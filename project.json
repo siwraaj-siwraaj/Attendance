@@ -1,0 +1,17 @@
+{
+  "overview": "Rossie is a labour and contract management app with username/password login, an admin panel for managing user credentials, and a combined flow for creating contracts and marking attendance.",
+  "features": [
+    "Username and password login for admin and users",
+    "Admin panel to create and change user credentials",
+    "Combined contract creation and attendance marking flow",
+    "Contract, attendance, advance, payment, and labour management"
+  ],
+  "category": "productivity",
+  "tags": [
+    "labour-management",
+    "contract-management",
+    "attendance",
+    "productivity"
+  ],
+  "last_updated": "2026-08-27T17:48:10.316Z"
+}

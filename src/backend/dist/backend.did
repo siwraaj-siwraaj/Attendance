@@ -1,0 +1,201 @@
+type WorkColumn = 
+ record {
+   id: text;
+   name: text;
+   workType: text;
+ };
+type Value = 
+ variant {
+   "bool": bool;
+   float: float64;
+   "int": int;
+   "nat": nat;
+   "null";
+   "text": text;
+ };
+type UserStatus = 
+ variant {
+   approved;
+   pending;
+   revoked;
+ };
+type UserInfo = 
+ record {
+   email: opt text;
+   name: opt text;
+   role: Role;
+   status: UserStatus;
+   username: text;
+ };
+type Role = 
+ variant {
+   admin;
+   attendanceOnly;
+   contractOnly;
+   viewOnly;
+ };
+type Result = 
+ record {
+   hasMore: bool;
+   rows: vec vec Cell;
+ };
+type Labour = 
+ record {
+   createdAt: int;
+   employeeId: text;
+   id: nat;
+   isActive: bool;
+   joinDate: text;
+   name: text;
+ };
+type Credentials = 
+ record {
+   password: text;
+   username: text;
+ };
+type Contract = 
+ record {
+   bedAmount: float64;
+   contractAmount: float64;
+   createdAt: int;
+   id: nat;
+   machineExpenses: float64;
+   meshAmount: float64;
+   multiplier: float64;
+   name: text;
+   paperAmount: float64;
+   settled: bool;
+   workColumns: vec WorkColumn;
+ };
+type Cell = 
+ record {
+   name: text;
+   value: Value;
+ };
+type AuthResult = 
+ record {
+   role: Role;
+   status: UserStatus;
+   username: text;
+ };
+type AttendanceValue = 
+ variant {
+   absent;
+   partial: float64;
+   present;
+ };
+type AttendanceRecord = 
+ record {
+   columnId: text;
+   contractId: nat;
+   labourId: nat;
+   value: AttendanceValue;
+ };
+type Advance = 
+ record {
+   amount: float64;
+   contractId: nat;
+   createdAt: int;
+   id: nat;
+   labourId: nat;
+   note: text;
+ };
+service : {
+  addAdvance: (contractId: nat, labourId: nat, amount: float64, note:
+   text) -> (variant {
+               err: text;
+               ok: Advance;
+             });
+  addContract: (name: text, multiplier: float64, contractAmount: float64,
+   machineExpenses: float64, bedAmount: float64, paperAmount: float64,
+   meshAmount: opt float64) -> (variant {
+                                  err: text;
+                                  ok: Contract;
+                                });
+  addLabour: (name: text, employeeId: text, joinDate: text) ->
+   (variant {
+      err: text;
+      ok: Labour;
+    });
+  addWorkColumn: (contractId: nat, name: text, workType: text) ->
+   (variant {
+      err: text;
+      ok: Contract;
+    });
+  approveUser: (username: text, role: Role) -> ();
+  batchSaveAttendance: (updates:
+   vec record {
+         nat;
+         nat;
+         text;
+         AttendanceValue;
+       }) -> (vec bool);
+  createUser: (username: text, password: text, role: Role) -> (bool);
+  deleteAdvance: (id: nat) -> (variant {
+                                 err: text;
+                                 ok: bool;
+                               });
+  deleteContract: (id: nat) -> (variant {
+                                  err: text;
+                                  ok: bool;
+                                });
+  execute: (qJson: text) -> (Result) query;
+  exportData: () -> (text) query;
+  getActiveLabours: () -> (vec Labour) query;
+  getAdvances: () -> (vec Advance) query;
+  getAdvancesByContract: (contractId: nat) -> (vec Advance) query;
+  getAllAttendance: () -> (vec AttendanceRecord) query;
+  getAttendance: (contractId: nat) -> (vec AttendanceRecord) query;
+  getCallerRole: () -> (opt Role) query;
+  getCallerStatus: () -> (UserStatus) query;
+  getContracts: () -> (vec Contract) query;
+  getLabours: () -> (vec Labour) query;
+  importData: (json: text) -> (variant {
+                                 err: text;
+                                 ok: bool;
+                               });
+  listUsers: () -> (vec UserInfo) query;
+  login: (creds: Credentials) -> (opt AuthResult);
+  logout: () -> ();
+  markContractSettled: (id: nat, settled: bool) ->
+   (variant {
+      err: text;
+      ok: Contract;
+    });
+  removeWorkColumn: (contractId: nat, columnId: text) ->
+   (variant {
+      err: text;
+      ok: Contract;
+    });
+  revokeAccess: (username: text) -> ();
+  schema: () -> (text) query;
+  setAttendance: (contractId: nat, labourId: nat, columnId: text, value:
+   AttendanceValue) -> (variant {
+                          err: text;
+                          ok: bool;
+                        });
+  setUserRole: (username: text, role: Role) -> ();
+  updateAdvance: (id: nat, amount: float64, note: text) ->
+   (variant {
+      err: text;
+      ok: Advance;
+    });
+  updateContract: (id: nat, name: text, multiplier: float64, contractAmount:
+   float64, machineExpenses: float64, bedAmount: float64, paperAmount:
+   float64, meshAmount: opt float64) -> (variant {
+                                           err: text;
+                                           ok: Contract;
+                                         });
+  updateLabour: (id: nat, name: text, employeeId: text, joinDate: text,
+   isActive: bool) -> (variant {
+                         err: text;
+                         ok: Labour;
+                       });
+  updateUserCredentials: (oldUsername: text, newUsername: text, newPassword:
+   opt text) -> (bool);
+  updateWorkColumn: (contractId: nat, columnId: text, name: text) ->
+   (variant {
+      err: text;
+      ok: Contract;
+    });
+}

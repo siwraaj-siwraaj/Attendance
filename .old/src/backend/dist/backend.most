@@ -1,0 +1,769 @@
+// Version: 4.0.0
+type AdminCredentials__435407603 = {passwordHash : Text; username : Text};
+type AdminCredentials__444220708 = {passwordHash : Text; username : Text};
+type AdminCredentials__455876532 = {passwordHash : Text; username : Text};
+type AdminCredentials__527583036 = {passwordHash : Text; username : Text};
+type Advance__159586523 =
+  {
+    amount : Float;
+    contractId : Nat;
+    createdAt : Int;
+    id : Nat;
+    labourId : Nat;
+    note : Text
+  };
+type Advance__231156780 =
+  {
+    amount : Float;
+    contractId : Nat;
+    createdAt : Int;
+    id : Nat;
+    labourId : Nat;
+    note : Text
+  };
+type Advance__232564272 =
+  {
+    amount : Float;
+    contractId : Nat;
+    createdAt : Int;
+    id : Nat;
+    labourId : Nat;
+    note : Text
+  };
+type Advance__257244823 =
+  {
+    amount : Float;
+    contractId : Nat;
+    createdAt : Int;
+    id : Nat;
+    labourId : Nat;
+    note : Text
+  };
+type Advance__309938175 =
+  {
+    amount : Float;
+    contractId : Nat;
+    createdAt : Int;
+    id : Nat;
+    labourId : Nat;
+    note : Text
+  };
+type Advance__397840126 =
+  {
+    amount : Float;
+    contractId : Nat;
+    createdAt : Int;
+    id : Nat;
+    labourId : Nat;
+    note : Text
+  };
+type Advance__48539935 =
+  {
+    amount : Float;
+    contractId : Nat;
+    createdAt : Int;
+    id : Nat;
+    labourId : Nat;
+    note : Text
+  };
+type Advance__509406937 =
+  {
+    amount : Float;
+    contractId : Nat;
+    createdAt : Int;
+    id : Nat;
+    labourId : Nat;
+    note : Text
+  };
+type Advance__608651358 =
+  {
+    amount : Float;
+    contractId : Nat;
+    createdAt : Int;
+    id : Nat;
+    labourId : Nat;
+    note : Text
+  };
+type Advance__710935848 =
+  {
+    amount : Float;
+    contractId : Nat;
+    createdAt : Int;
+    id : Nat;
+    labourId : Nat;
+    note : Text
+  };
+type Advance__789293575 =
+  {
+    amount : Float;
+    contractId : Nat;
+    createdAt : Int;
+    id : Nat;
+    labourId : Nat;
+    note : Text
+  };
+type AttendanceKey__1025847130 = (Nat, Nat, Text);
+type AttendanceKey__146177853 = (Nat, Nat, Text);
+type AttendanceKey__458875821 = (Nat, Nat, Text);
+type AttendanceKey__495261915 = (Nat, Nat, Text);
+type AttendanceKey__579247906 = (Nat, Nat, Text);
+type AttendanceKey__616884523 = (Nat, Nat, Text);
+type AttendanceKey__619852018 = (Nat, Nat, Text);
+type AttendanceKey__749518018 = (Nat, Nat, Text);
+type AttendanceKey__766617174 = (Nat, Nat, Text);
+type AttendanceKey__945560651 = (Nat, Nat, Text);
+type AttendanceKey__953066043 = (Nat, Nat, Text);
+type AttendanceValue__1006740461 = {#absent; #partial : Float; #present};
+type AttendanceValue__114771722 = {#absent; #partial : Float; #present};
+type AttendanceValue__282159113 = {#absent; #partial : Float; #present};
+type AttendanceValue__303333684 = {#absent; #partial : Float; #present};
+type AttendanceValue__507842372 = {#absent; #partial : Float; #present};
+type AttendanceValue__545567308 = {#absent; #partial : Float; #present};
+type AttendanceValue__567217008 = {#absent; #partial : Float; #present};
+type AttendanceValue__637203495 = {#absent; #partial : Float; #present};
+type AttendanceValue__943790132 = {#absent; #partial : Float; #present};
+type AttendanceValue__973740318 = {#absent; #partial : Float; #present};
+type AttendanceValue__999028179 = {#absent; #partial : Float; #present};
+type Contract__282313345 =
+  {
+    bedAmount : Float;
+    contractAmount : Float;
+    createdAt : Int;
+    id : Nat;
+    machineExpenses : Float;
+    meshAmount : Float;
+    multiplier : Float;
+    name : Text;
+    paperAmount : Float;
+    settled : Bool;
+    workColumns : [WorkColumn__822712216]
+  };
+type Contract__406074731 =
+  {
+    bedAmount : Float;
+    contractAmount : Float;
+    createdAt : Int;
+    id : Nat;
+    machineExpenses : Float;
+    meshAmount : Float;
+    multiplier : Float;
+    name : Text;
+    paperAmount : Float;
+    settled : Bool;
+    workColumns : [WorkColumn__801311992]
+  };
+type Contract__421288994 =
+  {
+    bedAmount : Float;
+    contractAmount : Float;
+    createdAt : Int;
+    id : Nat;
+    machineExpenses : Float;
+    meshAmount : Float;
+    multiplier : Float;
+    name : Text;
+    paperAmount : Float;
+    settled : Bool;
+    workColumns : [WorkColumn__616468312]
+  };
+type Contract__437052550 =
+  {
+    bedAmount : Float;
+    contractAmount : Float;
+    createdAt : Int;
+    id : Nat;
+    machineExpenses : Float;
+    meshAmount : Float;
+    multiplier : Float;
+    name : Text;
+    paperAmount : Float;
+    settled : Bool;
+    workColumns : [WorkColumn__198711676]
+  };
+type Contract__496199061 =
+  {
+    bedAmount : Float;
+    contractAmount : Float;
+    createdAt : Int;
+    id : Nat;
+    machineExpenses : Float;
+    multiplier : Float;
+    name : Text;
+    paperAmount : Float;
+    settled : Bool;
+    workColumns : [WorkColumn__1044144699]
+  };
+type Contract__642554327 =
+  {
+    bedAmount : Float;
+    contractAmount : Float;
+    createdAt : Int;
+    id : Nat;
+    machineExpenses : Float;
+    meshAmount : Float;
+    multiplier : Float;
+    name : Text;
+    paperAmount : Float;
+    settled : Bool;
+    workColumns : [WorkColumn__718444855]
+  };
+type Contract__671998149 =
+  {
+    bedAmount : Float;
+    contractAmount : Float;
+    createdAt : Int;
+    id : Nat;
+    machineExpenses : Float;
+    meshAmount : Float;
+    multiplier : Float;
+    name : Text;
+    paperAmount : Float;
+    settled : Bool;
+    workColumns : [WorkColumn__820926025]
+  };
+type Contract__672775910 =
+  {
+    bedAmount : Float;
+    contractAmount : Float;
+    createdAt : Int;
+    id : Nat;
+    machineExpenses : Float;
+    meshAmount : Float;
+    multiplier : Float;
+    name : Text;
+    paperAmount : Float;
+    settled : Bool;
+    workColumns : [WorkColumn__508863490]
+  };
+type Contract__845076460 =
+  {
+    bedAmount : Float;
+    contractAmount : Float;
+    createdAt : Int;
+    id : Nat;
+    machineExpenses : Float;
+    meshAmount : Float;
+    multiplier : Float;
+    name : Text;
+    paperAmount : Float;
+    settled : Bool;
+    workColumns : [WorkColumn__367487141]
+  };
+type Contract__981920117 =
+  {
+    bedAmount : Float;
+    contractAmount : Float;
+    createdAt : Int;
+    id : Nat;
+    machineExpenses : Float;
+    multiplier : Float;
+    name : Text;
+    paperAmount : Float;
+    settled : Bool;
+    workColumns : [WorkColumn__448210500]
+  };
+type Data__265875254<K, V> = {var count : Nat__58649523; kvs : [var ?(K, V)]};
+type Internal__161573640<K, V> =
+  {children : [var ?Node__430031793<K, V>]; data : Data__265875254<K, V>};
+type Labour__142315705 =
+  {
+    createdAt : Int;
+    employeeId : Text;
+    id : Nat;
+    isActive : Bool;
+    joinDate : Text;
+    name : Text
+  };
+type Labour__150268068 =
+  {
+    createdAt : Int;
+    employeeId : Text;
+    id : Nat;
+    isActive : Bool;
+    joinDate : Text;
+    name : Text
+  };
+type Labour__334555732 = {createdAt : Int; id : Nat; name : Text};
+type Labour__371965604 =
+  {
+    createdAt : Int;
+    employeeId : Text;
+    id : Nat;
+    isActive : Bool;
+    joinDate : Text;
+    name : Text
+  };
+type Labour__637809308 = {createdAt : Int; id : Nat; name : Text};
+type Labour__647279807 =
+  {
+    createdAt : Int;
+    employeeId : Text;
+    id : Nat;
+    isActive : Bool;
+    joinDate : Text;
+    name : Text
+  };
+type Labour__728265746 =
+  {
+    createdAt : Int;
+    employeeId : Text;
+    id : Nat;
+    isActive : Bool;
+    joinDate : Text;
+    name : Text
+  };
+type Labour__780455614 =
+  {
+    createdAt : Int;
+    employeeId : Text;
+    id : Nat;
+    isActive : Bool;
+    joinDate : Text;
+    name : Text
+  };
+type Labour__844183698 = {createdAt : Int; id : Nat; name : Text};
+type Labour__978048237 =
+  {
+    createdAt : Int;
+    employeeId : Text;
+    id : Nat;
+    isActive : Bool;
+    joinDate : Text;
+    name : Text
+  };
+type Leaf__1045638083<K, V> = {data : Data__265875254<K, V>};
+type List__1004628775<T> =
+  {
+    var blockIndex : Nat__58649523;
+    var blocks : [var [var ?T]];
+    var elementIndex : Nat__58649523
+  };
+type List__89170296<T> = List__1004628775<T>;
+type Map__13625999<K, V> =
+  {var root : Node__430031793<K, V>; var size : Nat__58649523};
+type Map__386906547<K, V> = Map__670138087<K, V>;
+type Map__670138087<K, V> = Map__13625999<K, V>;
+type Nat__58649523 = Nat__920180692;
+type Nat__920180692 = Nat;
+type NewActor__1060985076 =
+  {
+    advances : List__89170296<Advance__48539935>;
+    attendance :
+      Map__386906547<AttendanceKey__945560651, AttendanceValue__282159113>;
+    contracts : List__89170296<NewContract__241006117>;
+    labours : List__89170296<Labour__844183698>;
+    state :
+      {
+        var nextAdvanceId : Nat;
+        var nextContractId : Nat;
+        var nextLabourId : Nat
+      }
+  };
+type NewActor__180733458 =
+  {
+    adminCreds : {var value : ?AdminCredentials__455876532};
+    advances : List__89170296<Advance__789293575>;
+    attendance :
+      Map__386906547<AttendanceKey__619852018, AttendanceValue__943790132>;
+    contracts : List__89170296<Contract__437052550>;
+    labours : List__89170296<Labour__150268068>;
+    state :
+      {
+        var nextAdvanceId : Nat;
+        var nextContractId : Nat;
+        var nextLabourId : Nat
+      }
+  };
+type NewActor__228804214 =
+  {
+    advances : List__89170296<Advance__257244823>;
+    attendance :
+      Map__386906547<AttendanceKey__579247906, AttendanceValue__114771722>;
+    contracts : List__89170296<Contract__845076460>;
+    labours : List__89170296<Labour__371965604>;
+    state :
+      {
+        var nextAdvanceId : Nat;
+        var nextContractId : Nat;
+        var nextLabourId : Nat
+      };
+    users : Map__386906547<Principal, User__454872458>
+  };
+type NewActor__394838867 =
+  {
+    advances : List__89170296<Advance__397840126>;
+    attendance :
+      Map__386906547<AttendanceKey__749518018, AttendanceValue__545567308>;
+    contracts : List__89170296<Contract__642554327>;
+    labours : List__89170296<Labour__647279807>;
+    session : {var currentUser : ?Text};
+    state :
+      {
+        var nextAdvanceId : Nat;
+        var nextContractId : Nat;
+        var nextLabourId : Nat
+      };
+    users : Map__386906547<Text, NewUser__543646867>
+  };
+type NewActor__394923971 =
+  {
+    adminCreds : {var value : ?{passwordHash : Text; username : Text}};
+    advances : List__89170296<Advance__159586523>;
+    attendance :
+      Map__386906547<AttendanceKey__766617174, AttendanceValue__999028179>;
+    contracts : List__89170296<Contract__406074731>;
+    labours : List__89170296<Labour__780455614>;
+    state :
+      {
+        var nextAdvanceId : Nat;
+        var nextContractId : Nat;
+        var nextLabourId : Nat
+      }
+  };
+type NewActor__468435946 =
+  {
+    advances : List__89170296<Advance__710935848>;
+    attendance :
+      Map__386906547<AttendanceKey__1025847130, AttendanceValue__303333684>;
+    contracts : List__89170296<Contract__282313345>;
+    labours : List__89170296<NewLabour__901467484>;
+    state :
+      {
+        var nextAdvanceId : Nat;
+        var nextContractId : Nat;
+        var nextLabourId : Nat
+      }
+  };
+type NewActor__525475060 =
+  {
+    advances : List__89170296<Advance__608651358>;
+    attendance :
+      Map__386906547<AttendanceKey__458875821, AttendanceValue__507842372>;
+    contracts : List__89170296<Contract__421288994>;
+    labours : List__89170296<Labour__978048237>;
+    state :
+      {
+        var nextAdvanceId : Nat;
+        var nextContractId : Nat;
+        var nextLabourId : Nat
+      }
+  };
+type NewActor__695517033 =
+  {
+    advances : List__89170296<Advance__509406937>;
+    attendance :
+      Map__386906547<AttendanceKey__146177853, AttendanceValue__567217008>;
+    contracts : List__89170296<Contract__672775910>;
+    labours : List__89170296<Labour__728265746>;
+    state :
+      {
+        var nextAdvanceId : Nat;
+        var nextContractId : Nat;
+        var nextLabourId : Nat
+      }
+  };
+type NewActor__813616742 =
+  {
+    advances : List__89170296<Advance__232564272>;
+    attendance :
+      Map__386906547<AttendanceKey__495261915, AttendanceValue__973740318>;
+    contracts : List__89170296<Contract__496199061>;
+    labours : List__89170296<Labour__637809308>;
+    state :
+      {
+        var nextAdvanceId : Nat;
+        var nextContractId : Nat;
+        var nextLabourId : Nat
+      }
+  };
+type NewActor__844250320 =
+  {
+    adminCreds : {var value : ?AdminCredentials__527583036};
+    advances : List__89170296<Advance__231156780>;
+    attendance :
+      Map__386906547<AttendanceKey__616884523, AttendanceValue__1006740461>;
+    contracts : List__89170296<Contract__981920117>;
+    labours : List__89170296<Labour__334555732>;
+    state :
+      {
+        var nextAdvanceId : Nat;
+        var nextContractId : Nat;
+        var nextLabourId : Nat
+      }
+  };
+type NewContract__241006117 =
+  {
+    bedAmount : Float;
+    contractAmount : Float;
+    createdAt : Int;
+    id : Nat;
+    machineExpenses : Float;
+    meshAmount : Float;
+    multiplier : Float;
+    name : Text;
+    paperAmount : Float;
+    settled : Bool;
+    workColumns : [WorkColumn__971066073]
+  };
+type NewLabour__901467484 =
+  {
+    createdAt : Int;
+    employeeId : Text;
+    id : Nat;
+    isActive : Bool;
+    joinDate : Text;
+    name : Text
+  };
+type NewUser__543646867 =
+  {
+    var email : ?Text;
+    var name : ?Text;
+    var passwordHash : Text;
+    var role : Role__102964614;
+    var status : UserStatus__467485566;
+    username : Text
+  };
+type Node__430031793<K, V> =
+  {#internal : Internal__161573640<K, V>; #leaf : Leaf__1045638083<K, V>};
+type OldActor__126432763 =
+  {
+    adminCreds : {var value : ?{passwordHash : Text; username : Text}};
+    advances : List__89170296<Advance__608651358>;
+    attendance :
+      Map__386906547<AttendanceKey__458875821, AttendanceValue__507842372>;
+    contracts : List__89170296<Contract__421288994>;
+    labours : List__89170296<Labour__978048237>;
+    state :
+      {
+        var nextAdvanceId : Nat;
+        var nextContractId : Nat;
+        var nextLabourId : Nat
+      }
+  };
+type OldActor__198466139 =
+  {
+    advances : List__89170296<Advance__789293575>;
+    attendance :
+      Map__386906547<AttendanceKey__619852018, AttendanceValue__943790132>;
+    contracts : List__89170296<Contract__437052550>;
+    labours : List__89170296<Labour__150268068>;
+    state :
+      {
+        var nextAdvanceId : Nat;
+        var nextContractId : Nat;
+        var nextLabourId : Nat
+      }
+  };
+type OldActor__225595790 =
+  {
+    advances : List__89170296<Advance__710935848>;
+    attendance :
+      Map__386906547<AttendanceKey__1025847130, AttendanceValue__303333684>;
+    contracts : List__89170296<Contract__282313345>;
+    labours : List__89170296<OldLabour__769549529>;
+    state :
+      {
+        var nextAdvanceId : Nat;
+        var nextContractId : Nat;
+        var nextLabourId : Nat
+      }
+  };
+type OldActor__253048902 =
+  {
+    adminCreds : {var value : ?AdminCredentials__435407603};
+    advances : List__89170296<Advance__232564272>;
+    attendance :
+      Map__386906547<AttendanceKey__495261915, AttendanceValue__973740318>;
+    contracts : List__89170296<Contract__496199061>;
+    labours : List__89170296<Labour__637809308>;
+    state :
+      {
+        var nextAdvanceId : Nat;
+        var nextContractId : Nat;
+        var nextLabourId : Nat
+      }
+  };
+type OldActor__356180246 =
+  {
+    advances : List__89170296<Advance__48539935>;
+    attendance :
+      Map__386906547<AttendanceKey__945560651, AttendanceValue__282159113>;
+    contracts : List__89170296<OldContract__536562910>;
+    labours : List__89170296<Labour__844183698>;
+    state :
+      {
+        var nextAdvanceId : Nat;
+        var nextContractId : Nat;
+        var nextLabourId : Nat
+      }
+  };
+type OldActor__362213262 =
+  {
+    advances : List__89170296<Advance__159586523>;
+    attendance :
+      Map__386906547<AttendanceKey__766617174, AttendanceValue__999028179>;
+    contracts : List__89170296<Contract__406074731>;
+    labours : List__89170296<Labour__780455614>;
+    state :
+      {
+        var nextAdvanceId : Nat;
+        var nextContractId : Nat;
+        var nextLabourId : Nat
+      }
+  };
+type OldActor__48442141 =
+  {
+    advances : List__89170296<Advance__257244823>;
+    attendance :
+      Map__386906547<AttendanceKey__579247906, AttendanceValue__114771722>;
+    contracts : List__89170296<Contract__845076460>;
+    labours : List__89170296<Labour__371965604>;
+    state :
+      {
+        var nextAdvanceId : Nat;
+        var nextContractId : Nat;
+        var nextLabourId : Nat
+      }
+  };
+type OldActor__741741474 =
+  {
+    adminCreds : {var value : ?AdminCredentials__444220708};
+    advances : List__89170296<Advance__509406937>;
+    attendance :
+      Map__386906547<AttendanceKey__146177853, AttendanceValue__567217008>;
+    contracts : List__89170296<Contract__672775910>;
+    labours : List__89170296<Labour__728265746>;
+    state :
+      {
+        var nextAdvanceId : Nat;
+        var nextContractId : Nat;
+        var nextLabourId : Nat
+      }
+  };
+type OldActor__93476354 = {};
+type OldActor__977362577 =
+  {
+    advances : List__89170296<Advance__397840126>;
+    attendance :
+      Map__386906547<AttendanceKey__749518018, AttendanceValue__545567308>;
+    contracts : List__89170296<Contract__642554327>;
+    labours : List__89170296<Labour__647279807>;
+    state :
+      {
+        var nextAdvanceId : Nat;
+        var nextContractId : Nat;
+        var nextLabourId : Nat
+      };
+    users : Map__386906547<Principal, OldUser__173502893>
+  };
+type OldContract__536562910 =
+  {
+    bedAmount : Float;
+    contractAmount : Float;
+    createdAt : Int;
+    id : Nat;
+    machineExpenses : Float;
+    multiplier : Float;
+    name : Text;
+    paperAmount : Float;
+    settled : Bool;
+    workColumns : [WorkColumn__971066073]
+  };
+type OldLabour__769549529 = {createdAt : Int; id : Nat; name : Text};
+type OldUser__173502893 =
+  {
+    var email : ?Text;
+    var name : ?Text;
+    principal : Principal;
+    var role : Role__102964614;
+    var status : UserStatus__467485566
+  };
+type Role__102964614 = {#admin; #attendanceOnly; #contractOnly; #viewOnly};
+type Role__490071529 = {#admin; #attendanceOnly; #contractOnly; #viewOnly};
+type Role__683683606 = {#admin; #attendanceOnly; #contractOnly; #viewOnly};
+type UserStatus__455052000 = {#approved; #pending; #revoked};
+type UserStatus__467485566 = {#approved; #pending; #revoked};
+type UserStatus__63642166 = {#approved; #pending; #revoked};
+type User__454872458 =
+  {
+    var email : ?Text;
+    var name : ?Text;
+    principal : Principal;
+    var role : Role__683683606;
+    var status : UserStatus__63642166
+  };
+type User__455962502 =
+  {
+    var email : ?Text;
+    var name : ?Text;
+    var passwordHash : Text;
+    var role : Role__490071529;
+    var status : UserStatus__455052000;
+    username : Text
+  };
+type WorkColumn__1044144699 = {id : Text; name : Text; workType : Text};
+type WorkColumn__198711676 = {id : Text; name : Text; workType : Text};
+type WorkColumn__367487141 = {id : Text; name : Text; workType : Text};
+type WorkColumn__448210500 = {id : Text; name : Text; workType : Text};
+type WorkColumn__508863490 = {id : Text; name : Text; workType : Text};
+type WorkColumn__616468312 = {id : Text; name : Text; workType : Text};
+type WorkColumn__718444855 = {id : Text; name : Text; workType : Text};
+type WorkColumn__801311992 = {id : Text; name : Text; workType : Text};
+type WorkColumn__820926025 = {id : Text; name : Text; workType : Text};
+type WorkColumn__822712216 = {id : Text; name : Text; workType : Text};
+type WorkColumn__971066073 = {id : Text; name : Text; workType : Text};
+{
+  "20260601_000000_Init" : OldActor__93476354 -> NewActor__844250320;
+  "20260601_000001_RemoveAdminCreds" :
+    (old : OldActor__253048902) -> NewActor__813616742;
+  "20260602_000000_AddMeshAmount" :
+    (old : OldActor__356180246) -> NewActor__1060985076;
+  "20260602_120000_AddLabourFields" :
+    (old : OldActor__225595790) -> NewActor__468435946;
+  "20260602_130000_AddAdminCreds" :
+    (old : OldActor__362213262) -> NewActor__394923971;
+  "20260604_120000_RemoveAdminCreds" :
+    (old : OldActor__126432763) -> NewActor__525475060;
+  "20260718_000000" : (old : OldActor__198466139) -> NewActor__180733458;
+  "20260827_000000" : (old : OldActor__741741474) -> NewActor__695517033;
+  "20260827_120000" : (old : OldActor__48442141) -> NewActor__228804214;
+  "20260827_130000" : (old : OldActor__977362577) -> NewActor__394838867
+}
+actor  {
+  stable advances :
+    {
+      var blockIndex : Nat__58649523;
+      var blocks : [var [var ?Advance__309938175]];
+      var elementIndex : Nat__58649523
+    };
+  stable attendance :
+    {
+      var root :
+        Node__430031793<AttendanceKey__953066043, AttendanceValue__637203495>;
+      var size : Nat__58649523
+    };
+  stable contracts :
+    {
+      var blockIndex : Nat__58649523;
+      var blocks : [var [var ?Contract__671998149]];
+      var elementIndex : Nat__58649523
+    };
+  stable labours :
+    {
+      var blockIndex : Nat__58649523;
+      var blocks : [var [var ?Labour__142315705]];
+      var elementIndex : Nat__58649523
+    };
+  stable session : {var currentUser : ?Text};
+  stable state :
+    {
+      var nextAdvanceId : Nat;
+      var nextContractId : Nat;
+      var nextLabourId : Nat
+    };
+  stable users :
+    {
+      var root : Node__430031793<Text, User__455962502>;
+      var size : Nat__58649523
+    }
+};
