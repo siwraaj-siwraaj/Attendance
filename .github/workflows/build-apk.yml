@@ -26,10 +26,7 @@ jobs:
         run: corepack enable
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile --ignore-scripts
-
-      - name: Approve and run required build scripts
-        run: pnpm rebuild
+        run: pnpm install --frozen-lockfile --config.ignore-scripts=false
 
       - name: Sync Capacitor Android
         working-directory: src/frontend
