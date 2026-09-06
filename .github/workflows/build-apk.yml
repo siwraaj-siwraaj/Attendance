@@ -28,6 +28,12 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --config.ignore-scripts=false
 
+      - name: Build frontend
+        working-directory: src/frontend
+        env:
+          CANISTER_ID_BACKEND: bkyz2-fmaaa-aaaaa-qaaaq-cai
+        run: pnpm build
+
       - name: Sync Capacitor Android
         working-directory: src/frontend
         run: pnpm exec cap sync android
