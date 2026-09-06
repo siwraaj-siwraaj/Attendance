@@ -16,10 +16,11 @@
     "bindgen": "caffeine-bindgen --did-file ./src/backend/dist/backend.did --out-dir ./src/frontend/src --actor-interface-file --force"
   },
   "devDependencies": {
-    "sharp": "^0.34.4",
-    "@dfinity/pic": "^0.23.0"
+    "@dfinity/pic": "^0.23.0",
+    "sharp": "^0.34.4"
   },
   "dependencies": {
     "@caffeineai/core-infrastructure": "^0.3.0"
-  }
+  },
+  "packageManager": "pnpm@10.32.1"
 }
