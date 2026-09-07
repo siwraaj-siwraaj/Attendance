@@ -926,11 +926,28 @@ function CombinedFlow({ onClose }: { onClose: () => void }) {
 
   const handleAddColumn = (workType: string) => {
     if (!createdContract) return;
+
+    const baseName =
+      workType === "bed"
+        ? "Bed"
+        : workType === "paper"
+          ? "Paper"
+          : workType === "mesh"
+            ? "Mesh"
+            : workType;
+
+    const sameTypeCount = createdContract.workColumns.filter(
+      (column) => column.workType === workType,
+    ).length;
+
+    const columnName =
+      sameTypeCount === 0 ? baseName : `${baseName} ${sameTypeCount + 1}`;
+
     setInstantAddLoading(workType);
     addWorkColumn.mutate(
       {
         contractId: createdContract.id,
-        name: workType === "bed" ? "Bed" : workType === "paper" ? "Paper" : workType === "mesh" ? "Mesh" : workType,
+        name: columnName,
         workType,
       },
       {
