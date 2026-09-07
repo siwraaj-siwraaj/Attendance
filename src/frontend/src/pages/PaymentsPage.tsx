@@ -553,7 +553,7 @@ export default function PaymentsPage({
   return (
     <div className="flex flex-col h-full overflow-hidden">
       {/* Frozen top controls */}
-      <div className="shrink-0 sticky top-0 z-30 bg-[#0a0f1e] px-4 pt-4 pb-3 border-b border-white/10">
+      <div className="shrink-0 sticky top-0 z-[100] bg-[#0a0f1e] px-4 pt-4 pb-3 border-b border-white/10">
         <div className="flex items-center justify-between mb-3">
           <h1 className="text-xl font-bold text-white">Payments</h1>
           {/* Calculate Payments — top right */}
@@ -624,7 +624,7 @@ export default function PaymentsPage({
           {/* Dropdown panel */}
           {contractDropdownOpen && (
             <div
-              className="absolute left-0 right-0 top-full mt-2 z-40 max-h-[60vh] flex flex-col overflow-hidden rounded-2xl border border-white/10 shadow-2xl"
+              className="absolute left-0 right-0 top-full mt-2 z-[200] max-h-[60vh] flex flex-col overflow-hidden rounded-2xl border border-white/10 shadow-2xl"
               style={{ background: "rgba(5,10,20,0.98)" }}
               data-ocid="payments.contract_select_dropdown"
             >
