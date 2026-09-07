@@ -244,6 +244,9 @@ export function createSupabaseActor() {
       try {
         const rows = await rest("labours", {
           method: "POST",
+          headers: {
+            Prefer: "return=representation",
+          },
           body: {
             name,
             employee_id: employeeId,
@@ -305,6 +308,9 @@ export function createSupabaseActor() {
       try {
         const rows = await rest("contracts", {
           method: "POST",
+          headers: {
+            Prefer: "return=representation",
+          },
           body: {
             name,
             multiplier,
@@ -391,7 +397,9 @@ export function createSupabaseActor() {
       try {
         const rows = await rest("work_columns", {
           method: "POST",
+          query: "?select=*",
           body: {
+            id: crypto.randomUUID(),
             contract_id: contractId.toString(),
             name,
             work_type: workType,
@@ -472,7 +480,10 @@ export function createSupabaseActor() {
 
         const rows = await rest("attendance", {
           method: "POST",
-          query: "?on_conflict=contract_id,labour_id,column_id",
+          query: "?on_conflict=contract_id,labour_id,column_id&select=*",
+          headers: {
+            Prefer: "resolution=merge-duplicates,return=representation",
+          },
           body: {
             contract_id: contractId.toString(),
             labour_id: labourId.toString(),
@@ -530,6 +541,9 @@ export function createSupabaseActor() {
       try {
         const rows = await rest("advances", {
           method: "POST",
+          headers: {
+            Prefer: "return=representation",
+          },
           body: {
             contract_id: contractId.toString(),
             labour_id: labourId.toString(),
