@@ -624,7 +624,7 @@ export default function PaymentsPage({
           {/* Dropdown panel */}
           {contractDropdownOpen && (
             <div
-              className="absolute left-0 right-0 top-full mt-2 z-[200] max-h-[60vh] flex flex-col overflow-hidden rounded-2xl border border-white/10 shadow-2xl"
+              className="relative w-full mt-2 z-[200] max-h-[60vh] flex flex-col overflow-hidden rounded-2xl border border-white/10 shadow-2xl"
               style={{ background: "rgba(5,10,20,0.98)" }}
               data-ocid="payments.contract_select_dropdown"
             >
