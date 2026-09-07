@@ -665,10 +665,30 @@ export default function AttendancePage({
 
   const handleAddColumn = useCallback(() => {
     if (!contract) return;
+
+    const baseName =
+      newColumnWorkType === "bed"
+        ? "Bed"
+        : newColumnWorkType === "paper"
+          ? "Paper"
+          : newColumnWorkType === "mesh"
+            ? "Mesh"
+            : newColumnWorkType;
+
+    const sameTypeCount = contract.workColumns.filter(
+      (column) => column.workType === newColumnWorkType,
+    ).length;
+
+    const columnName =
+      newColumnName.trim() ||
+      (sameTypeCount === 0
+        ? baseName
+        : `${baseName} ${sameTypeCount + 1}`);
+
     addWorkColumn.mutate(
       {
         contractId: contract.id,
-        name: newColumnName.trim(),
+        name: columnName,
         workType: newColumnWorkType,
       },
       {
@@ -1117,7 +1137,12 @@ export default function AttendancePage({
                                 addWorkColumn.mutate(
                                   {
                                     contractId: contract.id,
-                                    name: "",
+                                    name: (() => {
+                                      const count = contract.workColumns.filter(
+                                        (column) => column.workType === "bed",
+                                      ).length;
+                                      return count === 0 ? "Bed" : `Bed ${count + 1}`;
+                                    })(),
                                     workType: "bed",
                                   },
                                   {
@@ -1140,7 +1165,12 @@ export default function AttendancePage({
                                 addWorkColumn.mutate(
                                   {
                                     contractId: contract.id,
-                                    name: "",
+                                    name: (() => {
+                                      const count = contract.workColumns.filter(
+                                        (column) => column.workType === "paper",
+                                      ).length;
+                                      return count === 0 ? "Paper" : `Paper ${count + 1}`;
+                                    })(),
                                     workType: "paper",
                                   },
                                   {
@@ -1163,7 +1193,12 @@ export default function AttendancePage({
                                 addWorkColumn.mutate(
                                   {
                                     contractId: contract.id,
-                                    name: "",
+                                    name: (() => {
+                                      const count = contract.workColumns.filter(
+                                        (column) => column.workType === "mesh",
+                                      ).length;
+                                      return count === 0 ? "Mesh" : `Mesh ${count + 1}`;
+                                    })(),
                                     workType: "mesh",
                                   },
                                   {
