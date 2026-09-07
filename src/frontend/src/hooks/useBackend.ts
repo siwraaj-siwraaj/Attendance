@@ -972,7 +972,7 @@ export function useCreateUser() {
       username,
       password,
       role,
-    }: { username: string; password: string; role: Role }) => {
+    }: { username: string; password: string; role: Role | Role[] }) => {
       if (!actor) throw new Error("Backend not connected");
       return actor.createUser(username, password, role);
     },
@@ -1013,7 +1013,7 @@ export function useApproveUser() {
     mutationFn: async ({
       username,
       role,
-    }: { username: string; role: Role }) => {
+    }: { username: string; role: Role | Role[] }) => {
       if (!actor) throw new Error("Backend not connected");
       await actor.approveUser(username, role);
     },
@@ -1031,7 +1031,7 @@ export function useSetUserRole() {
     mutationFn: async ({
       username,
       role,
-    }: { username: string; role: Role }) => {
+    }: { username: string; role: Role | Role[] }) => {
       if (!actor) throw new Error("Backend not connected");
       await actor.setUserRole(username, role);
     },

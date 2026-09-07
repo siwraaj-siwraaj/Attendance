@@ -19,6 +19,7 @@ export type UserStatus = "pending" | "approved" | "revoked";
 export interface UserInfo {
   username: string;
   role: Role;
+  roles?: Role[];
   status: UserStatus;
   name?: string;
   email?: string;

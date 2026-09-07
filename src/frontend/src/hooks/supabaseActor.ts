@@ -229,14 +229,14 @@ export function createSupabaseActor() {
       return rows.map(mapLabour);
     },
 
-    async addLabour(name: string, employeeId: string, joinDate: bigint) {
+    async addLabour(name: string, employeeId: string, joinDate: string) {
       try {
         const rows = await rest("labours", {
           method: "POST",
           body: {
             name,
             employee_id: employeeId,
-            join_date: new Date(Number(joinDate / 1_000_000n)).toISOString(),
+            join_date: new Date(joinDate).toISOString(),
             is_active: true,
           },
         });
@@ -250,7 +250,7 @@ export function createSupabaseActor() {
       id: bigint,
       name: string,
       employeeId: string,
-      joinDate: bigint,
+      joinDate: string,
       active: boolean
     ) {
       try {
@@ -260,7 +260,7 @@ export function createSupabaseActor() {
           body: {
             name,
             employee_id: employeeId,
-            join_date: new Date(Number(joinDate / 1_000_000n)).toISOString(),
+            join_date: new Date(joinDate).toISOString(),
             is_active: active,
           },
         });
@@ -588,13 +588,13 @@ export function createSupabaseActor() {
           password,
           role,
         });
-        return Boolean(data?.user);
+        return Boolean(data?.created);
       } catch {
         return false;
       }
     },
 
-    async approveUser(username: string, role: Role) {
+    async approveUser(username: string, role: Role | Role[]) {
       await functionCall("rossie-admin", {
         action: "approve",
         username,
@@ -602,7 +602,7 @@ export function createSupabaseActor() {
       });
     },
 
-    async setUserRole(username: string, role: Role) {
+    async setUserRole(username: string, role: Role | Role[]) {
       await functionCall("rossie-admin", {
         action: "role",
         username,

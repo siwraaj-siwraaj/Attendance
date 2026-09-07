@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Suspense, lazy, useState } from "react";
+import { useState } from "react";
 import ErrorBoundary from "./components/ErrorBoundary";
 import Layout from "./components/Layout";
 import PendingApproval from "./components/PendingApproval";
@@ -13,13 +13,13 @@ import {
 import LoginPage from "./pages/LoginPage";
 import type { Tab } from "./types";
 
-const ContractsPage = lazy(() => import("./pages/ContractsPage"));
-const AttendancePage = lazy(() => import("./pages/AttendancePage"));
-const AdvancesPage = lazy(() => import("./pages/AdvancesPage"));
-const PaymentsPage = lazy(() => import("./pages/PaymentsPage"));
-const LaboursPage = lazy(() => import("./pages/LaboursPage"));
-const SettledPage = lazy(() => import("./pages/SettledPage"));
-const AdminPanel = lazy(() => import("./pages/AdminPanel"));
+import ContractsPage from "./pages/ContractsPage";
+import AttendancePage from "./pages/AttendancePage";
+import AdvancesPage from "./pages/AdvancesPage";
+import PaymentsPage from "./pages/PaymentsPage";
+import LaboursPage from "./pages/LaboursPage";
+import SettledPage from "./pages/SettledPage";
+import AdminPanel from "./pages/AdminPanel";
 
 const defaultQueryClient = new QueryClient({
   defaultOptions: {
@@ -126,7 +126,7 @@ function AppContent() {
       <DataPreloader />
       <div className="flex flex-col h-full">
         <ErrorBoundary tabName={activeTab}>
-          <Suspense fallback={<TabSkeleton />}>
+
             {activeTab === "admin" && <AdminPanel />}
             {mode === "view" && activeTab === "attendance" && (
               <AttendancePage
@@ -158,7 +158,7 @@ function AppContent() {
             )}
             {mode === "edit" && activeTab === "labours" && <LaboursPage />}
             {mode === "edit" && activeTab === "settled" && <SettledPage />}
-          </Suspense>
+          
         </ErrorBoundary>
       </div>
     </Layout>

@@ -79,7 +79,7 @@ export default function AdminPanel() {
   // Create-user form draft (Local UI state).
   const [newUsername, setNewUsername] = useState("");
   const [newPassword, setNewPassword] = useState("");
-  const [newRole, setNewRole] = useState<Role>(Role.viewOnly);
+  const [newRoles, setNewRoles] = useState<Role[]>([Role.viewOnly]);
   const [createError, setCreateError] = useState<string | null>(null);
 
   // Credential-edit modal state.
@@ -89,7 +89,7 @@ export default function AdminPanel() {
   const [editError, setEditError] = useState<string | null>(null);
 
   // Per-pending-user role selection, keyed by username.
-  const [pendingRoles, setPendingRoles] = useState<Record<string, Role>>({});
+  const [pendingRoles, setPendingRoles] = useState<Record<string, Role[]>>({});
 
   const usersQuery = useListUsers();
   const createMutation = useCreateUser();
@@ -135,7 +135,7 @@ export default function AdminPanel() {
     setCreateError(null);
     const capturedUsername = username;
     const capturedPassword = newPassword;
-    const capturedRole = newRole;
+    const capturedRoles = newRoles;
     // Clear the draft synchronously before the mutation settles.
     setNewUsername("");
     setNewPassword("");
@@ -143,7 +143,7 @@ export default function AdminPanel() {
       {
         username: capturedUsername,
         password: capturedPassword,
-        role: capturedRole,
+        role: capturedRoles,
       },
       {
         onSuccess: (created) => {
@@ -202,8 +202,8 @@ export default function AdminPanel() {
   };
 
   const handleApprove = (user: UserInfo) => {
-    const role = pendingRoles[user.username] ?? Role.viewOnly;
-    approveMutation.mutate({ username: user.username, role });
+    const roles = pendingRoles[user.username] ?? [Role.viewOnly];
+    approveMutation.mutate({ username: user.username, role: roles });
   };
 
   return (
@@ -271,22 +271,14 @@ export default function AdminPanel() {
               />
             </div>
             <div>
-              <label htmlFor="admin-create-role" className="login-label">
-                Role
+              <label className="login-label">
+                Roles
               </label>
-              <select
-                id="admin-create-role"
-                value={newRole}
-                onChange={(e) => setNewRole(e.target.value as Role)}
-                className="select-dark w-full text-sm"
-                data-ocid="admin_panel.create_role_select"
-              >
-                {ROLE_OPTIONS.map((role) => (
-                  <option key={role} value={role}>
-                    {roleLabel(role)}
-                  </option>
-                ))}
-              </select>
+              <RoleMultiSelect
+                value={newRoles}
+                onChange={setNewRoles}
+                dataOcid="admin_panel.create_role_select"
+              />
             </div>
             {createError && (
               <div className="login-error" data-ocid="admin_panel.create_error">
@@ -362,12 +354,12 @@ export default function AdminPanel() {
                   user={user}
                   index={i}
                   roleSelect={
-                    <RoleSelect
-                      value={pendingRoles[user.username] ?? Role.viewOnly}
-                      onChange={(role) =>
+                    <RoleMultiSelect
+                      value={pendingRoles[user.username] ?? [Role.viewOnly]}
+                      onChange={(roles) =>
                         setPendingRoles((prev) => ({
                           ...prev,
-                          [user.username]: role,
+                          [user.username]: roles,
                         }))
                       }
                       dataOcid={`admin_panel.pending_role.${i}`}
@@ -410,12 +402,12 @@ export default function AdminPanel() {
                   user={user}
                   index={i}
                   roleSelect={
-                    <RoleSelect
-                      value={user.role}
-                      onChange={(role) =>
+                    <RoleMultiSelect
+                      value={user.roles ?? [user.role]}
+                      onChange={(roles) =>
                         setRoleMutation.mutate({
                           username: user.username,
-                          role,
+                          role: roles,
                         })
                       }
                       dataOcid={`admin_panel.role_select.${i}`}
@@ -475,12 +467,12 @@ export default function AdminPanel() {
                   user={user}
                   index={i}
                   roleSelect={
-                    <RoleSelect
-                      value={user.role}
-                      onChange={(role) =>
+                    <RoleMultiSelect
+                      value={user.roles ?? [user.role]}
+                      onChange={(roles) =>
                         setRoleMutation.mutate({
                           username: user.username,
-                          role,
+                          role: roles,
                         })
                       }
                       dataOcid={`admin_panel.revoked_role.${i}`}
@@ -507,7 +499,7 @@ export default function AdminPanel() {
                         onClick={() =>
                           approveMutation.mutate({
                             username: user.username,
-                            role: user.role,
+                            role: user.roles ?? [user.role],
                           })
                         }
                         disabled={approveMutation.isPending}
@@ -737,28 +729,52 @@ function UserCard({
   );
 }
 
-function RoleSelect({
+function RoleMultiSelect({
   value,
   onChange,
   dataOcid,
 }: {
-  value: Role;
-  onChange: (role: Role) => void;
+  value: Role[];
+  onChange: (roles: Role[]) => void;
   dataOcid: string;
 }) {
+  const toggle = (role: Role) => {
+    const next = value.includes(role)
+      ? value.filter((r) => r !== role)
+      : [...value, role];
+
+    if (next.length > 0) onChange(next);
+  };
+
   return (
-    <select
-      value={value}
-      onChange={(e) => onChange(e.target.value as Role)}
-      className="select-dark text-xs"
+    <div
+      className="flex flex-wrap gap-1.5 max-w-[260px]"
       data-ocid={dataOcid}
-      aria-label="Assign role"
+      aria-label="Assign roles"
     >
-      {ROLE_OPTIONS.map((role) => (
-        <option key={role} value={role}>
-          {roleLabel(role)}
-        </option>
-      ))}
-    </select>
+      {ROLE_OPTIONS.map((role) => {
+        const selected = value.includes(role);
+        return (
+          <button
+            key={role}
+            type="button"
+            onClick={() => toggle(role)}
+            className="rounded-lg px-2.5 py-1.5 text-[11px] font-semibold transition-colors"
+            style={{
+              background: selected
+                ? "rgba(249,115,22,0.18)"
+                : "rgba(255,255,255,0.04)",
+              border: selected
+                ? "1px solid rgba(249,115,22,0.45)"
+                : "1px solid rgba(255,255,255,0.12)",
+              color: selected ? "#fb923c" : "#8892a4",
+            }}
+            aria-pressed={selected}
+          >
+            {selected ? "✓ " : ""}{roleLabel(role)}
+          </button>
+        );
+      })}
+    </div>
   );
 }

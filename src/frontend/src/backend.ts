@@ -66,6 +66,7 @@ export interface Credentials {
     password: string;
 }
 export interface UserInfo {
+    roles?: Role[];
     status: UserStatus;
     username: string;
     name?: string;
@@ -102,6 +103,7 @@ export interface AttendanceRecord {
     columnId: string;
 }
 export interface AuthResult {
+    roles?: Role[];
     status: UserStatus;
     username: string;
     role: Role;
@@ -186,9 +188,9 @@ export interface backendInterface {
         __kind__: "err";
         err: string;
     }>;
-    approveUser(username: string, role: Role): Promise<void>;
+    approveUser(username: string, role: Role | Role[]): Promise<void>;
     batchSaveAttendance(updates: Array<[bigint, bigint, string, AttendanceValue]>): Promise<Array<boolean>>;
-    createUser(username: string, password: string, role: Role): Promise<boolean>;
+    createUser(username: string, password: string, role: Role | Role[]): Promise<boolean>;
     deleteAdvance(id: bigint): Promise<{
         __kind__: "ok";
         ok: boolean;
@@ -247,7 +249,7 @@ export interface backendInterface {
         __kind__: "err";
         err: string;
     }>;
-    setUserRole(username: string, role: Role): Promise<void>;
+    setUserRole(username: string, role: Role | Role[]): Promise<void>;
     updateAdvance(id: bigint, amount: number, note: string): Promise<{
         __kind__: "ok";
         ok: Advance;
