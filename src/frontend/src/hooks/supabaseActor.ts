@@ -105,6 +105,7 @@ async function rest(
     method?: string;
     query?: string;
     body?: any;
+    headers?: Record<string, string>;
   } = {}
 ) {
   const token = await accessToken();
@@ -118,6 +119,7 @@ async function rest(
         Authorization: `Bearer ${token ?? SUPABASE_KEY}`,
         "Content-Type": "application/json",
         Prefer: "return=representation",
+        ...(options.headers ?? {}),
       },
       body: options.body === undefined ? undefined : JSON.stringify(options.body),
     }
@@ -492,7 +494,7 @@ export function createSupabaseActor() {
           valueType = "absent";
         } else if (value?.__kind__ === "partial") {
           valueType = "partial";
-          partialValue = Number(value.value ?? 0);
+          partialValue = Number(value.partial ?? 0);
         }
 
         const rows = await rest("attendance", {
