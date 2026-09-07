@@ -208,7 +208,7 @@ export default function AdminPanel() {
 
   return (
     <div className="flex-1 overflow-y-auto pb-safe" data-ocid="admin_panel">
-      <div className="p-4 space-y-4">
+      <div className="p-3 sm:p-4 space-y-3 sm:space-y-4">
         {/* Header */}
         <div>
           <h2 className="font-display text-xl font-bold text-white">
@@ -220,7 +220,7 @@ export default function AdminPanel() {
         </div>
 
         {/* Stat strip */}
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-3 gap-2.5">
           <StatCard label="Total users" value={users.length} />
           <StatCard label="Pending" value={pending.length} accent="#f97316" />
           <StatCard label="Approved" value={approved.length} accent="#10b981" />
@@ -614,7 +614,7 @@ function StatCard({
 }) {
   return (
     <div
-      className="rounded-2xl p-3"
+      className="rounded-2xl p-3 min-w-0"
       style={{
         background: "rgba(255,255,255,0.03)",
         border: "1px solid rgba(249,115,22,0.15)",
@@ -681,49 +681,59 @@ function UserCard({
 
   return (
     <div
-      className="rounded-2xl p-3 flex items-center gap-3"
+      className="rounded-2xl p-3.5 space-y-3"
       style={{
-        background: "rgba(255,255,255,0.03)",
-        border: "1px solid rgba(249,115,22,0.15)",
+        background: "linear-gradient(145deg, rgba(255,255,255,0.045), rgba(255,255,255,0.018))",
+        border: "1px solid rgba(249,115,22,0.18)",
+        boxShadow: "0 8px 24px rgba(0,0,0,0.16)",
       }}
       data-ocid={`admin_panel.user.${index}`}
     >
-      <div
-        className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-        style={{
-          background: "rgba(249,115,22,0.12)",
-          border: "1px solid rgba(249,115,22,0.25)",
-        }}
-      >
-        <Users size={18} className="text-[#fb923c]" aria-hidden="true" />
-      </div>
-
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-semibold text-white truncate">
-            {user.username}
-          </span>
-          <span
-            className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${badgeClass}`}
-          >
-            {isPending || isRevoked
-              ? statusLabel(user.status)
-              : roleLabel(user.role)}
-          </span>
-        </div>
+      <div className="flex items-center gap-3 min-w-0">
         <div
-          className="text-[11px] mt-0.5 truncate"
-          style={{ color: "#8892a4" }}
+          className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0"
+          style={{
+            background: "rgba(249,115,22,0.13)",
+            border: "1px solid rgba(249,115,22,0.28)",
+          }}
         >
-          {isPending || isRevoked
-            ? statusLabel(user.status)
-            : `${roleLabel(user.role)} role`}
+          <Users size={19} className="text-[#fb923c]" aria-hidden="true" />
+        </div>
+
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-sm font-bold text-white truncate">
+              {user.username}
+            </span>
+            <span
+              className={`rounded-full px-2 py-0.5 text-[10px] font-bold flex-shrink-0 ${badgeClass}`}
+            >
+              {isPending || isRevoked
+                ? statusLabel(user.status)
+                : roleLabel(user.role)}
+            </span>
+          </div>
+          <div
+            className="text-[11px] mt-1 truncate"
+            style={{ color: "#8892a4" }}
+          >
+            {isPending
+              ? "Waiting for approval"
+              : isRevoked
+                ? "Access revoked"
+                : "Active account"}
+          </div>
         </div>
       </div>
 
-      <div className="flex items-center gap-2 flex-shrink-0">
+      <div className="rounded-xl p-2.5 space-y-2.5" style={{
+        background: "rgba(0,0,0,0.14)",
+        border: "1px solid rgba(255,255,255,0.06)",
+      }}>
         {roleSelect}
-        {actions}
+        <div className="flex flex-wrap gap-2">
+          {actions}
+        </div>
       </div>
     </div>
   );
@@ -748,7 +758,7 @@ function RoleMultiSelect({
 
   return (
     <div
-      className="flex flex-wrap gap-1.5 max-w-[260px]"
+      className="flex flex-wrap gap-1.5 w-full"
       data-ocid={dataOcid}
       aria-label="Assign roles"
     >
