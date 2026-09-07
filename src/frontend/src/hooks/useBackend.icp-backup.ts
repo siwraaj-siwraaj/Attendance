@@ -1,11 +1,70 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import type { Role } from "../backend";
-import { createSupabaseActor } from "./supabaseActor";
+
+import { ExternalBlob, type Role, createActor } from "../backend";
 
 export function useBackendActor() {
-  const [actor] = useState(() => createSupabaseActor());
-  return { actor, actorReady: true };
+  const [actor, setActor] = useState<ReturnType<typeof createActor> | null>(
+    () => {
+      // Try sync sources first
+      const envId = (process.env as Record<string, string | undefined>)
+        .CANISTER_ID_BACKEND;
+      const isValid = (id: string | undefined | null): id is string =>
+        !!id && id !== "undefined" && id !== "null" && id.length > 0;
+      if (isValid(envId)) {
+        return createActor(
+          envId,
+          () => Promise.resolve(new Uint8Array() as Uint8Array<ArrayBuffer>),
+          (b: Uint8Array) =>
+            Promise.resolve(
+              ExternalBlob.fromBytes(b as Uint8Array<ArrayBuffer>),
+            ),
+        );
+      }
+      return null;
+    },
+  );
+
+  useEffect(() => {
+    if (actor) return; // already have one
+    const isValid = (id: string | undefined | null): id is string =>
+      !!id && id !== "undefined" && id !== "null" && id.length > 0;
+
+    // Poll until the canister ID appears. We deliberately do NOT give up after
+    // a fixed number of attempts: the canister ID can be injected onto
+    // window.__CANISTER_IDS__.backend asynchronously (after the first tab has
+    // already mounted), and permanently clearing the interval here left the
+    // initially-open tab blank until a tab switch remounted it and restarted
+    // the polling. Keeping the interval alive means the actor is created the
+    // moment the ID appears, so the first tab's queries fire without a switch.
+    const interval = setInterval(() => {
+      const winIds = (
+        window as unknown as Record<string, Record<string, string> | undefined>
+      ).__CANISTER_IDS__;
+      const canisterId = winIds?.backend;
+      if (isValid(canisterId)) {
+        setActor(
+          createActor(
+            canisterId,
+            () => Promise.resolve(new Uint8Array() as Uint8Array<ArrayBuffer>),
+            (b: Uint8Array) =>
+              Promise.resolve(
+                ExternalBlob.fromBytes(b as Uint8Array<ArrayBuffer>),
+              ),
+          ),
+        );
+        clearInterval(interval);
+      }
+    }, 200);
+
+    return () => clearInterval(interval);
+  }, [actor]);
+
+  // `actorReady` is derived directly from the `actor` state so that the moment
+  // the backend actor resolves, every query gated on `enabled: actorReady`
+  // re-renders and fires. Deriving it from a ref (as before) did not reliably
+  // re-render the initially-open tab, leaving it blank until a tab switch.
+  return { actor, actorReady: actor !== null };
 }
 
 // Labours
