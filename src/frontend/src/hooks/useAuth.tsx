@@ -28,6 +28,8 @@ interface AuthContextType {
   status: UserStatus | null;
   /** The caller's assigned role, or null when not approved. */
   role: Role | null;
+  /** All roles assigned to the current user. */
+  roles: Role[];
   /** Derived app mode: "edit" for Admin, "view" for all other approved roles, null otherwise. */
   mode: AppMode;
   activeTab: Tab;
@@ -51,6 +53,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [username, setUsername] = useState<string | null>(null);
   const [status, setStatus] = useState<UserStatus | null>(null);
   const [role, setRole] = useState<Role | null>(null);
+  const [roles, setRoles] = useState<Role[]>([]);
   const [activeTab, setActiveTabState] = useState<Tab>("attendance");
   const [attendanceContractId, setAttendanceContractId] = useState<
     bigint | null
@@ -69,6 +72,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUsername(result.username);
       setStatus(result.status);
       setRole(result.role);
+      setRoles(result.roles ?? [result.role]);
       return true;
     },
     [actor],
@@ -85,6 +89,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (s === UserStatus.approved) {
           const r = await actor.getCallerRole();
           setRole(r);
+          const rs = await actor.getCallerRoles();
+          setRoles(rs.length ? rs : (r ? [r] : []));
         } else {
           setRole(null);
         }
@@ -100,17 +106,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUsername(null);
     setStatus(null);
     setRole(null);
+    setRoles([]);
   }, [actor]);
 
   const mode: AppMode = useMemo(() => {
     if (!isAuthenticated) return null;
     if (status !== UserStatus.approved) return null;
-    return role === Role.admin ? "edit" : "view";
-  }, [isAuthenticated, status, role]);
+    return roles.includes(Role.admin) ? "edit" : "view";
+  }, [isAuthenticated, status, roles]);
 
-  const allowedTabs = useMemo(() => (role ? tabsForRole(role) : []), [role]);
-  const canEdit = useMemo(() => (role ? canEditForRole(role) : false), [role]);
-  const isAdmin = role === Role.admin;
+  const allowedTabs = useMemo(() => {
+    const result = new Set<Tab>();
+    for (const r of roles) {
+      for (const tab of tabsForRole(r)) result.add(tab);
+    }
+    return [...result];
+  }, [roles]);
+
+  const canEdit = useMemo(
+    () => roles.some((r) => canEditForRole(r)),
+    [roles],
+  );
+
+  const isAdmin = roles.includes(Role.admin);
 
   // Keep the active tab within the role's allowed set.
   useEffect(() => {
@@ -128,6 +146,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     logout,
     status,
     role,
+    roles,
     mode,
     activeTab,
     setActiveTab,

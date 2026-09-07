@@ -33,7 +33,7 @@ function mapLabour(row: any) {
     id: BigInt(row.id),
     name: row.name,
     employeeId: row.employee_id,
-    joinDate: ns(row.join_date),
+    joinDate: row.join_date ? String(row.join_date).slice(0, 10) : "",
     active: Boolean(row.is_active),
     createdAt: ns(row.created_at),
   };
@@ -213,6 +213,17 @@ export function createSupabaseActor() {
       });
 
       return rows?.[0]?.role ?? null;
+    },
+
+    async getCallerRoles(): Promise<Role[]> {
+      const { data } = await supabase.auth.getUser();
+      if (!data.user) return [];
+
+      const rows = await rest("profiles", {
+        query: `?select=role,roles&id=eq.${data.user.id}`,
+      });
+
+      return rows?.[0]?.roles ?? (rows?.[0]?.role ? [rows[0].role] : []);
     },
 
     async getLabours() {
@@ -579,14 +590,14 @@ export function createSupabaseActor() {
     async createUser(
       username: string,
       password: string,
-      role: Role
+      role: Role | Role[]
     ) {
       try {
         const data = await functionCall("rossie-admin", {
           action: "create",
           username,
           password,
-          role,
+          roles: Array.isArray(role) ? role : [role],
         });
         return Boolean(data?.created);
       } catch {
