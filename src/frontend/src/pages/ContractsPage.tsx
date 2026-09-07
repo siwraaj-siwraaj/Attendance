@@ -928,7 +928,11 @@ function CombinedFlow({ onClose }: { onClose: () => void }) {
     if (!createdContract) return;
     setInstantAddLoading(workType);
     addWorkColumn.mutate(
-      { contractId: createdContract.id, name: "", workType },
+      {
+        contractId: createdContract.id,
+        name: workType === "bed" ? "Bed" : workType === "paper" ? "Paper" : workType === "mesh" ? "Mesh" : workType,
+        workType,
+      },
       {
         // The mutation returns the full updated contract (with the new work
         // column appended). Replace the local createdContract snapshot with it

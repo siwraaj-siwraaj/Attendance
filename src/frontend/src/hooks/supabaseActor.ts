@@ -40,10 +40,16 @@ function mapLabour(row: any) {
 }
 
 function mapColumn(row: any) {
+  const fallbackNames: Record<string, string> = {
+    bed: "Bed",
+    paper: "Paper",
+    mesh: "Mesh",
+  };
+
   return {
     id: row.id,
     contractId: BigInt(row.contract_id),
-    name: row.name,
+    name: String(row.name ?? "").trim() || fallbackNames[row.work_type] || row.work_type,
     workType: row.work_type,
   };
 }
@@ -395,13 +401,24 @@ export function createSupabaseActor() {
       workType: string
     ) {
       try {
+        const fallbackNames: Record<string, string> = {
+          bed: "Bed",
+          paper: "Paper",
+          mesh: "Mesh",
+        };
+
+        const columnName =
+          String(name ?? "").trim() ||
+          fallbackNames[String(workType).toLowerCase()] ||
+          String(workType);
+
         const rows = await rest("work_columns", {
           method: "POST",
           query: "?select=*",
           body: {
             id: crypto.randomUUID(),
             contract_id: contractId.toString(),
-            name,
+            name: columnName,
             work_type: workType,
           },
         });
