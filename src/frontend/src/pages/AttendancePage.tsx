@@ -204,9 +204,16 @@ export function AttendanceTable({
                           <select
                             value={value.__kind__ === "partial" ? `partial:${value.partial}` : value.__kind__}
                             onChange={(e) => {
-                              const parsed = JSON.parse(
-                                e.target.value,
-                              ) as AttendanceValue;
+                              const selected = e.target.value;
+                              const parsed: AttendanceValue =
+                                selected === "present"
+                                  ? { __kind__: "present", present: null }
+                                  : selected === "absent"
+                                    ? { __kind__: "absent", absent: null }
+                                    : {
+                                        __kind__: "partial",
+                                        partial: Number(selected.replace("partial:", "")),
+                                      };
                               onChange(labour.id, col.id, parsed);
                             }}
                             className={`w-20 px-1.5 py-1 rounded-md border text-xs text-white focus:outline-none focus:border-[#f97316] ${getSelectBgClass(value)}`}
