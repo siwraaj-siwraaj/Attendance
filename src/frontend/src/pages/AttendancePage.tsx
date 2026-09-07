@@ -202,7 +202,7 @@ export function AttendanceTable({
                       >
                         {canEdit ? (
                           <select
-                            value={JSON.stringify(value)}
+                            value={value.__kind__ === "partial" ? `partial:${value.partial}` : value.__kind__}
                             onChange={(e) => {
                               const parsed = JSON.parse(
                                 e.target.value,
@@ -213,19 +213,13 @@ export function AttendanceTable({
                             data-ocid={`attendance.select.${idx + 1}.${col.id}`}
                           >
                             <option
-                              value={JSON.stringify({
-                                __kind__: "present",
-                                present: null,
-                              })}
+                              value="present"
                               className="bg-[#0a0f1e]"
                             >
                               Present
                             </option>
                             <option
-                              value={JSON.stringify({
-                                __kind__: "absent",
-                                absent: null,
-                              })}
+                              value="absent"
                               className="bg-[#0a0f1e]"
                             >
                               Absent
@@ -233,10 +227,7 @@ export function AttendanceTable({
                             {PARTIAL_VALUES.map((v) => (
                               <option
                                 key={v}
-                                value={JSON.stringify({
-                                  __kind__: "partial",
-                                  partial: v,
-                                })}
+                                value={`partial:${v}`}
                                 className="bg-[#0a0f1e]"
                               >
                                 {v}
