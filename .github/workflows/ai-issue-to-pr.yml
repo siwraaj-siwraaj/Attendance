@@ -13,7 +13,7 @@ jobs:
   issue-automation-test:
     runs-on: ubuntu-latest
     steps:
-      - name: Ask AI to read the issue
+      - name: Ask AI for a code-change proposal
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           ISSUE_TITLE: ${{ github.event.issue.title }}
@@ -27,8 +27,8 @@ jobs:
               --arg body "$ISSUE_BODY" \
               '{
                 model: "gpt-5.6-luna",
-                input: ("Read this GitHub issue. Reply with a one-sentence summary. Title: " + $title + " Body: " + $body)
+                input: ("You are reviewing a software issue. Do NOT modify files. Based on the issue below, propose what code should be changed. Give a concise plan with likely file names and what should change. Issue title: " + $title + " Issue body: " + $body)
               }')")
 
-          echo "AI response:"
+          echo "AI code-change proposal:"
           echo "$response" | jq -r '.output[0].content[0].text // .error.message // "No response text returned."'
