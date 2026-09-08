@@ -109,26 +109,57 @@ const REPORT_CSS = `
   .report-footer { padding: 12px 24px; border-top: 1px solid oklch(0.92 0.01 255); font-size: 10.5px; color: oklch(0.46 0.02 255); display: flex; justify-content: space-between; gap: 12px; }
   @media print { @page { size: A4; margin: 12mm; } body { background: oklch(0.99 0.005 255) !important; } .report { box-shadow: none; border-radius: 0; max-width: 100%; } .report-table tr, .report-section, .report-summary-item, .report-total-row { page-break-inside: avoid; } .report-table thead { display: table-header-group; } }
 `;
+async function openPrintWindow(title: string, bodyHTML: string) {
+  try {
+    const container = document.createElement("div");
 
-function openPrintWindow(title: string, bodyHTML: string) {
-  const parts: string[] = [];
-  parts.push(
-    `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${title}</title>`,
-  );
-  parts.push(`<style>${REPORT_CSS}</style>`);
-  parts.push("</head><body>");
-  parts.push(bodyHTML);
-  parts.push("</body></html>");
-  const win = window.open("", "_blank");
-  if (!win) {
-    alert("Please allow pop-ups for this site to download the PDF");
-    return;
+    container.innerHTML = `
+      <style>
+        ${REPORT_CSS}
+      </style>
+      ${bodyHTML}
+    `;
+
+    container.style.position = "fixed";
+    container.style.left = "-100000px";
+    container.style.top = "0";
+    container.style.width = "794px";
+    container.style.background = "#ffffff";
+    container.style.color = "#000000";
+    container.style.zIndex = "-1";
+
+    document.body.appendChild(container);
+
+    const pdf = new jsPDF({
+      orientation: "portrait",
+      unit: "mm",
+      format: "a4",
+    });
+
+    await pdf.html(container, {
+      margin: [10, 10, 10, 10],
+      autoPaging: "text",
+      html2canvas: {
+        scale: 1,
+        useCORS: true,
+        backgroundColor: "#ffffff",
+      },
+      callback: (doc) => {
+        const safeTitle = title
+          .replace(/[\\/:*?"<>|]/g, "_")
+          .trim() || "Payment_Report";
+
+        doc.save(`${safeTitle}.pdf`);
+      },
+    });
+
+    container.remove();
+  } catch (error) {
+    console.error("PDF generation failed:", error);
+    alert("Unable to create the PDF. Please try again.");
   }
-  win.document.write(parts.join(""));
-  win.document.close();
-  win.focus();
-  win.print();
 }
+
 
 export default function PaymentsPage({
   selectedContractIds,
