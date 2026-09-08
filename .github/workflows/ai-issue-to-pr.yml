@@ -5,6 +5,10 @@ on:
     types: [opened]
   workflow_dispatch:
 
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
   issue-automation-test:
     runs-on: ubuntu-latest
