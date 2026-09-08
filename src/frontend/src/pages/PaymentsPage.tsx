@@ -602,7 +602,8 @@ setShowPaymentPdfPreview(true);
         ${footerHTML}
       </div>`;
 
-    openPrintWindow("Attendance Sheet", bodyHTML);
+    setPaymentPreviewHTML(bodyHTML);
+setShowPaymentPdfPreview(true);
   };
 
   const overviewData = paymentData || [];
