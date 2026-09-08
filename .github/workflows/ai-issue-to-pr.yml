@@ -13,20 +13,22 @@ jobs:
   issue-automation-test:
     runs-on: ubuntu-latest
     steps:
-      - name: Test OpenAI API connection
+      - name: Ask AI to read the issue
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+          ISSUE_BODY: ${{ github.event.issue.body }}
         run: |
-          response_code=$(curl -sS -o /tmp/openai-response.json -w "%{http_code}" \
-            https://api.openai.com/v1/models \
-            -H "Authorization: Bearer $OPENAI_API_KEY")
+          response=$(curl -sS https://api.openai.com/v1/responses \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer $OPENAI_API_KEY" \
+            -d "$(jq -n \
+              --arg title "$ISSUE_TITLE" \
+              --arg body "$ISSUE_BODY" \
+              '{
+                model: "gpt-5.6-luna",
+                input: ("Read this GitHub issue. Reply with a one-sentence summary. Title: " + $title + " Body: " + $body)
+              }')")
 
-          echo "OpenAI HTTP status: $response_code"
-
-          if [ "$response_code" -lt 200 ] || [ "$response_code" -ge 300 ]; then
-            echo "OpenAI API request failed."
-            cat /tmp/openai-response.json
-            exit 1
-          fi
-
-          echo "OpenAI API connection successful."
+          echo "AI response:"
+          echo "$response" | jq -r '.output[0].content[0].text // .error.message // "No response text returned."'
