@@ -55,7 +55,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [status, setStatus] = useState<UserStatus | null>(null);
   const [role, setRole] = useState<Role | null>(null);
   const [roles, setRoles] = useState<Role[]>([]);
-  const [activeTab, setActiveTabState] = useState<Tab>("attendance");
+  const [activeTab, setActiveTabState] = useState<Tab>("contracts");
   const [attendanceContractId, setAttendanceContractId] = useState<
     bigint | null
   >(null);

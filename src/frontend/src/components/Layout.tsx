@@ -25,6 +25,9 @@ export default function Layout({ children }: LayoutProps) {
   const importData = importDataMutation.mutateAsync;
   const onTabChange = setActiveTab;
   const [menuOpen, setMenuOpen] = useState(false);
+  const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
+  const swipeTabs = useAuth().allowedTabs;
 
   useAutoBackupReminder(mode === "edit");
 
@@ -528,6 +531,24 @@ export default function Layout({ children }: LayoutProps) {
 
       {/* Main content — fills viewport between header and tab bar */}
       <main
+        onTouchStart={(e) => {
+          touchStartX.current = e.touches[0]?.clientX ?? null;
+          touchStartY.current = e.touches[0]?.clientY ?? null;
+        }}
+        onTouchEnd={(e) => {
+          const startX = touchStartX.current;
+          const startY = touchStartY.current;
+          touchStartX.current = null;
+          touchStartY.current = null;
+          if (startX === null || startY === null || swipeTabs.length < 2) return;
+          const dx = e.changedTouches[0]?.clientX - startX;
+          const dy = e.changedTouches[0]?.clientY - startY;
+          if (Math.abs(dx) < 70 || Math.abs(dx) < Math.abs(dy) * 1.3) return;
+          const index = swipeTabs.indexOf(activeTab);
+          if (index < 0) return;
+          const nextIndex = dx < 0 ? index + 1 : index - 1;
+          if (nextIndex >= 0 && nextIndex < swipeTabs.length) onTabChange(swipeTabs[nextIndex]);
+        }}
         className="flex-1 overflow-hidden flex flex-col"
         style={{ height: "calc(100dvh - 56px - 64px)" }}
       >
