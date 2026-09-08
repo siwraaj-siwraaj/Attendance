@@ -1,5 +1,6 @@
 import { AlertCircle, Eye, EyeOff, Loader2 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { biometricLogin } from "../hooks/nativeBiometric";
 import { useAuth } from "../hooks/useAuth";
 
 export default function LoginPage() {
@@ -9,6 +10,26 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [biometricBusy, setBiometricBusy] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    void (async () => {
+      const credentials = await biometricLogin();
+      if (!credentials || cancelled) return;
+
+      setBiometricBusy(true);
+      const ok = await login(credentials.username, credentials.password);
+      if (!cancelled && !ok) {
+        setBiometricBusy(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [login]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -173,6 +194,26 @@ export default function LoginPage() {
               </button>
             </div>
           </div>
+
+          {/* Biometric / PIN login */}
+          <button
+            type="button"
+            onClick={async () => {
+              if (biometricBusy || submitting) return;
+              setBiometricBusy(true);
+              setError(null);
+              const credentials = await biometricLogin();
+              if (credentials) {
+                const ok = await login(credentials.username, credentials.password);
+                if (!ok) setError("Saved login expired. Please sign in again.");
+              }
+              setBiometricBusy(false);
+            }}
+            className="mb-3 w-full rounded-xl border border-[#f97316]/40 bg-[#f97316]/10 py-3 font-semibold text-orange-300 transition-colors hover:bg-[#f97316]/20"
+            disabled={biometricBusy || submitting}
+          >
+            {biometricBusy ? "Verifying…" : "🔐 Use Fingerprint / PIN"}
+          </button>
 
           {/* Submit */}
           <button

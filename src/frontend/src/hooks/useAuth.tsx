@@ -10,6 +10,7 @@ import {
 import { Role, UserStatus } from "../backend";
 import type { AppMode, Tab } from "../types";
 import { canEditForRole, tabsForRole } from "../types";
+import { clearBiometricCredentials, saveBiometricCredentials } from "./nativeBiometric";
 import { useBackendActor } from "./useBackend";
 
 interface AuthContextType {
@@ -72,7 +73,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUsername(result.username);
       setStatus(result.status);
       setRole(result.role);
-      setRoles(result.roles ?? [result.role]);
+      setRoles((result as { roles?: Role[]; role: Role }).roles ?? [result.role]);
+      await saveBiometricCredentials(usernameInput.trim(), password);
       return true;
     },
     [actor],
@@ -87,9 +89,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const s = await actor.getCallerStatus();
         setStatus(s);
         if (s === UserStatus.approved) {
-          const r = await actor.getCallerRole();
+          const r = (await actor.getCallerRole()) as Role | null;
           setRole(r);
-          const rs = await actor.getCallerRoles();
+          const rs = (await actor.getCallerRoles()) as Role[];
           setRoles(rs.length ? rs : (r ? [r] : []));
         } else {
           setRole(null);
@@ -103,6 +105,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Sign out: clear the backend session and reset local auth state.
   const logout = useCallback(() => {
     if (actor) void actor.logout();
+    void clearBiometricCredentials();
     setUsername(null);
     setStatus(null);
     setRole(null);

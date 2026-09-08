@@ -835,9 +835,10 @@ export function useUpdateAdvance() {
       id,
       amount,
       note,
-    }: { id: bigint; amount: number; note: string }) => {
+        cleared,
+    }: { id: bigint; amount: number; note: string; cleared?: boolean }) => {
       if (!actor) throw new Error("Backend not connected");
-      const result = await actor.updateAdvance(id, amount, note);
+      const result = await actor.updateAdvance(id, amount, note, cleared ?? false);
       if (result.__kind__ === "err") throw new Error(result.err);
       return result.ok;
     },
@@ -909,9 +910,8 @@ export function useImportData() {
     retryDelay: 1000,
     mutationFn: async (json: string) => {
       if (!actor) throw new Error("Backend not connected");
-      const result = await actor.importData(json);
-      if (result.__kind__ === "err") throw new Error(result.err);
-      return result.ok;
+      await actor.importData(json);
+      return true;
     },
     onSuccess: () => qc.invalidateQueries(),
   });

@@ -41,6 +41,7 @@
     "@capacitor/android": "^8.5.1",
     "@capacitor/cli": "^8.5.1",
     "@capacitor/core": "^8.5.1",
+    "@capgo/capacitor-native-biometric": "^8.6.7",
     "@dfinity/agent": "^3.4.3",
     "@dfinity/candid": "^3.4.3",
     "@dfinity/principal": "^3.4.3",

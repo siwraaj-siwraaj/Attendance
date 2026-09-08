@@ -421,7 +421,6 @@ export function createSupabaseActor() {
             id: crypto.randomUUID(),
             contract_id: contractId.toString(),
             name: columnName,
-            work_type: workType,
           },
         });
 
@@ -432,17 +431,16 @@ export function createSupabaseActor() {
     },
 
     async updateWorkColumn(
-      id: string,
-      name: string,
-      workType: string
+      _contractId: bigint,
+      columnId: string,
+      name: string
     ) {
       try {
         const rows = await rest("work_columns", {
           method: "PATCH",
-          query: `?id=eq.${encodeURIComponent(id)}`,
+          query: `?id=eq.${encodeURIComponent(columnId)}`,
           body: {
             name,
-            work_type: workType,
           },
         });
 
@@ -488,13 +486,13 @@ export function createSupabaseActor() {
     ) {
       try {
         let valueType = "present";
-        let partialValue = null;
+        let partialValue: number | null = null;
 
         if (value?.__kind__ === "absent") {
           valueType = "absent";
         } else if (value?.__kind__ === "partial") {
           valueType = "partial";
-          partialValue = Number(value.partial ?? 0);
+          partialValue = Number((value as any)?.partial ?? 0);
         }
 
         const rows = await rest("attendance", {
@@ -666,12 +664,13 @@ export function createSupabaseActor() {
       newUsername: string | null,
       newPassword: string | null
     ) {
-      await functionCall("rossie-admin", {
+      const data = await functionCall("rossie-admin", {
         action: "credentials",
         username,
         newUsername,
         newPassword,
       });
+      return Boolean(data?.updated);
     },
 
     async exportData() {
