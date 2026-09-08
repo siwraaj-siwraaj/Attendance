@@ -47,7 +47,7 @@ jobs:
           ATTENDANCE_KEY_PASSWORD: ${{ secrets.ATTENDANCE_KEY_PASSWORD }}
         run: |
           echo "${{ secrets.ATTENDANCE_KEYSTORE_BASE64 }}" | base64 --decode > attendance-release.keystore
-      chmod +x gradlew
+          chmod +x gradlew
           ./gradlew assembleDebug
 
       - name: Upload APK
