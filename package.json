@@ -20,7 +20,9 @@
     "sharp": "^0.34.4"
   },
   "dependencies": {
-    "@caffeineai/core-infrastructure": "^0.3.0"
+    "@caffeineai/core-infrastructure": "^0.3.0",
+    "@capacitor/filesystem": "8.1.3",
+    "html2pdf.js": "^0.14.0"
   },
   "packageManager": "pnpm@10.32.1"
 }

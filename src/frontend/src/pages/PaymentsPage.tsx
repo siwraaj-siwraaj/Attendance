@@ -21,6 +21,8 @@ import {
 import LoadingSpinner from "../components/LoadingSpinner";
 import { safeParse, safeStringify } from "../lib/bigintJson";
 import { type AttendanceValue, getAttendanceDisplay } from "../types";
+import html2pdf from "html2pdf.js";
+import { Directory, Filesystem } from "@capacitor/filesystem";
 
 function calculateLabourSalary(
   contract: any,
@@ -109,24 +111,74 @@ const REPORT_CSS = `
   @media print { @page { size: A4; margin: 12mm; } body { background: oklch(0.99 0.005 255) !important; } .report { box-shadow: none; border-radius: 0; max-width: 100%; } .report-table tr, .report-section, .report-summary-item, .report-total-row { page-break-inside: avoid; } .report-table thead { display: table-header-group; } }
 `;
 
-function openPrintWindow(title: string, bodyHTML: string) {
-  const parts: string[] = [];
-  parts.push(
-    `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${title}</title>`,
-  );
-  parts.push(`<style>${REPORT_CSS}</style>`);
-  parts.push("</head><body>");
-  parts.push(bodyHTML);
-  parts.push("</body></html>");
-  const win = window.open("", "_blank");
-  if (!win) {
-    alert("Please allow pop-ups for this site to download the PDF");
-    return;
+async function openPrintWindow(title: string, bodyHTML: string) {
+  const wrapper = document.createElement("div");
+  wrapper.innerHTML = bodyHTML;
+  wrapper.style.position = "fixed";
+  wrapper.style.left = "-100000px";
+  wrapper.style.top = "0";
+  wrapper.style.width = "794px";
+  wrapper.style.background = "#ffffff";
+  document.body.appendChild(wrapper);
+
+  try {
+    const report = wrapper.querySelector(".report") as HTMLElement | null;
+    if (!report) throw new Error("Report could not be created");
+
+    const filename = `${title.replace(/[^a-z0-9_-]+/gi, "_")}.pdf`;
+
+    const pdf = await html2pdf()
+      .set({
+        margin: 8,
+        filename,
+        image: { type: "jpeg", quality: 0.95 },
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: "#ffffff",
+        },
+        jsPDF: {
+          unit: "mm",
+          format: "a4",
+          orientation: "portrait",
+        },
+      })
+      .from(report)
+      .outputPdf("datauristring");
+
+    const base64 = pdf.split(",")[1];
+
+    if (!base64) {
+      throw new Error("PDF data could not be generated");
+    }
+
+    if (typeof window !== "undefined") {
+      const isNative =
+        "Capacitor" in window &&
+        (window as any).Capacitor?.isNativePlatform?.();
+
+      if (isNative) {
+        await Filesystem.writeFile({
+          path: filename,
+          data: base64,
+          directory: Directory.Documents,
+          recursive: true,
+        });
+        alert(`PDF saved to Documents/${filename}`);
+        return;
+      }
+    }
+
+    const link = document.createElement("a");
+    link.href = pdf;
+    link.download = filename;
+    link.click();
+  } catch (error) {
+    console.error("PDF generation failed:", error);
+    alert("Unable to create the PDF. Please try again.");
+  } finally {
+    wrapper.remove();
   }
-  win.document.write(parts.join(""));
-  win.document.close();
-  win.focus();
-  win.print();
 }
 
 export default function PaymentsPage({
