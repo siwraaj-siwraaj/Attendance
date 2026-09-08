@@ -23,7 +23,7 @@ import { safeParse, safeStringify } from "../lib/bigintJson";
 import { type AttendanceValue, getAttendanceDisplay } from "../types";
 import html2pdf from "html2pdf.js";
 import { PdfGenerator } from "@capgo/capacitor-pdf-generator";
-
+import { FileSharer } from "@capgo/capacitor-file-sharer";
 
 function calculateLabourSalary(
   contract: any,
@@ -153,10 +153,22 @@ const isNative =
   type: "base64",
   fileName: filename,
 });
-      if (result.type === "share" && !result.completed) {
-  throw new Error("PDF sharing was cancelled");
-      }
-      return;
+
+if (result.type !== "base64") {
+  throw new Error("PDF was not generated as base64");
+}
+
+await FileSharer.save({
+  filename,
+  contentType: "application/pdf",
+  base64Data: result.base64,
+  android: {
+    saveDirectory: "downloads",
+    relativePath: "Download",
+  },
+});
+
+return;
     }
       const pdf = await html2pdf()
   .set({
