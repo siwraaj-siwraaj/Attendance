@@ -147,8 +147,8 @@ function AppContent() {
                 onColumnPickerOpened={() => setOpenColumnPickerFor(null)}
               />
             )}
-            {mode === "edit" && activeTab === "advances" && <AdvancesPage />}
-            {mode === "edit" && activeTab === "payments" && (
+            {(mode === "edit" || mode === "view") && activeTab === "advances" && <AdvancesPage />}
+            {(mode === "edit" || mode === "view") && activeTab === "payments" && (
               <PaymentsPage
                 selectedContractIds={selectedContractIds}
                 setSelectedContractIds={setSelectedContractIds}
@@ -156,8 +156,8 @@ function AppContent() {
                 setPaymentData={setPaymentData}
               />
             )}
-            {mode === "edit" && activeTab === "labours" && <LaboursPage />}
-            {mode === "edit" && activeTab === "settled" && <SettledPage />}
+            {(mode === "edit" || mode === "view") && activeTab === "labours" && <LaboursPage />}
+            {(mode === "edit" || mode === "view") && activeTab === "settled" && <SettledPage />}
           
         </ErrorBoundary>
       </div>
