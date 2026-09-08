@@ -10,3 +10,6 @@ project(':capacitor-filesystem').projectDir = new File('../../../node_modules/.p
 
 include ':capgo-capacitor-native-biometric'
 project(':capgo-capacitor-native-biometric').projectDir = new File('../../../node_modules/.pnpm/@capgo+capacitor-native-biometric@8.6.7_@capacitor+core@8.5.1/node_modules/@capgo/capacitor-native-biometric/android')
+
+include ':capgo-capacitor-pdf-generator'
+project(':capgo-capacitor-pdf-generator').projectDir = new File('../../../node_modules/.pnpm/@capgo+capacitor-pdf-generator@8.0.36_@capacitor+core@8.5.1/node_modules/@capgo/capacitor-pdf-generator/android')

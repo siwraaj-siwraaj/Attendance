@@ -48,6 +48,9 @@ importers:
       '@capgo/capacitor-native-biometric':
         specifier: ^8.6.7
         version: 8.6.7(@capacitor/core@8.5.1)
+      '@capgo/capacitor-pdf-generator':
+        specifier: 8.0.36
+        version: 8.0.36(@capacitor/core@8.5.1)
       '@dfinity/agent':
         specifier: ^3.4.3
         version: 3.4.3(@dfinity/candid@3.4.3(@dfinity/principal@3.4.3))(@dfinity/principal@3.4.3)(@noble/hashes@1.8.0)
@@ -507,6 +510,11 @@ packages:
 
   '@capgo/capacitor-native-biometric@8.6.7':
     resolution: {integrity: sha512-Xlj8rk5sDq5mAU+leOGAj0XzTelwJMJx8O9cXLyW3rCGhPhCtrAEziFaPHBlEp0Vco3q6hbsZAkQ4KodfcuVZg==}
+    peerDependencies:
+      '@capacitor/core': '>=8.0.0'
+
+  '@capgo/capacitor-pdf-generator@8.0.36':
+    resolution: {integrity: sha512-iVzt45jaRkSoJvEhvERH8yQE4+4CTEu/K2JjF6VozMtYDHPIqyeAFL2PFM8N8wjzFhqlKRsiNB0A86r179duPg==}
     peerDependencies:
       '@capacitor/core': '>=8.0.0'
 
@@ -4206,6 +4214,10 @@ snapshots:
   '@capacitor/synapse@1.0.4': {}
 
   '@capgo/capacitor-native-biometric@8.6.7(@capacitor/core@8.5.1)':
+    dependencies:
+      '@capacitor/core': 8.5.1
+
+  '@capgo/capacitor-pdf-generator@8.0.36(@capacitor/core@8.5.1)':
     dependencies:
       '@capacitor/core': 8.5.1
 
