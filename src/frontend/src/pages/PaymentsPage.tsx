@@ -1349,7 +1349,7 @@ setShowPaymentPdfPreview(true);
         </div>
       )}
     {showPaymentPdfPreview && (
-  <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+  <div className="fixed inset-0 z-[9999] bg-black/80 flex items-center justify-center p-4">
     <div className="bg-white w-full max-w-4xl max-h-[90vh] rounded-xl overflow-hidden flex flex-col">
       
       <div className="flex-1 overflow-auto p-4">
