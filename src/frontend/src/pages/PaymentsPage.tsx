@@ -22,7 +22,8 @@ import LoadingSpinner from "../components/LoadingSpinner";
 import { safeParse, safeStringify } from "../lib/bigintJson";
 import { type AttendanceValue, getAttendanceDisplay } from "../types";
 import html2pdf from "html2pdf.js";
-import { Directory, Filesystem } from "@capacitor/filesystem";
+import { PdfGenerator } from "@capgo/capacitor-pdf-generator";
+
 
 function calculateLabourSalary(
   contract: any,
@@ -126,53 +127,60 @@ async function openPrintWindow(title: string, bodyHTML: string) {
     if (!report) throw new Error("Report could not be created");
 
     const filename = `${title.replace(/[^a-z0-9_-]+/gi, "_")}.pdf`;
-
-    const pdf = await html2pdf()
-      .set({
-        margin: 8,
-        filename,
-        image: { type: "jpeg", quality: 0.95 },
-        html2canvas: {
-          scale: 2,
-          useCORS: true,
-          backgroundColor: "#ffffff",
-        },
-        jsPDF: {
-          unit: "mm",
-          format: "a4",
-          orientation: "portrait",
-        },
-      })
-      .from(report)
-      .outputPdf("datauristring");
-
-    const base64 = pdf.split(",")[1];
-
-    if (!base64) {
-      throw new Error("PDF data could not be generated");
-    }
-
-    if (typeof window !== "undefined") {
-      const isNative =
-        "Capacitor" in window &&
-        (window as any).Capacitor?.isNativePlatform?.();
-
-      if (isNative) {
-        await Filesystem.writeFile({
-          path: filename,
-          data: base64,
-          directory: Directory.Documents,
-          recursive: true,
-        });
-        alert(`PDF saved to Documents/${filename}`);
-        return;
+const isNative =
+  typeof window !== "undefined" &&
+  "Capacitor" in window &&
+  (window as any).Capacitor?.isNativePlatform?.();
+    if (isNative) {
+      const html = `
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <meta charset="UTF-8" />
+      <style>
+        ${REPORT_CSS}
+      </style>
+    </head>
+    <body>
+      ${report.outerHTML}
+    </body>
+  </html>
+`;
+      const result = await PdfGenerator.fromData({
+  data: html,
+  documentSize: "A4",
+  orientation: "portrait",
+  type: "share",
+  fileName: filename,
+});
+      if (result.type === "share" && !result.completed) {
+  throw new Error("PDF sharing was cancelled");
       }
+      return;
     }
+      const pdf = await html2pdf()
+  .set({
+    margin: 8,
+    filename,
+    image: { type: "jpeg", quality: 0.95 },
+    html2canvas: {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: "#ffffff",
+    },
+    jsPDF: {
+      unit: "mm",
+      format: "a4",
+      orientation: "portrait",
+    },
+  })
+  .from(report)
+  .outputPdf("datauristring");
 
-    const link = document.createElement("a");
-    link.href = pdf;
-    link.download = filename;
-    link.click();
+const link = document.createElement("a");
+link.href = pdf;
+link.download = filename;
+link.click();
   } catch (error) {
     console.error("PDF generation failed:", error);
     alert("Unable to create the PDF. Please try again.");
