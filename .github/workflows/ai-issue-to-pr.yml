@@ -12,6 +12,7 @@ permissions:
 jobs:
   issue-automation-test:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -19,7 +20,10 @@ jobs:
       - name: Show repository files
         run: |
           echo "Repository files available to AI:"
-          find . -type f             -not -path './.git/*'             -not -path './node_modules/*'             | sort | head -200
+          find . -type f \
+            -not -path './.git/*' \
+            -not -path './node_modules/*' \
+            | sort | head -200
 
       - name: Ask AI for a code-change proposal
         env:
@@ -27,15 +31,18 @@ jobs:
           ISSUE_TITLE: ${{ github.event.issue.title }}
           ISSUE_BODY: ${{ github.event.issue.body }}
         run: |
+          payments_code=$(cat src/frontend/src/pages/PaymentsPage.tsx)
+
           response=$(curl -sS https://api.openai.com/v1/responses \
             -H "Content-Type: application/json" \
             -H "Authorization: Bearer $OPENAI_API_KEY" \
             -d "$(jq -n \
               --arg title "$ISSUE_TITLE" \
               --arg body "$ISSUE_BODY" \
+              --arg code "$payments_code" \
               '{
                 model: "gpt-5.6-luna",
-                input: ("You are reviewing a software issue. Do NOT modify files. Based on the issue below, propose what code should be changed. Give a concise plan with likely file names and what should change. Issue title: " + $title + " Issue body: " + $body)
+                input: ("You are reviewing a software issue. Do NOT modify files. Inspect the PaymentsPage.tsx source below and propose the exact area that should change. Give a concise plan with likely line/section and what should change.\n\nIssue title: " + $title + "\nIssue body: " + $body + "\n\nPaymentsPage.tsx source:\n" + $code)
               }')")
 
           echo "AI code-change proposal:"
