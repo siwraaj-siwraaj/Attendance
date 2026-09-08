@@ -16,6 +16,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Show repository files
+        run: |
+          echo "Repository files available to AI:"
+          find . -type f             -not -path './.git/*'             -not -path './node_modules/*'             | sort | head -200
+
       - name: Ask AI for a code-change proposal
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
