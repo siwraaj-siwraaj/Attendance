@@ -36,16 +36,9 @@ export const ALL_TABS: Tab[] = [
 
 /** The tabs a given role is allowed to see. */
 export function tabsForRole(role: Role): Tab[] {
-  switch (role) {
-    case "admin":
-      return [...ALL_TABS, "admin"];
-    case "attendanceOnly":
-      return ["attendance"];
-    case "contractOnly":
-      return ["contracts"];
-    case "viewOnly":
-      return ["attendance"];
-  }
+  // All approved users can view every normal tab.
+  // Only Admin can access the Admin Panel.
+  return role === "admin" ? [...ALL_TABS, "admin"] : ALL_TABS;
 }
 
 /** Whether a role may perform writes within the tabs it can access. */

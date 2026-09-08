@@ -126,10 +126,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return [...result];
   }, [roles]);
 
-  const canEdit = useMemo(
-    () => roles.some((r) => canEditForRole(r)),
-    [roles],
-  );
+  const canEdit = useMemo(() => {
+    if (roles.includes(Role.admin)) return true;
+
+    if (
+      activeTab === "attendance" &&
+      roles.includes(Role.attendanceOnly)
+    ) {
+      return true;
+    }
+
+    if (
+      activeTab === "contracts" &&
+      roles.includes(Role.contractOnly)
+    ) {
+      return true;
+    }
+
+    return false;
+  }, [roles, activeTab]);
 
   const isAdmin = roles.includes(Role.admin);
 
