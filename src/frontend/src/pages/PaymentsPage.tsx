@@ -167,7 +167,7 @@ const saved = await FileSharer.save({
     relativePath: "Download",
   },
 });
-      console.log("PDF SAVED URI:", saved.uri);
+      alert(`PDF URI: ${saved.uri}`);
 
 return;
     }
