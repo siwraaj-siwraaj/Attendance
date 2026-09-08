@@ -1,0 +1,15 @@
+name: AI Issue to PR
+
+on:
+  issues:
+    types: [opened]
+  workflow_dispatch:
+
+jobs:
+  issue-automation-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Confirm issue automation trigger
+        run: |
+          echo "Issue automation triggered successfully."
+          echo "Issue title: ${{ github.event.issue.title }}"
