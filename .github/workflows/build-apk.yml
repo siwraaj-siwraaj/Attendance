@@ -1,5 +1,4 @@
-permissions:
-  contents: write
+
 name: Build APK
 
 on:
@@ -28,7 +27,7 @@ jobs:
         run: corepack enable
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile --config.ignore-scripts=false
+        run: pnpm install --no-frozen-lockfile --config.ignore-scripts=false
 
       - name: Build frontend
         working-directory: src/frontend
