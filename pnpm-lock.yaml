@@ -30,6 +30,9 @@ importers:
       '@caffeineai/object-storage':
         specifier: ^1.1.1
         version: 1.1.1
+      '@capacitor-community/file-opener':
+        specifier: 8.0.1
+        version: 8.0.1(@capacitor/core@8.5.1)
       '@capacitor/android':
         specifier: ^8.5.1
         version: 8.5.1(@capacitor/core@8.5.1)
@@ -481,6 +484,12 @@ packages:
 
   '@caffeineai/object-storage@1.1.1':
     resolution: {integrity: sha512-WfAofqfLRK+/xr/hgzglef7n/QeHJRbLhuVD9YneqnefBipoT8JpNLP/1l7XDcFKiq31cMoxKghYDzkCziNSvg==}
+
+  '@capacitor-community/file-opener@8.0.1':
+    resolution: {integrity: sha512-kiPybhOlDUMmt5LLsulxLZC/j4gHcPuvKsdbCZTDsQTShGc2G5SNqalYSJUFUfNYl3gQSF7jnNPRlfD5JnSeaw==}
+    engines: {node: '>=16.0.0', npm: '>=8.0.0'}
+    peerDependencies:
+      '@capacitor/core': '>=8.0.0'
 
   '@capacitor/android@8.5.1':
     resolution: {integrity: sha512-o8fUIPDSEASeXHHrDz26WU7OlyiRb+QqtI9KFdnLS1jUL77o5iGrvegibaZX8rWpiCyDJ6jlUhhhHlfeq3ou9A==}
@@ -4170,6 +4179,10 @@ snapshots:
       file-type: 21.3.4
     transitivePeerDependencies:
       - supports-color
+
+  '@capacitor-community/file-opener@8.0.1(@capacitor/core@8.5.1)':
+    dependencies:
+      '@capacitor/core': 8.5.1
 
   '@capacitor/android@8.5.1(@capacitor/core@8.5.1)':
     dependencies:
