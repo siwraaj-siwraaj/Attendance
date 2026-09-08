@@ -39,6 +39,7 @@
   "dependencies": {
     "@caffeineai/object-storage": "^1.1.1",
     "@capacitor/android": "^8.5.1",
+    "@capacitor/app": "8.1.1",
     "@capacitor/cli": "^8.5.1",
     "@capacitor/core": "^8.5.1",
     "@capgo/capacitor-native-biometric": "^8.6.7",
