@@ -26,6 +26,15 @@ jobs:
           git push origin "$branch_name"
           echo "Created and pushed branch: $branch_name"
 
+      - name: Safety check before AI work
+        run: |
+          echo "Checking repository safety..."
+          if git status --porcelain | grep -E '(^| )\.github/workflows/|attendance-release\.keystore|\.gitconfig'; then
+            echo "Protected files detected. Stopping workflow."
+            exit 1
+          fi
+          echo "Safety check passed."
+
       - name: Ask AI for code-change proposal
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
