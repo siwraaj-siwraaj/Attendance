@@ -860,6 +860,7 @@ export default function PaymentsPage({
               <button
                 type="button"
                 onClick={() => setShowPaymentPdfPreview(true)}
+                const [paymentPreviewHTML, setPaymentPreviewHTML] = useState("");
                 className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 border border-orange-500/50 text-orange-300 hover:bg-orange-500/10 hover:border-orange-500"
                 data-ocid="payments.download_payment_sheet"
               >
