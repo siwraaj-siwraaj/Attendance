@@ -464,7 +464,8 @@ export default function PaymentsPage({
         ${footerHTML}
       </div>`;
 
-    openPrintWindow("Payment Sheet", bodyHTML);
+    setPaymentPreviewHTML(bodyHTML);
+setShowPaymentPdfPreview(true);
   };
 
   const downloadAttendancePDF = () => {
@@ -1347,6 +1348,36 @@ export default function PaymentsPage({
           </div>
         </div>
       )}
+    {showPaymentPdfPreview && (
+  <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+    <div className="bg-white w-full max-w-4xl max-h-[90vh] rounded-xl overflow-hidden flex flex-col">
+      
+      <div className="flex-1 overflow-auto p-4">
+        <div
+          dangerouslySetInnerHTML={{ __html: paymentPreviewHTML }}
+        />
+      </div>
+
+      <div className="flex gap-3 p-4 border-t bg-white">
+        <button
+          type="button"
+          onClick={() => setShowPaymentPdfPreview(false)}
+          className="flex-1 rounded-lg bg-gray-500 px-4 py-3 font-semibold text-white"
+        >
+          Close
+        </button>
+
+        <button
+          type="button"
+          className="flex-1 rounded-lg bg-orange-500 px-4 py-3 font-semibold text-white"
+        >
+          Save PDF
+        </button>
+      </div>
+
+    </div>
+  </div>
+)}    
     </div>
   );
 }
