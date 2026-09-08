@@ -24,6 +24,7 @@ import { type AttendanceValue, getAttendanceDisplay } from "../types";
 import html2pdf from "html2pdf.js";
 import { PdfGenerator } from "@capgo/capacitor-pdf-generator";
 import { FileSharer } from "@capgo/capacitor-file-sharer";
+import { FileOpener } from "@capacitor-community/file-opener";
 
 function calculateLabourSalary(
   contract: any,
@@ -167,7 +168,11 @@ const saved = await FileSharer.save({
     relativePath: "Download",
   },
 });
-      alert(`PDF URI: ${saved.uri}`);
+      await FileOpener.open({
+  filePath: saved.uri!,
+  contentType: "application/pdf",
+  openWithDefault: true,
+});
 
 return;
     }
