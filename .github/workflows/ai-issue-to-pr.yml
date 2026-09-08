@@ -94,3 +94,8 @@ jobs:
           echo "Applying validated AI patch..."
           git apply /tmp/ai.patch
           echo "AI patch applied successfully."
+
+
+      - name: Run typecheck
+        working-directory: src/frontend
+        run: pnpm typecheck
