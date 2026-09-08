@@ -104,7 +104,9 @@ jobs:
 
       - name: Run typecheck
         working-directory: src/frontend
-        run: pnpm typecheck
+        run: |
+    corepack enable
+    pnpm typecheck
 
 
       - name: Commit changes and create Pull Request
