@@ -223,6 +223,7 @@ export default function PaymentsPage({
   const [contractSearch, setContractSearch] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [showOverview, setShowOverview] = useState(false);
+  const [showPaymentPdfPreview, setShowPaymentPdfPreview] = useState(false);
   const paymentsScrollRef = useRef<HTMLDivElement>(null);
   const [overviewMode, setOverviewMode] = useState<"oneByOne" | "multiSelect">(
     "oneByOne",
