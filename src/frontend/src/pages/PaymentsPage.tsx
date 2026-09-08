@@ -158,7 +158,7 @@ if (result.type !== "base64") {
   throw new Error("PDF was not generated as base64");
 }
 
-await FileSharer.save({
+const saved = await FileSharer.save({
   filename,
   contentType: "application/pdf",
   base64Data: result.base64,
@@ -167,7 +167,13 @@ await FileSharer.save({
     relativePath: "Download",
   },
 });
-
+if (saved.uri) {
+  await FileOpener.open({
+    filePath: saved.uri,
+    contentType: "application/pdf",
+    openWithDefault: true,
+  });
+}
 return;
     }
       const pdf = await html2pdf()
