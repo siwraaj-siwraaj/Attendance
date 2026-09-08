@@ -1352,7 +1352,7 @@ setShowPaymentPdfPreview(true);
   <div className="fixed inset-0 z-[9999] bg-black/80 flex items-center justify-center p-4">
     <div className="bg-white w-full h-full max-w-4xl max-h-full overflow-hidden flex flex-col">
       
-      <div className="flex-1 overflow-auto p-4">
+      <div className="flex-1 overflow-auto p-2">
         <div
           dangerouslySetInnerHTML={{ __html: paymentPreviewHTML }}
         />
