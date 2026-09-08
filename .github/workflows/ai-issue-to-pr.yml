@@ -87,3 +87,10 @@ jobs:
           git apply --check /tmp/ai.patch
 
           echo "AI patch validation passed."
+
+
+      - name: Apply AI patch
+        run: |
+          echo "Applying validated AI patch..."
+          git apply /tmp/ai.patch
+          echo "AI patch applied successfully."
