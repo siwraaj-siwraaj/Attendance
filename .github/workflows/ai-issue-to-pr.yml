@@ -59,3 +59,31 @@ jobs:
           echo "AI patch saved to /tmp/ai.patch"
           echo "Patch preview:"
           sed -n '1,120p' /tmp/ai.patch
+
+      - name: Validate AI patch
+        run: |
+          echo "Validating AI patch..."
+
+          if [ ! -s /tmp/ai.patch ]; then
+            echo "AI patch is empty."
+            exit 1
+          fi
+
+          if ! grep -q '^diff --git ' /tmp/ai.patch; then
+            echo "AI did not return a valid unified git diff."
+            exit 1
+          fi
+
+          if grep '^diff --git ' /tmp/ai.patch | grep -v 'src/frontend/src/'; then
+            echo "Protected or out-of-scope file detected."
+            exit 1
+          fi
+
+          if grep -E '^diff --git .*\.\./|^--- .*\.\./|^+++ .*\.\./' /tmp/ai.patch; then
+            echo "Unsafe path detected in AI patch."
+            exit 1
+          fi
+
+          git apply --check /tmp/ai.patch
+
+          echo "AI patch validation passed."
