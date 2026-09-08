@@ -13,6 +13,9 @@ jobs:
   issue-automation-test:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Ask AI for a code-change proposal
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
