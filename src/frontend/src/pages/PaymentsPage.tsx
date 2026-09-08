@@ -167,13 +167,7 @@ const saved = await FileSharer.save({
     relativePath: "Download",
   },
 });
-if (saved.uri) {
-  await FileOpener.open({
-    filePath: saved.uri,
-    contentType: "application/pdf",
-    openWithDefault: true,
-  });
-}
+
 return;
     }
       const pdf = await html2pdf()
