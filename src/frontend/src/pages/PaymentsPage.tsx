@@ -1369,6 +1369,10 @@ setShowPaymentPdfPreview(true);
 
         <button
           type="button"
+          onClick={async () => {
+  await openPrintWindow("Payment Sheet", paymentPreviewHTML);
+  setShowPaymentPdfPreview(false);
+}}
           className="flex-1 rounded-lg bg-orange-500 px-4 py-3 font-semibold text-white"
         >
           Save PDF
