@@ -150,7 +150,7 @@ const isNative =
   data: html,
   documentSize: "A4",
   orientation: "portrait",
-  type: "share",
+  type: "base64",
   fileName: filename,
 });
       if (result.type === "share" && !result.completed) {
