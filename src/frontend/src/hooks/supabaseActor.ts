@@ -66,9 +66,38 @@ function mapContract(row: any, columns: any[] = []) {
     meshAmount: Number(row.mesh_amount),
     settled: Boolean(row.settled),
     createdAt: ns(row.created_at),
-    workColumns: columns.filter(
-      (c) => String(c.contract_id) === String(row.id)
-    ).map(mapColumn),
+    workColumns: columns
+      .filter((c) => String(c.contract_id) === String(row.id))
+      .map(mapColumn)
+      .sort((a, b) => {
+        const order: Record<string, number> = {
+          bed: 0,
+          paper: 1,
+          mesh: 2,
+        };
+        const typeA = String(a.workType).toLowerCase();
+        const typeB = String(b.workType).toLowerCase();
+
+        const typeCompare =
+          (order[typeA] ?? 99) - (order[typeB] ?? 99);
+
+        if (typeCompare !== 0) return typeCompare;
+
+        const baseA = order[typeA] === 0 ? "Bed" : order[typeA] === 1 ? "Paper" : "Mesh";
+        const baseB = order[typeB] === 0 ? "Bed" : order[typeB] === 1 ? "Paper" : "Mesh";
+
+        const numberA =
+          String(a.name) === baseA
+            ? 1
+            : Number(String(a.name).slice(baseA.length)) || 1;
+
+        const numberB =
+          String(b.name) === baseB
+            ? 1
+            : Number(String(b.name).slice(baseB.length)) || 1;
+
+        return numberA - numberB;
+      }),
   };
 }
 
@@ -398,59 +427,111 @@ export function createSupabaseActor() {
     },
 
     async addWorkColumn(
-      contractId: bigint,
-      name: string,
-      workType: string
-    ) {
-      try {
-        const fallbackNames: Record<string, string> = {
-          bed: "Bed",
-          paper: "Paper",
-          mesh: "Mesh",
-        };
+    contractId: bigint,
+    _name: string,
+    workType: string
+  ) {
+    try {
+      const normalizedType = String(workType ?? "").trim().toLowerCase();
 
-        const columnName =
-          String(name ?? "").trim() ||
-          fallbackNames[String(workType).toLowerCase()] ||
-          String(workType);
+      const fallbackNames: Record<string, string> = {
+        bed: "Bed",
+        paper: "Paper",
+        mesh: "Mesh",
+      };
 
-        const rows = await rest("work_columns", {
-          method: "POST",
-          query: "?select=*",
-          body: {
-            id: crypto.randomUUID(),
-            contract_id: contractId.toString(),
-            name: columnName,
-          },
-        });
+      const baseName =
+        fallbackNames[normalizedType] || String(workType).trim();
 
-        return ok(mapColumn(rows[0]));
-      } catch (e: any) {
-        return err(e.message);
+      if (!baseName) {
+        return err("Work type is required");
       }
-    },
 
-    async updateWorkColumn(
-      _contractId: bigint,
-      columnId: string,
-      name: string
-    ) {
-      try {
-        const rows = await rest("work_columns", {
-          method: "PATCH",
-          query: `?id=eq.${encodeURIComponent(columnId)}`,
-          body: {
-            name,
-          },
-        });
+      const existing = await rest("work_columns", {
+        query:
+          `?select=name&contract_id=eq.${encodeURIComponent(contractId.toString())}` +
+          `&work_type=eq.${encodeURIComponent(normalizedType)}`,
+      });
 
-        return ok(mapColumn(rows[0]));
-      } catch (e: any) {
-        return err(e.message);
+      let maxNumber = 0;
+
+      for (const column of existing) {
+        const existingName = String(column.name ?? "").trim();
+
+        if (existingName === baseName) {
+          maxNumber = Math.max(maxNumber, 1);
+          continue;
+        }
+
+        const match = existingName.match(
+          new RegExp(`^${baseName}(\\d+)$`)
+        );
+
+        if (match) {
+          maxNumber = Math.max(maxNumber, Number(match[1]));
+        }
       }
-    },
 
-    async removeWorkColumn(contractId: bigint, columnId: string) {
+      const columnName =
+        maxNumber === 0 ? baseName : `${baseName}${maxNumber + 1}`;
+
+      await rest("work_columns", {
+        method: "POST",
+        query: "?select=*",
+        body: {
+          id: crypto.randomUUID(),
+          contract_id: contractId.toString(),
+          name: columnName,
+          work_type: normalizedType,
+        },
+      });
+
+      const contractRows = await rest("contracts", {
+        query:
+          `?select=*&id=eq.${encodeURIComponent(contractId.toString())}`,
+      });
+
+      const columns = await rest("work_columns", {
+        query:
+          `?select=*&contract_id=eq.${encodeURIComponent(contractId.toString())}` +
+          `&order=id.asc`,
+      });
+
+      if (!contractRows.length) {
+        return err("Contract not found");
+      }
+
+      return ok(mapContract(contractRows[0], columns));
+    } catch (e: any) {
+      return err(e.message);
+    }
+  },
+
+  async updateWorkColumn(
+    _contractId: bigint,
+    columnId: string,
+    name: string
+  ) {
+    try {
+      const rows = await rest("work_columns", {
+        method: "PATCH",
+        query: `?id=eq.${encodeURIComponent(columnId)}&select=*`,
+        body: {
+          name: String(name ?? "").trim(),
+        },
+      });
+
+      if (!rows.length) {
+        return err("Work column not found");
+      }
+
+      return ok(mapColumn(rows[0]));
+    } catch (e: any) {
+      return err(e.message);
+    }
+  },
+
+  async removeWorkColumn(contractId: bigint, columnId: string) {
       try {
         await rest("work_columns", {
           method: "DELETE",
