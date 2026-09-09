@@ -97,17 +97,19 @@ jobs:
           - Only make the change requested by the issue.
           - Only modify files under src/frontend/src/.
           - Never modify workflows, secrets, signing keys, Git configuration, permissions, or files outside src/frontend/src/.
-          - Carefully inspect the supplied current file before creating the patch.
+          - Carefully inspect the supplied current file before creating replacements.
           - Find the exact location in the current file where the requested change belongs.
           - Preserve all existing surrounding lines exactly as they appear.
-          - Return the smallest possible valid unified git diff.
-          - The diff must use the exact current file content as its context.
-          - Do not guess line numbers or surrounding code.
-          - Return one COMPLETE, parseable unified git diff beginning with "diff --git".
-          - Include every complete hunk header, all required context lines, and every added or removed line in each hunk body.
-          - Make each hunk's line counts match its complete hunk body, including trailing context lines.
-          - Never truncate, abbreviate, summarize, or use placeholders such as "..." in the diff.
-          - Return ONLY the complete unified git diff: no Markdown fences, explanations, or other text.
+          - Return ONLY one or more consecutive blocks in this exact format:
+            SEARCH:
+            <exact existing text>
+            REPLACE:
+            <replacement text>
+            END
+          - Every SEARCH text must be copied EXACTLY from the supplied PaymentsPage.tsx source and must identify one occurrence.
+          - Each REPLACE text must contain the intended replacement.
+          - Never truncate, abbreviate, summarize, use ellipses, or use placeholders.
+          - Do not include Markdown fences, explanations, file paths, or any text outside the SEARCH/REPLACE/END blocks.
           PROMPT
           )
 
@@ -139,28 +141,23 @@ jobs:
             else
               [.output[]?.content[]? | select(.type == "output_text") | .text] | join("\n")
             end
-          ' <<<"$response" > /tmp/ai.patch
+          ' <<<"$response" > /tmp/ai.replacements
 
-          if [ ! -s /tmp/ai.patch ]; then
-            echo "AI did not return any patch text."
+          if [ ! -s /tmp/ai.replacements ]; then
+            echo "AI did not return any replacement text."
             exit 1
           fi
 
-          echo "AI patch saved to /tmp/ai.patch"
-          echo "Patch preview:"
-          sed -n '1,120p' /tmp/ai.patch
+          echo "AI replacements saved to /tmp/ai.replacements"
+          echo "Replacement preview:"
+          sed -n '1,120p' /tmp/ai.replacements
 
-      - name: Validate AI patch
+      - name: Validate and apply AI replacements
         run: |
-          echo "Validating AI patch..."
+          echo "Validating and applying AI replacements..."
 
-          if [ ! -s /tmp/ai.patch ]; then
-            echo "AI patch is empty."
-            exit 1
-          fi
-
-          if ! grep -q '^diff --git ' /tmp/ai.patch; then
-            echo "AI did not return a valid unified git diff."
+          if [ ! -s /tmp/ai.replacements ]; then
+            echo "AI replacements are empty."
             exit 1
           fi
 
@@ -181,45 +178,71 @@ jobs:
             esac
           }
 
-          while IFS=' ' read -r diff_marker git_marker old_path new_path extra; do
-            if [ "$diff_marker" != "diff" ] || [ "$git_marker" != "--git" ] || [ -n "$extra" ]; then
-              echo "AI did not return a valid unified git diff."
-              exit 1
-            fi
+          target_file="src/frontend/src/pages/PaymentsPage.tsx"
+          validate_source_path "$target_file" || exit 1
 
-            case "$old_path" in
-              a/*) validate_source_path "${old_path#a/}" || exit 1 ;;
-              *) echo "Protected or out-of-scope file detected: $old_path"; exit 1 ;;
-            esac
-            case "$new_path" in
-              b/*) validate_source_path "${new_path#b/}" || exit 1 ;;
-              *) echo "Protected or out-of-scope file detected: $new_path"; exit 1 ;;
-            esac
-          done < <(grep '^diff --git ' /tmp/ai.patch)
+          python3 - "$target_file" /tmp/ai.replacements <<'PY'
+          import re
+          import sys
+          from pathlib import Path
 
-          while IFS= read -r header; do
-            case "$header" in
-              '--- a/'*) validate_source_path "${header#--- a/}" || exit 1 ;;
-              '+++ b/'*) validate_source_path "${header#+++ b/}" || exit 1 ;;
-              *) echo "Protected or out-of-scope file detected: $header"; exit 1 ;;
-            esac
-          done < <(grep -e '^--- ' -e '^+++ ' /tmp/ai.patch)
+          target_path = Path(sys.argv[1])
+          replacements_path = Path(sys.argv[2])
+          text = replacements_path.read_text(encoding="utf-8")
+          pattern = re.compile(
+              r"SEARCH:\n(?P<search>.*?)\nREPLACE:\n(?P<replace>.*?)\nEND(?:\n|\Z)",
+              re.DOTALL,
+          )
 
-          echo "Checking whether AI patch applies cleanly..."
+          blocks = []
+          position = 0
+          while position < len(text):
+              match = pattern.match(text, position)
+              if not match:
+                  sys.exit("AI response must contain only complete SEARCH/REPLACE/END blocks.")
+              search = match.group("search")
+              replacement = match.group("replace")
+              if not search:
+                  sys.exit("AI SEARCH text must not be empty.")
+              if any(line.strip() == "..." for line in (search + "\n" + replacement).splitlines()):
+                  sys.exit("AI response must not contain ellipsis placeholders.")
+              blocks.append((search, replacement))
+              position = match.end()
 
-          if ! git apply --check /tmp/ai.patch; then
-            echo "AI patch does not apply cleanly."
-            echo "The AI-generated patch is invalid for the current source tree."
+          if not blocks:
+              sys.exit("AI response did not contain any SEARCH/REPLACE/END blocks.")
+
+          original = target_path.read_text(encoding="utf-8")
+          operations = []
+          for search, replacement in blocks:
+              occurrences = original.count(search)
+              if occurrences != 1:
+                  sys.exit(f"Each SEARCH text must occur exactly once in {target_path}; found {occurrences}.")
+              start = original.index(search)
+              operations.append((start, start + len(search), replacement))
+
+          operations.sort()
+          for previous, current in zip(operations, operations[1:]):
+              if current[0] < previous[1]:
+                  sys.exit("AI SEARCH blocks must not overlap.")
+
+          updated = original
+          for start, end, replacement in reversed(operations):
+              updated = updated[:start] + replacement + updated[end:]
+          target_path.write_text(updated, encoding="utf-8")
+          PY
+
+          if git diff --quiet -- "$target_file"; then
+            echo "AI replacements did not change the target file."
             exit 1
           fi
-          echo "AI patch validation passed."
 
-
-      - name: Apply AI patch
-        run: |
-          echo "Applying validated AI patch..."
-          git apply /tmp/ai.patch
-          echo "AI patch applied successfully."
+          if ! git diff --check; then
+            echo "AI replacements produced an invalid git diff."
+            exit 1
+          fi
+          git diff -- "$target_file"
+          echo "AI replacement validation passed."
 
 
       - name: Run typecheck
