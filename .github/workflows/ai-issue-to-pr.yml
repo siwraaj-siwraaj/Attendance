@@ -146,7 +146,7 @@ jobs:
             exit 1
           fi
 
-          if grep -E '^(---|\+\+\+) ' /tmp/ai.patch | grep -Ev '^(--- a|\+\+\+ b)src/frontend/src/[^[:space:]]+$'; then
+          if grep -E '^(---|\+\+\+) ' /tmp/ai.patch | grep -Ev '^(--- a/|\+\+\+ b/)src/frontend/src/[^[:space:]]+$'; then
             echo "Protected or out-of-scope file detected."
             exit 1
           fi
