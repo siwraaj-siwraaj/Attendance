@@ -97,7 +97,11 @@ jobs:
           - Return the smallest possible valid unified git diff.
           - The diff must use the exact current file content as its context.
           - Do not guess line numbers or surrounding code.
-          - Return ONLY the unified git diff. No explanations.
+          - Return one COMPLETE, parseable unified git diff beginning with "diff --git".
+          - Include every complete hunk header, all required context lines, and every added or removed line in each hunk body.
+          - Make each hunk's line counts match its complete hunk body, including trailing context lines.
+          - Never truncate, abbreviate, summarize, or use placeholders such as "..." in the diff.
+          - Return ONLY the complete unified git diff: no Markdown fences, explanations, or other text.
           PROMPT
           )
 
@@ -108,6 +112,7 @@ jobs:
             --arg code "$payments_code" \
             '{
               model: "gpt-5.6-luna",
+              max_output_tokens: 8192,
               input: ($prompt + "\n\nIssue title: " + $title + "\nIssue body: " + $body + "\n\nCurrent PaymentsPage.tsx:\n" + $code)
             }')
 
