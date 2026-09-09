@@ -36,7 +36,8 @@ jobs:
               echo "issue_number must be a positive integer."
               exit 1
             fi
-            issue_json="$(gh issue view "$REQUESTED_ISSUE_NUMBER" --json number,title,body)"
+            issue_response="$(gh api "repos/${{ github.repository }}/issues/$REQUESTED_ISSUE_NUMBER")" || exit 1
+            issue_json="$(jq '{number, title, body}' <<<"$issue_response")"
           else
             issue_json="$(jq -n \
               --arg number "$EVENT_ISSUE_NUMBER" \
