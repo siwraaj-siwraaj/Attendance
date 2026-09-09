@@ -174,16 +174,11 @@ jobs:
             esac
           done < <(grep '^diff --git ' /tmp/ai.patch)
 
-          while IFS=' ' read -r marker path extra; do
-            if [ -n "$extra" ]; then
-              echo "Protected or out-of-scope file detected."
-              exit 1
-            fi
-
-            case "$marker:$path" in
-              ---:a/*) validate_source_path "${path#a/}" || exit 1 ;;
-              +++:b/*) validate_source_path "${path#b/}" || exit 1 ;;
-              *) echo "Protected or out-of-scope file detected: $path"; exit 1 ;;
+          while IFS= read -r header; do
+            case "$header" in
+              '--- a/'*) validate_source_path "${header#--- a/}" || exit 1 ;;
+              '+++ b/'*) validate_source_path "${header#+++ b/}" || exit 1 ;;
+              *) echo "Protected or out-of-scope file detected: $header"; exit 1 ;;
             esac
           done < <(grep -e '^--- ' -e '^+++ ' /tmp/ai.patch)
 
