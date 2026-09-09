@@ -141,20 +141,51 @@ jobs:
             exit 1
           fi
 
-          if grep '^diff --git ' /tmp/ai.patch | grep -Ev '^diff --git a/src/frontend/src/[^[:space:]]+ b/src/frontend/src/[^[:space:]]+$'; then
-            echo "Protected or out-of-scope file detected."
-            exit 1
-          fi
+          validate_source_path() {
+            case "$1" in
+              src/frontend/src/*) ;;
+              *)
+                echo "Protected or out-of-scope file detected: $1"
+                return 1
+                ;;
+            esac
 
-          if grep -E '^(---|\+\+\+) ' /tmp/ai.patch | grep -Ev '^(--- a/|\+\+\+ b/)src/frontend/src/[^[:space:]]+$'; then
-            echo "Protected or out-of-scope file detected."
-            exit 1
-          fi
+            case "$1" in
+              *../*)
+                echo "Unsafe path detected: $1"
+                return 1
+                ;;
+            esac
+          }
 
-          if grep -E '^diff --git .*\.\./|^--- .*\.\./|^+++ .*\.\./' /tmp/ai.patch; then
-            echo "Unsafe path detected in AI patch."
-            exit 1
-          fi
+          while IFS=' ' read -r diff_marker git_marker old_path new_path extra; do
+            if [ "$diff_marker" != "diff" ] || [ "$git_marker" != "--git" ] || [ -n "$extra" ]; then
+              echo "AI did not return a valid unified git diff."
+              exit 1
+            fi
+
+            case "$old_path" in
+              a/*) validate_source_path "${old_path#a/}" || exit 1 ;;
+              *) echo "Protected or out-of-scope file detected: $old_path"; exit 1 ;;
+            esac
+            case "$new_path" in
+              b/*) validate_source_path "${new_path#b/}" || exit 1 ;;
+              *) echo "Protected or out-of-scope file detected: $new_path"; exit 1 ;;
+            esac
+          done < <(grep '^diff --git ' /tmp/ai.patch)
+
+          while IFS=' ' read -r marker path extra; do
+            if [ -n "$extra" ]; then
+              echo "Protected or out-of-scope file detected."
+              exit 1
+            fi
+
+            case "$marker:$path" in
+              ---:a/*) validate_source_path "${path#a/}" || exit 1 ;;
+              +++:b/*) validate_source_path "${path#b/}" || exit 1 ;;
+              *) echo "Protected or out-of-scope file detected: $path"; exit 1 ;;
+            esac
+          done < <(grep -e '^--- ' -e '^+++ ' /tmp/ai.patch)
 
           echo "Checking whether AI patch applies cleanly..."
 
