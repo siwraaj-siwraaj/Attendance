@@ -64,8 +64,14 @@ jobs:
       - name: Create issue branch
         run: |
           branch_name="ai/issue-${ISSUE_NUMBER}"
-          git checkout -b "$branch_name"
-          git push origin "$branch_name"
+          git fetch origin || exit 1
+
+          if git ls-remote --exit-code --heads origin "$branch_name" > /dev/null; then
+            git push origin --delete "$branch_name" || exit 1
+          fi
+
+          git checkout -B "$branch_name" origin/main || exit 1
+          git push --set-upstream origin "$branch_name" || exit 1
           echo "Created and pushed branch: $branch_name"
 
       - name: Safety check before AI work
