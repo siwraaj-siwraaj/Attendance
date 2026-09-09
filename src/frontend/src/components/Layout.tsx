@@ -401,32 +401,63 @@ export default function Layout({ children }: LayoutProps) {
       />
       {/* Header */}
       <header
-        className="sticky top-0 z-40 px-4 py-3 flex items-center justify-between"
-        style={{
-          background:
-            "linear-gradient(135deg, #000000 0%, #0a2a2a 35%, #0d4040 55%, #1a1800 80%, #2a0a00 100%)",
-          borderBottom: "1px solid rgba(249,115,22,0.25)",
-          boxShadow:
-            "0 0 0 0 transparent, inset 0 1px 0 rgba(255,200,100,0.08), 0 2px 24px rgba(249,115,22,0.18)",
-          backdropFilter: "blur(16px)",
-          WebkitBackdropFilter: "blur(16px)",
-        }}
-      >
-        <h1
-          className="font-display text-lg font-bold tracking-tight"
+      className="sticky top-0 z-40 px-4 py-3 flex items-center justify-between"
+      style={{
+        background:
+          "linear-gradient(135deg, #050708 0%, #081515 45%, #0d2928 72%, #1b1308 100%)",
+        borderBottom: "1px solid rgba(249,115,22,0.22)",
+        boxShadow:
+          "inset 0 1px 0 rgba(255,200,100,0.06), 0 4px 22px rgba(0,0,0,0.35)",
+        backdropFilter: "blur(16px)",
+        WebkitBackdropFilter: "blur(16px)",
+      }}
+    >
+      <div className="flex items-center gap-3 min-w-0">
+        <div
+          className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
           style={{
             background:
-              "linear-gradient(90deg, #ffffff 0%, #fb923c 50%, #14b8a6 100%)",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-            backgroundClip: "text",
+              "linear-gradient(145deg, rgba(20,184,166,0.22), rgba(249,115,22,0.16))",
+            border: "1px solid rgba(249,115,22,0.25)",
+            boxShadow:
+              "inset 0 1px 0 rgba(255,255,255,0.08), 0 4px 12px rgba(0,0,0,0.25)",
           }}
         >
-          Rossie
-        </h1>
+          <span
+            className="text-xl font-bold"
+            style={{
+              color: "#f59e0b",
+              textShadow: "0 0 12px rgba(245,158,11,0.35)",
+            }}
+          >
+            R
+          </span>
+        </div>
+
+        <div className="min-w-0">
+          <h1
+            className="text-xl font-bold tracking-tight leading-tight"
+            style={{
+              background:
+                "linear-gradient(90deg, #ffffff 0%, #fbbf24 55%, #14b8a6 100%)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+            }}
+          >
+            Rossie
+          </h1>
+
+          <p className="text-[10px] tracking-[0.16em] uppercase text-teal-200/60">
+            Attendance Management
+          </p>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-2">
         {role && (
           <span
-            className={`ml-3 px-2.5 py-1 rounded-full text-xs font-semibold ${roleBadgeClass(
+            className={`hidden sm:inline-flex px-2.5 py-1 rounded-full text-xs font-semibold ${roleBadgeClass(
               role,
             )}`}
             data-ocid="header.role_badge"
@@ -434,18 +465,30 @@ export default function Layout({ children }: LayoutProps) {
             {roleLabel(role)}
           </span>
         )}
+
         {mode === "edit" && (
           <div className="relative">
             <button
               type="button"
               onClick={() => setMenuOpen((v) => !v)}
-              className="text-white text-xl p-1 hover:text-[#f97316] transition-colors"
+              className="w-10 h-10 rounded-xl flex items-center justify-center text-white text-xl transition-all active:scale-95"
+              style={{
+                background: menuOpen
+                  ? "rgba(249,115,22,0.18)"
+                  : "rgba(255,255,255,0.06)",
+                border: menuOpen
+                  ? "1px solid rgba(249,115,22,0.4)"
+                  : "1px solid rgba(255,255,255,0.1)",
+                boxShadow: menuOpen
+                  ? "0 0 14px rgba(249,115,22,0.12)"
+                  : "none",
+              }}
               aria-label="Menu"
               data-ocid="header.menu_button"
             >
               ☰
             </button>
-            {/* Compact dropdown menu */}
+
             {menuOpen && (
               <>
                 <div
@@ -457,12 +500,16 @@ export default function Layout({ children }: LayoutProps) {
                   tabIndex={-1}
                   role="presentation"
                 />
+
                 <div
-                  className="absolute right-0 top-10 z-40 w-56 rounded-xl border border-orange-500/20 shadow-2xl overflow-hidden"
+                  className="absolute right-0 top-12 z-40 w-56 rounded-2xl overflow-hidden"
                   style={{
-                    background: "rgba(13,18,32,0.95)",
-                    backdropFilter: "blur(16px)",
-                    WebkitBackdropFilter: "blur(16px)",
+                    background: "rgba(13,18,20,0.97)",
+                    border: "1px solid rgba(249,115,22,0.2)",
+                    boxShadow:
+                      "0 14px 35px rgba(0,0,0,0.45), 0 0 20px rgba(249,115,22,0.06)",
+                    backdropFilter: "blur(18px)",
+                    WebkitBackdropFilter: "blur(18px)",
                   }}
                   onClick={(e) => e.stopPropagation()}
                   onKeyDown={(e) => {
@@ -475,49 +522,57 @@ export default function Layout({ children }: LayoutProps) {
                     <button
                       type="button"
                       onClick={handleExportCSV}
-                      className="w-full text-left px-4 py-2.5 text-sm text-white hover:bg-white/10 transition-colors"
+                      className="w-full text-left px-4 py-3 text-sm text-white hover:bg-orange-500/10 transition-colors"
                       data-ocid="header.export_csv"
                     >
                       Export CSV
                     </button>
+
                     <button
                       type="button"
                       onClick={handleExportExcel}
-                      className="w-full text-left px-4 py-2.5 text-sm text-white hover:bg-white/10 transition-colors"
+                      className="w-full text-left px-4 py-3 text-sm text-white hover:bg-orange-500/10 transition-colors"
                       data-ocid="header.export_excel"
                     >
                       Export Excel
                     </button>
+
                     <button
                       type="button"
                       onClick={() => {
                         setMenuOpen(false);
                         csvInputRef.current?.click();
                       }}
-                      className="w-full text-left px-4 py-2.5 text-sm text-white hover:bg-white/10 transition-colors"
+                      className="w-full text-left px-4 py-3 text-sm text-white hover:bg-orange-500/10 transition-colors"
                       data-ocid="header.import_csv"
                     >
                       Import CSV
                     </button>
+
                     <div className="border-t border-white/10 my-1" />
+
                     <button
                       type="button"
                       onClick={() => {
                         setMenuOpen(false);
                         setActiveTab("admin");
                       }}
-                      className="w-full text-left px-4 py-2.5 text-sm text-white hover:bg-white/10 transition-colors"
+                      className="w-full text-left px-4 py-3 text-sm text-white hover:bg-orange-500/10 transition-colors"
                       data-ocid="header.admin_panel"
                     >
                       Admin Panel
                     </button>
+
                     <div className="border-t border-white/10 my-1" />
+
                     <SettingsPanel onClose={() => setMenuOpen(false)} />
+
                     <div className="border-t border-white/10 my-1" />
+
                     <button
                       type="button"
                       onClick={handleLogout}
-                      className="w-full text-left px-4 py-2.5 text-sm text-red-400 hover:bg-white/10 transition-colors"
+                      className="w-full text-left px-4 py-3 text-sm text-red-400 hover:bg-red-500/10 transition-colors"
                       data-ocid="header.logout"
                     >
                       Logout
@@ -528,7 +583,8 @@ export default function Layout({ children }: LayoutProps) {
             )}
           </div>
         )}
-      </header>
+      </div>
+    </header>
 
       {/* Main content — fills viewport between header and tab bar */}
       <main
