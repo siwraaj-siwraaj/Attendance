@@ -90,7 +90,13 @@ jobs:
             exit 1
           fi
 
-          git apply --check /tmp/ai.patch
+          echo "Checking whether AI patch applies cleanly..."
+
+    if ! git apply --check /tmp/ai.patch; then
+      echo "AI patch does not apply cleanly."
+      echo "The AI-generated patch is invalid for the current source tree."
+      exit 1
+    fi
 
           echo "AI patch validation passed."
 
