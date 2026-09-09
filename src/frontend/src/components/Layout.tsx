@@ -27,6 +27,7 @@ export default function Layout({ children }: LayoutProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const touchStartX = useRef<number | null>(null);
   const touchStartY = useRef<number | null>(null);
+  const swipeBlocked = useRef(false);
   const swipeTabs = useAuth().allowedTabs;
 
   useAutoBackupReminder(mode === "edit");
@@ -532,14 +533,26 @@ export default function Layout({ children }: LayoutProps) {
       {/* Main content — fills viewport between header and tab bar */}
       <main
         onTouchStart={(e) => {
-          touchStartX.current = e.touches[0]?.clientX ?? null;
-          touchStartY.current = e.touches[0]?.clientY ?? null;
-        }}
+              const target = e.target as HTMLElement | null;
+              swipeBlocked.current = !!target?.closest(
+                'table, [role="dialog"], [data-pdf-preview], input, textarea, select, button, [data-no-tab-swipe]'
+              );
+
+              touchStartX.current = e.touches[0]?.clientX ?? null;
+              touchStartY.current = e.touches[0]?.clientY ?? null;
+            }}
         onTouchEnd={(e) => {
           const startX = touchStartX.current;
           const startY = touchStartY.current;
           touchStartX.current = null;
           touchStartY.current = null;
+            if (swipeBlocked.current) {
+              swipeBlocked.current = false;
+              touchStartX.current = null;
+              touchStartY.current = null;
+              return;
+            }
+            
           if (startX === null || startY === null || swipeTabs.length < 2) return;
           const dx = e.changedTouches[0]?.clientX - startX;
           const dy = e.changedTouches[0]?.clientY - startY;
