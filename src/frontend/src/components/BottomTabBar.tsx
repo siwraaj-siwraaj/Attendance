@@ -11,7 +11,7 @@ import { useEffect, useRef, useState } from "react";
 import { useAuth } from "../hooks/useAuth";
 import type { Tab } from "../types";
 
-interface BottomTabBarProps {
+interface LayoutProps {
   activeTab: Tab;
   onTabChange: (tab: Tab) => void;
   swipeProgress?: number;
@@ -26,12 +26,13 @@ const ALL_TAB_DEFS: { key: Tab; label: string; icon: React.ReactNode }[] = [
   { key: "settled", label: "Settled", icon: <CheckSquare size={24} strokeWidth={2} /> },
 ];
 
-export default function BottomTabBar({ activeTab, onTabChange, swipeProgress: externalSwipeProgress = 0 }: BottomTabBarProps) {
+export default function BottomTabBar({ activeTab, onTabChange, swipeProgress: externalSwipeProgress = 0 }: LayoutProps) {
   const { allowedTabs } = useAuth();
   const tabs = ALL_TAB_DEFS.filter((t) => allowedTabs.includes(t.key));
   const prevTabRef = useRef<Tab>(activeTab);
   const touchStartX = useRef<number | null>(null);
   const touchStartY = useRef<number | null>(null);
+  const didSwipeRef = useRef(false);
   const [localSwipeProgress, setLocalSwipeProgress] = useState(0);
   const [indicatorStyle, setIndicatorStyle] = useState<React.CSSProperties>({});
   const swipeProgress = Math.abs(externalSwipeProgress) > 0.001 ? externalSwipeProgress : localSwipeProgress;
@@ -42,11 +43,12 @@ export default function BottomTabBar({ activeTab, onTabChange, swipeProgress: ex
       if (!target?.closest("main") || target.closest('table, [role="dialog"], [data-pdf-preview], input, textarea, select, button, [data-no-tab-swipe]')) {
         touchStartX.current = null;
         touchStartY.current = null;
-        setLocalSwipeProgress(0);
+        didSwipeRef.current = false;
         return;
       }
       touchStartX.current = e.touches[0]?.clientX ?? null;
       touchStartY.current = e.touches[0]?.clientY ?? null;
+      didSwipeRef.current = false;
     };
 
     const handleTouchMove = (e: TouchEvent) => {
@@ -61,12 +63,15 @@ export default function BottomTabBar({ activeTab, onTabChange, swipeProgress: ex
       const index = tabs.indexOf(activeTab);
       const atEdge = (progress > 0 && index <= 0) || (progress < 0 && index >= tabs.length - 1);
       setLocalSwipeProgress(atEdge ? -progress * 0.28 : -progress * 0.92);
+      didSwipeRef.current = Math.abs(dx) >= 8;
     };
 
     const handleTouchEnd = () => {
       touchStartX.current = null;
       touchStartY.current = null;
-      setLocalSwipeProgress(0);
+      // Keep the dragged indicator position until Layout commits the new tab.
+      // Resetting immediately caused the indicator to visibly jump back.
+      if (!didSwipeRef.current) setLocalSwipeProgress(0);
     };
 
     window.addEventListener("touchstart", handleTouchStart, { passive: true });
@@ -82,11 +87,20 @@ export default function BottomTabBar({ activeTab, onTabChange, swipeProgress: ex
   }, [activeTab, tabs]);
 
   useEffect(() => {
+    if (!didSwipeRef.current) return;
+    // Layout changes activeTab after its 180ms content transition. Give that
+    // transition time to finish before clearing the temporary indicator offset.
+    const timer = window.setTimeout(() => {
+      setLocalSwipeProgress(0);
+      didSwipeRef.current = false;
+    }, 260);
+    return () => window.clearTimeout(timer);
+  }, [activeTab]);
+
+  useEffect(() => {
     const idx = tabs.findIndex((t) => t.key === activeTab);
     const total = tabs.length;
     if (idx < 0 || total === 0) return;
-    // swipeProgress is deliberately inverted in handleTouchMove. Adding it
-    // here makes the indicator travel opposite to the user's finger.
     const visualIndex = Math.max(0, Math.min(total - 1, idx + swipeProgress));
     const isSwiping = Math.abs(swipeProgress) > 0.001;
     setIndicatorStyle({
@@ -137,21 +151,14 @@ export default function BottomTabBar({ activeTab, onTabChange, swipeProgress: ex
               style={{ touchAction: "manipulation" }}
               data-ocid={`tab.${t.key}`}
             >
-              <span
-                className={`leading-none transition-transform duration-300 ease-out ${
-                  isActive ? "scale-110" : "scale-100"
-                }`}
-              >
+              <span className={`leading-none transition-transform duration-300 ease-out ${isActive ? "scale-110" : "scale-100"}`}>
                 {t.icon}
               </span>
               <span className="text-[10px] mt-0.5 font-medium whitespace-nowrap">{t.label}</span>
             </button>
           );
         })}
-        <div
-          className="absolute bottom-0 h-0.5 bg-[#f97316] rounded-full pointer-events-none"
-          style={indicatorStyle}
-        />
+        <div className="absolute bottom-0 h-0.5 bg-[#f97316] rounded-full pointer-events-none" style={indicatorStyle} />
       </div>
     </nav>
   );
