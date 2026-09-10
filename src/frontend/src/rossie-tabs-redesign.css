@@ -1,0 +1,181 @@
+/* Rossie Core Tabs — complete visual refresh
+   Targets existing page markup without changing business logic. */
+
+@keyframes rossie-rise { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+@keyframes rossie-pulse { 0%,100% { opacity:.45; transform:scale(.9); } 50% { opacity:1; transform:scale(1); } }
+
+/* Shared surface language for Contracts / Attendance / Advances / Payments */
+body:has([data-ocid^="contracts."]),
+body:has([data-ocid^="attendance."]),
+body:has([data-ocid^="advances."]),
+body:has([data-ocid^="payments."]) {
+  background:#070b16 !important;
+}
+
+body:has([data-ocid^="contracts."]) .glass-card,
+body:has([data-ocid^="attendance."]) .glass-card,
+body:has([data-ocid^="advances."]) .glass-card,
+body:has([data-ocid^="payments."]) .glass-card {
+  background:linear-gradient(145deg,rgba(20,28,48,.96),rgba(10,15,29,.94)) !important;
+  border:1px solid rgba(255,255,255,.075) !important;
+  box-shadow:0 12px 35px rgba(0,0,0,.22), inset 0 1px 0 rgba(255,255,255,.025) !important;
+  backdrop-filter:blur(18px);
+}
+
+body:has([data-ocid^="contracts."]) h1,
+body:has([data-ocid^="attendance."]) h1,
+body:has([data-ocid^="advances."]) h1,
+body:has([data-ocid^="payments."]) h1 {
+  letter-spacing:-.035em;
+}
+
+/* ---------- CONTRACTS ---------- */
+body:has([data-ocid="contracts.search_input"]) .glass-card {
+  border-radius:20px !important;
+}
+body:has([data-ocid="contracts.search_input"]) input[type="text"] {
+  min-height:46px;
+  background:rgba(255,255,255,.045) !important;
+  border-color:rgba(255,255,255,.08) !important;
+  border-radius:15px !important;
+}
+body:has([data-ocid="contracts.search_input"]) input[type="text"]:focus {
+  border-color:rgba(249,115,22,.65) !important;
+  box-shadow:0 0 0 4px rgba(249,115,22,.08) !important;
+}
+body:has([data-ocid="contracts.search_input"]) [data-ocid^="contract.item."] {
+  min-height:58px;
+  background:rgba(255,255,255,.018);
+}
+body:has([data-ocid="contracts.search_input"]) [data-ocid^="contract.item."]:hover {
+  background:rgba(249,115,22,.055);
+}
+body:has([data-ocid="contracts.search_input"]) .btn-orange {
+  border-radius:13px !important;
+}
+
+/* ---------- ATTENDANCE ---------- */
+body:has([data-ocid^="attendance."]) .swipeable-table-wrapper {
+  border-radius:18px;
+  overflow:auto;
+  border:1px solid rgba(255,255,255,.07);
+  background:rgba(7,11,22,.82);
+}
+body:has([data-ocid^="attendance."]) table {
+  border-spacing:0;
+}
+body:has([data-ocid^="attendance."]) thead th {
+  height:48px;
+  background:linear-gradient(180deg,#18223a,#11192c) !important;
+  color:#9ca8bd !important;
+  font-size:11px !important;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+}
+body:has([data-ocid^="attendance."]) tbody tr {
+  transition:background .18s ease,transform .18s ease;
+}
+body:has([data-ocid^="attendance."]) tbody tr:hover {
+  background:rgba(249,115,22,.045) !important;
+}
+body:has([data-ocid^="attendance."]) tbody td {
+  height:48px;
+  border-bottom-color:rgba(255,255,255,.055) !important;
+}
+body:has([data-ocid^="attendance."]) select {
+  min-height:34px;
+  border-radius:10px !important;
+  border-width:1px !important;
+  font-weight:650;
+}
+body:has([data-ocid^="attendance."]) [data-ocid^="attendance.pagination_"] {
+  border-radius:11px !important;
+}
+
+/* ---------- ADVANCES ---------- */
+body:has([data-ocid="advances.total_outstanding_card"]) [data-ocid="advances.total_outstanding_card"] {
+  min-height:118px;
+  border-radius:22px !important;
+  padding:20px !important;
+  background:
+    radial-gradient(circle at 88% 20%,rgba(249,115,22,.18),transparent 34%),
+    linear-gradient(145deg,#18233b,#0d1425) !important;
+  border-color:rgba(249,115,22,.2) !important;
+}
+body:has([data-ocid="advances.total_outstanding_card"]) [data-ocid="advances.total_outstanding_card"] p:nth-of-type(2) {
+  font-size:30px !important;
+  line-height:1.05;
+}
+body:has([data-ocid="advances.total_outstanding_card"]) [data-ocid="advances.labour_card.button"] {
+  min-height:56px;
+  background:rgba(255,255,255,.018);
+  transition:background .18s ease;
+}
+body:has([data-ocid="advances.total_outstanding_card"]) [data-ocid="advances.labour_card.button"]:hover {
+  background:rgba(249,115,22,.055);
+}
+body:has([data-ocid="advances.total_outstanding_card"]) select {
+  min-height:42px;
+  border-radius:13px !important;
+}
+body:has([data-ocid="advances.total_outstanding_card"]) [data-ocid="advances.edit_button"],
+body:has([data-ocid="advances.total_outstanding_card"]) [data-ocid="advances.delete_button"] {
+  padding:6px 9px;
+  border-radius:8px;
+  background:rgba(255,255,255,.04);
+}
+
+/* ---------- PAYMENTS ---------- */
+body:has([data-ocid="payments.contract_select_dropdown"]) .glass-card {
+  border-radius:20px !important;
+}
+body:has([data-ocid="payments.contract_select_dropdown"]) select,
+body:has([data-ocid="payments.contract_select_dropdown"]) input {
+  min-height:44px;
+  border-radius:13px !important;
+}
+body:has([data-ocid="payments.contract_select_dropdown"]) table {
+  border-collapse:separate;
+  border-spacing:0;
+  overflow:hidden;
+}
+body:has([data-ocid="payments.contract_select_dropdown"]) thead th {
+  background:linear-gradient(180deg,#18233b,#10182b) !important;
+  color:#a9b3c5 !important;
+  text-transform:uppercase;
+  letter-spacing:.05em;
+  font-size:10px !important;
+}
+body:has([data-ocid="payments.contract_select_dropdown"]) tbody tr {
+  transition:background .18s ease;
+}
+body:has([data-ocid="payments.contract_select_dropdown"]) tbody tr:hover {
+  background:rgba(249,115,22,.045) !important;
+}
+body:has([data-ocid="payments.contract_select_dropdown"]) [data-ocid="payments.overview_button"] {
+  min-height:44px;
+  border-radius:13px !important;
+}
+
+/* Shared action hierarchy */
+body:has([data-ocid^="contracts."]) button,
+body:has([data-ocid^="attendance."]) button,
+body:has([data-ocid^="advances."]) button,
+body:has([data-ocid^="payments."]) button {
+  -webkit-tap-highlight-color:transparent;
+}
+body:has([data-ocid^="contracts."]) button:active,
+body:has([data-ocid^="attendance."]) button:active,
+body:has([data-ocid^="advances."]) button:active,
+body:has([data-ocid^="payments."]) button:active {
+  transform:scale(.985);
+}
+
+@media (max-width:640px) {
+  body:has([data-ocid^="contracts."]) .glass-card,
+  body:has([data-ocid^="attendance."]) .glass-card,
+  body:has([data-ocid^="advances."]) .glass-card,
+  body:has([data-ocid^="payments."]) .glass-card {
+    box-shadow:0 8px 24px rgba(0,0,0,.2),inset 0 1px 0 rgba(255,255,255,.02) !important;
+  }
+}
