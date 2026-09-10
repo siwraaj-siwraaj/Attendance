@@ -14,6 +14,7 @@ import type { Tab } from "../types";
 interface BottomTabBarProps {
   activeTab: Tab;
   onTabChange: (tab: Tab) => void;
+  swipeProgress?: number;
 }
 
 const ALL_TAB_DEFS: { key: Tab; label: string; icon: React.ReactNode }[] = [
@@ -25,7 +26,7 @@ const ALL_TAB_DEFS: { key: Tab; label: string; icon: React.ReactNode }[] = [
   { key: "settled", label: "Settled", icon: <CheckSquare size={24} strokeWidth={2} /> },
 ];
 
-export default function BottomTabBar({ activeTab, onTabChange }: BottomTabBarProps) {
+export default function BottomTabBar({ activeTab, onTabChange, swipeProgress = 0 }: BottomTabBarProps) {
   const { allowedTabs } = useAuth();
   const tabs = ALL_TAB_DEFS.filter((t) => allowedTabs.includes(t.key));
   const prevTabRef = useRef<Tab>(activeTab);
@@ -35,17 +36,20 @@ export default function BottomTabBar({ activeTab, onTabChange }: BottomTabBarPro
     const idx = tabs.findIndex((t) => t.key === activeTab);
     const total = tabs.length;
     if (idx < 0 || total === 0) return;
+    const visualIndex = Math.max(0, Math.min(total - 1, idx - swipeProgress));
+    const isSwiping = Math.abs(swipeProgress) > 0.001;
     setIndicatorStyle({
-      left: `${(idx / total) * 100}%`,
+      left: `${(visualIndex / total) * 100}%`,
       width: `${100 / total}%`,
       boxShadow: "0 0 8px rgba(249, 115, 22, 0.7)",
-      transition:
-        prevTabRef.current !== activeTab
-          ? "left 0.3s cubic-bezier(0.4,0,0.2,1), width 0.3s cubic-bezier(0.4,0,0.2,1)"
+      transition: isSwiping
+        ? "none"
+        : prevTabRef.current !== activeTab
+          ? "left 0.18s cubic-bezier(0.22,1,0.36,1), width 0.18s cubic-bezier(0.22,1,0.36,1)"
           : "none",
     });
     prevTabRef.current = activeTab;
-  }, [activeTab, tabs]);
+  }, [activeTab, tabs, swipeProgress]);
 
   return (
     <nav
