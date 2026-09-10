@@ -30,6 +30,7 @@ export default function Layout({ children }: LayoutProps) {
   const swipeBlocked = useRef(false);
   const swipeIntent = useRef(false);
   const swipeTabs = useAuth().allowedTabs;
+  const swipeContentRef = useRef<HTMLDivElement | null>(null);
   const mainRef = useRef<HTMLElement | null>(null);
 
   useAutoBackupReminder(mode === "edit");
@@ -165,23 +166,6 @@ export default function Layout({ children }: LayoutProps) {
     logout();
   };
 
-  const finishSwipe = (dx: number) => {
-    const main = mainRef.current;
-    if (!main) return;
-    main.style.transition = "transform 180ms cubic-bezier(0.22, 1, 0.36, 1)";
-    main.style.transform = `translate3d(${dx < 0 ? "-18px" : "18px"}, 0, 0)`;
-    requestAnimationFrame(() => {
-      onTabChange(swipeTabs[swipeTabs.indexOf(activeTab) + (dx < 0 ? 1 : -1)]);
-      requestAnimationFrame(() => {
-        main.style.transform = `translate3d(${dx < 0 ? "18px" : "-18px"}, 0, 0)`;
-        requestAnimationFrame(() => {
-          main.style.transition = "transform 180ms cubic-bezier(0.22, 1, 0.36, 1)";
-          main.style.transform = "translate3d(0, 0, 0)";
-        });
-      });
-    });
-  };
-
   return (
     <div className="min-h-screen flex flex-col bg-[#0a0f1e]">
       <BackButtonGuard enabled={mode !== null} onReturnToSelection={() => { logout(); setActiveTab("contracts"); }} />
@@ -228,10 +212,10 @@ export default function Layout({ children }: LayoutProps) {
           touchStartX.current = e.touches[0]?.clientX ?? null;
           touchStartY.current = e.touches[0]?.clientY ?? null;
           if (!swipeBlocked.current) {
-            const main = mainRef.current;
-            if (main) {
-              main.style.transition = "none";
-              main.style.transform = "translate3d(0, 0, 0)";
+            const content = swipeContentRef.current;
+            if (content) {
+              content.style.transition = "none";
+              content.style.transform = "translate3d(0, 0, 0)";
             }
           }
         }}
@@ -253,8 +237,8 @@ export default function Layout({ children }: LayoutProps) {
           const index = swipeTabs.indexOf(activeTab);
           const atEdge = (dx > 0 && index <= 0) || (dx < 0 && index >= swipeTabs.length - 1);
           const dampedDx = atEdge ? dx * 0.28 : dx * 0.92;
-          const main = mainRef.current;
-          if (main) main.style.transform = `translate3d(${dampedDx}px, 0, 0)`;
+          const content = swipeContentRef.current;
+          if (content) content.style.transform = `translate3d(${dampedDx}px, 0, 0)`;
         }}
         onTouchEnd={(e) => {
           const startX = touchStartX.current;
@@ -271,19 +255,19 @@ export default function Layout({ children }: LayoutProps) {
           const index = swipeTabs.indexOf(activeTab);
           const nextIndex = dx < 0 ? index + 1 : index - 1;
           const valid = Math.abs(dx) >= 55 && Math.abs(dx) > Math.abs(dy) * 1.15 && nextIndex >= 0 && nextIndex < swipeTabs.length;
-          const main = mainRef.current;
-          if (!main) return;
-          main.style.transition = "transform 180ms cubic-bezier(0.22, 1, 0.36, 1)";
+          const content = swipeContentRef.current;
+          if (!content) return;
+          content.style.transition = "transform 180ms cubic-bezier(0.22, 1, 0.36, 1)";
           if (!valid) {
-            main.style.transform = "translate3d(0, 0, 0)";
+            content.style.transform = "translate3d(0, 0, 0)";
             return;
           }
-          const width = Math.max(main.clientWidth, 320);
-          main.style.transform = `translate3d(${dx < 0 ? -width : width}px, 0, 0)`;
+          const width = Math.max(mainRef.current?.clientWidth ?? 0, 320);
+          content.style.transform = `translate3d(${dx < 0 ? -width : width}px, 0, 0)`;
           setTimeout(() => {
             onTabChange(swipeTabs[nextIndex]);
             requestAnimationFrame(() => {
-              const current = mainRef.current;
+              const current = swipeContentRef.current;
               if (!current) return;
               current.style.transition = "none";
               current.style.transform = `translate3d(${dx < 0 ? width : -width}px, 0, 0)`;
@@ -294,10 +278,16 @@ export default function Layout({ children }: LayoutProps) {
             });
           }, 180);
         }}
-        className="flex-1 overflow-hidden flex flex-col"
-        style={{ height: "calc(100dvh - 56px - 64px)", willChange: "transform", touchAction: "pan-y" }}
+        className="flex-1 min-h-0 overflow-hidden flex flex-col"
+        style={{ height: "calc(100dvh - 56px - 64px)", touchAction: "pan-y" }}
       >
-        {children}
+        <div
+          ref={swipeContentRef}
+          className="flex-1 min-h-0 min-w-0 flex flex-col"
+          style={{ width: "100%", willChange: "transform" }}
+        >
+          {children}
+        </div>
       </main>
 
       {mode && <BottomTabBar activeTab={activeTab} onTabChange={onTabChange} />}
