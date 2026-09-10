@@ -23,6 +23,11 @@ jobs:
             -o /tmp/app-icon.png
           file /tmp/app-icon.png
 
+      - name: Install ImageMagick
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y imagemagick
+
       - name: Generate Android launcher icons
         run: |
           set -e
@@ -31,7 +36,7 @@ jobs:
             dir="${spec%%:*}"
             size="${spec##*:}"
             mkdir -p "$base/$dir"
-            magick /tmp/app-icon.png -resize "${size}x${size}" "$base/$dir/ic_launcher.png"
+            convert /tmp/app-icon.png -resize "${size}x${size}" "$base/$dir/ic_launcher.png"
             cp "$base/$dir/ic_launcher.png" "$base/$dir/ic_launcher_round.png"
           done
 
