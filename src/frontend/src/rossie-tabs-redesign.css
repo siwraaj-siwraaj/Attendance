@@ -4,6 +4,63 @@
 @keyframes rossie-rise { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
 @keyframes rossie-pulse { 0%,100% { opacity:.45; transform:scale(.9); } 50% { opacity:1; transform:scale(1); } }
 
+html, body, #root {
+  min-height: 100%;
+  background: #040913;
+}
+
+body {
+  margin: 0;
+  overscroll-behavior-y: none;
+}
+
+/* The bottom navigation is fixed. Reserve its full visual footprint so it
+   never covers report totals, page actions, cards, or floating buttons. */
+body:has([data-ocid="bottom_tab_bar"]) main {
+  padding-bottom: calc(98px + env(safe-area-inset-bottom, 0px));
+}
+
+/* Keep floating actions above the navigation dock. */
+body:has([data-ocid="bottom_tab_bar"]) [data-ocid$=".add_button"] {
+  bottom: calc(112px + env(safe-area-inset-bottom, 0px)) !important;
+}
+
+/* Edge-to-edge: the web content itself must be able to occupy the safe-area
+   behind the Android status bar. The native layer also uses transparent bars. */
+body:has([data-ocid="bottom_tab_bar"]) header {
+  margin-top: calc(-1 * env(safe-area-inset-top, 0px));
+  padding-top: calc(env(safe-area-inset-top, 0px) + 0px) !important;
+}
+
+/* Fix the dark active label in the combined Contract + Attendance stepper.
+   The original uses the theme's foreground variable, which resolves too dark
+   in the Android dark theme. */
+.flow-step-active .flow-step-label {
+  color: #f8fafc !important;
+}
+.flow-step-label {
+  color: #98a3b7;
+}
+
+/* Dialogs must stay readable after the dark-theme visual refresh. */
+.glass-dialog {
+  color: #f8fafc;
+  background: linear-gradient(145deg, rgba(13,19,33,.985), rgba(6,11,22,.99)) !important;
+  border: 1px solid rgba(255,255,255,.09);
+  box-shadow: 0 24px 70px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.035);
+}
+.glass-dialog label,
+.glass-dialog .text-gray-400,
+.glass-dialog .text-gray-500 {
+  color: #a8b1c2 !important;
+}
+.glass-dialog input,
+.glass-dialog textarea,
+.glass-dialog select {
+  color: #f8fafc !important;
+  background: rgba(255,255,255,.045) !important;
+}
+
 /* Shared surface language for Contracts / Attendance / Advances / Payments */
 body:has([data-ocid^="contracts."]),
 body:has([data-ocid^="attendance."]),
