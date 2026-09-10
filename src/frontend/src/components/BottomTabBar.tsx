@@ -17,53 +17,55 @@ interface LayoutProps {
   swipeProgress?: number;
 }
 
-const ALL_TAB_DEFS: { key: Tab; label: string; icon: React.ReactNode }[] = [
-  { key: "contracts", label: "Contracts", icon: <FileText size={24} strokeWidth={2} /> },
-  { key: "attendance", label: "Attendance", icon: <ClipboardList size={24} strokeWidth={2} /> },
-  { key: "advances", label: "Advances", icon: <Wallet size={24} strokeWidth={2} /> },
-  { key: "payments", label: "Payments", icon: <CreditCard size={24} strokeWidth={2} /> },
-  { key: "labours", label: "Labours", icon: <Users size={24} strokeWidth={2} /> },
-  { key: "settled", label: "Settled", icon: <CheckSquare size={24} strokeWidth={2} /> },
+const ALL_TAB_DEFS: { key: Tab; label: string; shortLabel: string; icon: React.ReactNode }[] = [
+  { key: "contracts", label: "Contracts", shortLabel: "Contracts", icon: <FileText size={21} strokeWidth={1.9} /> },
+  { key: "attendance", label: "Attendance", shortLabel: "Attendance", icon: <ClipboardList size={21} strokeWidth={1.9} /> },
+  { key: "advances", label: "Advances", shortLabel: "Advances", icon: <Wallet size={21} strokeWidth={1.9} /> },
+  { key: "payments", label: "Payments", shortLabel: "Payments", icon: <CreditCard size={21} strokeWidth={1.9} /> },
+  { key: "labours", label: "Labours", shortLabel: "Labours", icon: <Users size={21} strokeWidth={1.9} /> },
+  { key: "settled", label: "Settled", shortLabel: "Settled", icon: <CheckSquare size={21} strokeWidth={1.9} /> },
 ];
 
 export default function BottomTabBar({ activeTab, onTabChange, swipeProgress = 0 }: LayoutProps) {
   const { allowedTabs } = useAuth();
   const tabs = ALL_TAB_DEFS.filter((t) => allowedTabs.includes(t.key));
-  const prevTabRef = useRef<Tab>(activeTab);
+  const previousTabRef = useRef<Tab>(activeTab);
   const indicatorRef = useRef<HTMLDivElement | null>(null);
   const [indicatorStyle, setIndicatorStyle] = useState<React.CSSProperties>({});
 
   useEffect(() => {
-    const idx = tabs.findIndex((t) => t.key === activeTab);
+    const index = tabs.findIndex((tab) => tab.key === activeTab);
     const total = tabs.length;
-    if (idx < 0 || total === 0) return;
+    if (index < 0 || total === 0) return;
 
-    const boundedProgress = Math.max(-0.5, Math.min(0.5, swipeProgress));
-    const visualIndex = Math.max(0, Math.min(total - 1, idx + boundedProgress));
-    const isSwiping = Math.abs(boundedProgress) > 0.001;
-    const tabChanged = prevTabRef.current !== activeTab;
+    const progress = Math.max(-0.5, Math.min(0.5, swipeProgress));
+    const visualIndex = Math.max(0, Math.min(total - 1, index + progress));
+    const swiping = Math.abs(progress) > 0.001;
+    const changed = previousTabRef.current !== activeTab;
 
     setIndicatorStyle({
-      left: `${(visualIndex / total) * 100}%`,
-      width: `${100 / total}%`,
-      boxShadow: "0 0 8px rgba(249, 115, 22, 0.7)",
-      transition: isSwiping ? "none" : tabChanged ? "left 220ms cubic-bezier(0.22, 1, 0.36, 1)" : "none",
+      left: `calc(${(visualIndex / total) * 100}% + 4px)`,
+      width: `calc(${100 / total}% - 8px)`,
+      transition: swiping
+        ? "none"
+        : changed
+          ? "left 300ms cubic-bezier(0.22, 1, 0.36, 1), width 200ms ease"
+          : "none",
       transformOrigin: "center",
     });
 
-    if (tabChanged && !isSwiping) {
+    if (changed && !swiping) {
       requestAnimationFrame(() => {
         const indicator = indicatorRef.current;
         if (!indicator) return;
         indicator.animate(
           [
-            { transform: "scaleX(1)", offset: 0 },
-            { transform: "scaleX(1.5)", offset: 0.35 },
-            { transform: "scaleX(0.82)", offset: 0.72 },
-            { transform: "scaleX(1)", offset: 1 },
+            { transform: "translateY(0) scaleX(0.82) scaleY(0.92)" },
+            { transform: "translateY(-2px) scaleX(1.08) scaleY(1)" },
+            { transform: "translateY(0) scaleX(1) scaleY(1)" },
           ],
           {
-            duration: 360,
+            duration: 320,
             easing: "cubic-bezier(0.22, 1, 0.36, 1)",
             fill: "none",
           },
@@ -71,63 +73,77 @@ export default function BottomTabBar({ activeTab, onTabChange, swipeProgress = 0
       });
     }
 
-    prevTabRef.current = activeTab;
+    previousTabRef.current = activeTab;
   }, [activeTab, tabs, swipeProgress]);
 
   return (
     <nav
-      className="tab-bar z-50"
+      className="fixed left-0 right-0 bottom-0 z-50 pointer-events-none"
       data-ocid="bottom_tab_bar"
-      style={{
-        position: "fixed",
-        left: 0,
-        right: 0,
-        bottom: 0,
-        width: "100%",
-        boxSizing: "border-box",
-        paddingBottom: "env(safe-area-inset-bottom, 0px)",
-        minHeight: "calc(64px + env(safe-area-inset-bottom, 0px))",
-        height: "calc(64px + env(safe-area-inset-bottom, 0px))",
-        zIndex: 50,
-        isolation: "isolate",
-        transform: "none",
-        WebkitTransform: "none",
-        willChange: "auto",
-      }}
+      style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
     >
-      <div className="flex items-center justify-around relative h-16 min-h-16">
-        {tabs.map((t) => {
-          const isActive = activeTab === t.key;
-          return (
-            <button
-              key={t.key}
-              type="button"
-              onClick={() => onTabChange(t.key)}
-              className={`relative flex flex-col items-center justify-center flex-1 min-w-0 h-16 py-1.5 transition-all duration-200 ease-out active:scale-[0.97] ${
-                isActive ? "text-[#f97316]" : "text-gray-500"
-              }`}
-              style={{ touchAction: "manipulation" }}
-              data-ocid={`tab.${t.key}`}
-            >
-              <span
-                className="leading-none"
-                style={{
-                  transform: isActive ? "scale(1.08)" : "scale(1)",
-                  transition: "transform 220ms cubic-bezier(0.22, 1, 0.36, 1)",
-                  willChange: "transform",
-                }}
-              >
-                {t.icon}
-              </span>
-              <span className="text-[10px] mt-0.5 font-medium whitespace-nowrap">{t.label}</span>
-            </button>
-          );
-        })}
+      <div className="mx-3 mb-2.5 pointer-events-auto">
         <div
-          ref={indicatorRef}
-          className="absolute bottom-0 h-0.5 bg-[#f97316] rounded-full pointer-events-none"
-          style={indicatorStyle}
-        />
+          className="relative h-[68px] rounded-[22px] border border-white/[0.08] overflow-hidden"
+          style={{
+            background: "linear-gradient(180deg, rgba(18,25,43,0.97) 0%, rgba(8,13,27,0.98) 100%)",
+            boxShadow: "0 12px 36px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.05)",
+            backdropFilter: "blur(22px)",
+            WebkitBackdropFilter: "blur(22px)",
+          }}
+        >
+          <div
+            className="absolute inset-x-8 top-0 h-px"
+            style={{ background: "linear-gradient(90deg, transparent, rgba(249,115,22,0.45), transparent)" }}
+          />
+
+          <div className="relative flex h-full items-center px-1.5">
+            <div
+              ref={indicatorRef}
+              className="absolute top-1.5 bottom-1.5 rounded-[18px] pointer-events-none"
+              style={{
+                ...indicatorStyle,
+                background: "linear-gradient(180deg, rgba(249,115,22,0.18), rgba(249,115,22,0.08))",
+                border: "1px solid rgba(249,115,22,0.18)",
+                boxShadow: "0 0 20px rgba(249,115,22,0.08), inset 0 1px 0 rgba(255,255,255,0.04)",
+                willChange: "left, transform",
+              }}
+            />
+
+            {tabs.map((tab) => {
+              const isActive = activeTab === tab.key;
+              return (
+                <button
+                  key={tab.key}
+                  type="button"
+                  onClick={() => onTabChange(tab.key)}
+                  className="relative z-10 flex h-full min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-[18px] px-0.5"
+                  style={{ touchAction: "manipulation", WebkitTapHighlightColor: "transparent" }}
+                  data-ocid={`tab.${tab.key}`}
+                  aria-label={tab.label}
+                  aria-current={isActive ? "page" : undefined}
+                >
+                  <span
+                    className="flex h-7 w-8 items-center justify-center rounded-xl"
+                    style={{
+                      color: isActive ? "#fb923c" : "#8b94a7",
+                      transform: isActive ? "translateY(-1px) scale(1.04)" : "translateY(0) scale(1)",
+                      transition: "color 220ms ease, transform 280ms cubic-bezier(0.22,1,0.36,1)",
+                    }}
+                  >
+                    {tab.icon}
+                  </span>
+                  <span
+                    className="max-w-full truncate text-[9px] font-semibold tracking-[0.01em]"
+                    style={{ color: isActive ? "#f7f8fa" : "#737d91", transition: "color 200ms ease" }}
+                  >
+                    {tab.shortLabel}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
       </div>
     </nav>
   );
