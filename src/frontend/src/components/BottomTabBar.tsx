@@ -26,11 +26,60 @@ const ALL_TAB_DEFS: { key: Tab; label: string; icon: React.ReactNode }[] = [
   { key: "settled", label: "Settled", icon: <CheckSquare size={24} strokeWidth={2} /> },
 ];
 
-export default function BottomTabBar({ activeTab, onTabChange, swipeProgress = 0 }: BottomTabBarProps) {
+export default function BottomTabBar({ activeTab, onTabChange, swipeProgress: externalSwipeProgress = 0 }: BottomTabBarProps) {
   const { allowedTabs } = useAuth();
   const tabs = ALL_TAB_DEFS.filter((t) => allowedTabs.includes(t.key));
   const prevTabRef = useRef<Tab>(activeTab);
+  const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
+  const [localSwipeProgress, setLocalSwipeProgress] = useState(0);
   const [indicatorStyle, setIndicatorStyle] = useState<React.CSSProperties>({});
+  const swipeProgress = Math.abs(externalSwipeProgress) > 0.001 ? externalSwipeProgress : localSwipeProgress;
+
+  useEffect(() => {
+    const handleTouchStart = (e: TouchEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (!target?.closest("main") || target.closest('table, [role="dialog"], [data-pdf-preview], input, textarea, select, button, [data-no-tab-swipe]')) {
+        touchStartX.current = null;
+        touchStartY.current = null;
+        setLocalSwipeProgress(0);
+        return;
+      }
+      touchStartX.current = e.touches[0]?.clientX ?? null;
+      touchStartY.current = e.touches[0]?.clientY ?? null;
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (touchStartX.current === null || touchStartY.current === null) return;
+      const touch = e.touches[0];
+      if (!touch) return;
+      const dx = touch.clientX - touchStartX.current;
+      const dy = touch.clientY - touchStartY.current;
+      if (Math.abs(dx) <= Math.abs(dy) * 1.15 || Math.abs(dx) < 8) return;
+      const width = Math.max(window.innerWidth, 320);
+      const progress = dx / width;
+      const index = tabs.indexOf(activeTab);
+      const atEdge = (progress > 0 && index <= 0) || (progress < 0 && index >= tabs.length - 1);
+      setLocalSwipeProgress(atEdge ? -progress * 0.28 : -progress * 0.92);
+    };
+
+    const handleTouchEnd = () => {
+      touchStartX.current = null;
+      touchStartY.current = null;
+      setLocalSwipeProgress(0);
+    };
+
+    window.addEventListener("touchstart", handleTouchStart, { passive: true });
+    window.addEventListener("touchmove", handleTouchMove, { passive: true });
+    window.addEventListener("touchend", handleTouchEnd, { passive: true });
+    window.addEventListener("touchcancel", handleTouchEnd, { passive: true });
+    return () => {
+      window.removeEventListener("touchstart", handleTouchStart);
+      window.removeEventListener("touchmove", handleTouchMove);
+      window.removeEventListener("touchend", handleTouchEnd);
+      window.removeEventListener("touchcancel", handleTouchEnd);
+    };
+  }, [activeTab, tabs]);
 
   useEffect(() => {
     const idx = tabs.findIndex((t) => t.key === activeTab);
