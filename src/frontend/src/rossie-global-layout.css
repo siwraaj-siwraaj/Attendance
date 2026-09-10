@@ -20,6 +20,14 @@ body:has([data-ocid="bottom_tab_bar"]) main > div {
   min-height: 0;
 }
 
+/* Contracts already uses flex-1 for its list. Its old fixed 100vh height
+   conflicts with the edge-to-edge header and the fixed bottom navigation. */
+body:has([data-ocid="contracts.search_input"]) main [class*="overflow-y-auto"] {
+  height: auto !important;
+  max-height: none !important;
+  min-height: 0;
+}
+
 /* Every floating primary action uses the same clearance above the dock. */
 body:has([data-ocid="bottom_tab_bar"]) [data-ocid$=".add_button"] {
   bottom: var(--rossie-nav-clearance) !important;
