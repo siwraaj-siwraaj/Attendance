@@ -52,14 +52,23 @@ export default function BottomTabBar({ activeTab, onTabChange }: BottomTabBarPro
       className="tab-bar z-50"
       data-ocid="bottom_tab_bar"
       style={{
+        position: "fixed",
+        left: 0,
+        right: 0,
+        bottom: 0,
+        width: "100%",
+        boxSizing: "border-box",
         paddingBottom: "env(safe-area-inset-bottom, 0px)",
         minHeight: "calc(64px + env(safe-area-inset-bottom, 0px))",
-        transform: "translateZ(0)",
-        WebkitTransform: "translateZ(0)",
-        willChange: "transform",
+        height: "calc(64px + env(safe-area-inset-bottom, 0px))",
+        zIndex: 50,
+        isolation: "isolate",
+        transform: "none",
+        WebkitTransform: "none",
+        willChange: "auto",
       }}
     >
-      <div className="flex items-center justify-around relative min-h-16">
+      <div className="flex items-center justify-around relative h-16 min-h-16">
         {tabs.map((t) => {
           const isActive = activeTab === t.key;
           return (
@@ -67,7 +76,7 @@ export default function BottomTabBar({ activeTab, onTabChange }: BottomTabBarPro
               key={t.key}
               type="button"
               onClick={() => onTabChange(t.key)}
-              className={`relative flex flex-col items-center justify-center flex-1 min-w-0 py-1.5 transition-all duration-300 ease-out ${
+              className={`relative flex flex-col items-center justify-center flex-1 min-w-0 h-16 py-1.5 transition-all duration-300 ease-out ${
                 isActive ? "text-[#f97316]" : "text-gray-500"
               }`}
               style={{ touchAction: "manipulation" }}
