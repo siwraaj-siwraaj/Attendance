@@ -3,7 +3,7 @@ import { useState } from "react";
 import ErrorBoundary from "./components/ErrorBoundary";
 import Layout from "./components/Layout";
 import PendingApproval from "./components/PendingApproval";
-import { useAuth } from "./hooks/useAuth";
+import { AuthProvider, useAuth } from "./hooks/useAuth";
 import {
   useAdvances,
   useAllAttendance,
@@ -125,8 +125,6 @@ function AppContent() {
     setActiveTab("attendance");
   };
 
-  // Keep the app shell visible until Remember Me/session restoration finishes.
-  // This prevents the launcher -> white/blank -> login flash on app startup.
   if (isInitializing) return <OpeningRossie />;
 
   if (!isAuthenticated) {
