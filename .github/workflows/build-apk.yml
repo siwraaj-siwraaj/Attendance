@@ -59,3 +59,4 @@ jobs:
           path: src/frontend/android/app/build/outputs/apk/debug/app-debug.apk
 
 # Rebuild trigger to refresh the downloadable APK artifact.
+# Triggered after custom work-column name fix.
