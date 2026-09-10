@@ -14,6 +14,27 @@ const LaboursPage = lazy(() => import("./pages/LaboursPage"));
 const SettledPage = lazy(() => import("./pages/SettledPage"));
 const AdminPanel = lazy(() => import("./pages/AdminPanel"));
 
+// A stalled mobile/WebView network request must not leave React Query in a
+// permanent first-load state. React Query retries rejected requests, but it
+// cannot recover from a fetch promise that never settles. Keep the existing
+// AbortSignal behavior while adding a hard upper bound for every fetch.
+const FETCH_TIMEOUT_MS = 15_000;
+if (typeof window !== "undefined" && !(window as any).__rossieFetchTimeoutInstalled) {
+  const nativeFetch = window.fetch.bind(window);
+  window.fetch = ((input: RequestInfo | URL, init?: RequestInit) => {
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+    const externalSignal = init?.signal;
+    const abortFromCaller = () => controller.abort();
+    externalSignal?.addEventListener("abort", abortFromCaller, { once: true });
+    return nativeFetch(input, { ...init, signal: controller.signal }).finally(() => {
+      window.clearTimeout(timeout);
+      externalSignal?.removeEventListener("abort", abortFromCaller);
+    });
+  }) as typeof window.fetch;
+  (window as any).__rossieFetchTimeoutInstalled = true;
+}
+
 const defaultQueryClient = new QueryClient({
   defaultOptions: {
     queries: {
