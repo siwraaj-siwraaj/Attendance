@@ -23,6 +23,7 @@ const RESTORE_TIMEOUT_MS = 10000;
 interface AuthContextType {
   isInitializing: boolean;
   isAuthenticated: boolean;
+  username: string | null;
   login: (username: string, password: string, rememberMe?: boolean) => Promise<boolean>;
   logout: () => void;
   status: UserStatus | null;
@@ -69,7 +70,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!cancelled) setIsInitializing(false);
     };
 
-    // Never leave the app behind an initialization screen if actor creation fails.
     if (!actor) {
       timeoutId = setTimeout(finishInitialization, 1500);
       return () => {
@@ -114,9 +114,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           await clearBiometricCredentials();
         }
       } catch {
-        if (!cancelled) {
-          localStorage.removeItem(REMEMBER_ME_KEY);
-        }
+        if (!cancelled) localStorage.removeItem(REMEMBER_ME_KEY);
       } finally {
         finishInitialization();
       }
@@ -214,6 +212,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const value: AuthContextType = {
     isInitializing,
     isAuthenticated,
+    username,
     login,
     logout,
     status,
