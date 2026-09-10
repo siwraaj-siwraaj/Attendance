@@ -91,7 +91,7 @@ export default function LoginPage() {
             <label className="login-label" htmlFor="login-username" style={{ color: "#b3bdcc" }}>Username</label>
             <div className="relative">
               <UserRound size={19} strokeWidth={1.8} className="pointer-events-none absolute left-4 top-1/2 z-10 -translate-y-1/2 text-[#aab5c7]" aria-hidden="true" />
-              <input id="login-username" type="text" autoComplete="username" value={username} onChange={(e) => { setUsername(e.target.value); if (error) setError(null); }} className={`login-input h-12 pl-12 pr-4 ${error ? "login-input-error" : ""}`} style={{ color: "#ffffff", WebkitTextFillColor: "#ffffff", caretColor: "#f97316" }} placeholder="Enter your username" data-ocid="login.username_input" />
+              <input id="login-username" type="text" autoComplete="username" value={username} onChange={(e) => { setUsername(e.target.value); if (error) setError(null); }} className={`login-input h-12 ${error ? "login-input-error" : ""}`} style={{ color: "#ffffff", WebkitTextFillColor: "#ffffff", caretColor: "#f97316", paddingLeft: "3.25rem", paddingRight: "1rem" }} placeholder="Enter your username" data-ocid="login.username_input" />
             </div>
           </div>
 
@@ -99,7 +99,7 @@ export default function LoginPage() {
             <label className="login-label" htmlFor="login-password" style={{ color: "#b3bdcc" }}>Password</label>
             <div className="relative">
               <LockKeyhole size={19} strokeWidth={1.8} className="pointer-events-none absolute left-4 top-1/2 z-10 -translate-y-1/2 text-[#aab5c7]" aria-hidden="true" />
-              <input id="login-password" type={showPassword ? "text" : "password"} autoComplete="current-password" value={password} onChange={(e) => { setPassword(e.target.value); if (error) setError(null); }} className={`login-input h-12 pl-12 pr-12 ${error ? "login-input-error" : ""}`} style={{ color: "#ffffff", WebkitTextFillColor: "#ffffff", caretColor: "#f97316" }} placeholder="Enter your password" data-ocid="login.password_input" />
+              <input id="login-password" type={showPassword ? "text" : "password"} autoComplete="current-password" value={password} onChange={(e) => { setPassword(e.target.value); if (error) setError(null); }} className={`login-input h-12 ${error ? "login-input-error" : ""}`} style={{ color: "#ffffff", WebkitTextFillColor: "#ffffff", caretColor: "#f97316", paddingLeft: "3.25rem", paddingRight: "3.25rem" }} placeholder="Enter your password" data-ocid="login.password_input" />
               <button type="button" onClick={() => setShowPassword((v) => !v)} className="absolute right-3 top-1/2 z-10 -translate-y-1/2 rounded-md p-1.5 text-[#9aa6ba] transition-colors hover:text-white active:scale-95" aria-label={showPassword ? "Hide password" : "Show password"} data-ocid="login.toggle_password">
                 {showPassword ? <EyeOff size={18} aria-hidden="true" /> : <Eye size={18} aria-hidden="true" />}
               </button>
