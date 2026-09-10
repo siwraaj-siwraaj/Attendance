@@ -1,27 +1,18 @@
-import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/react-query";
-import { lazy, Suspense, useEffect, useState, type ReactNode } from "react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { lazy, Suspense, useState } from "react";
 import ErrorBoundary from "./components/ErrorBoundary";
 import Layout from "./components/Layout";
 import PendingApproval from "./components/PendingApproval";
 import { AuthProvider, useAuth } from "./hooks/useAuth";
-import { useBackendActor } from "./hooks/useBackend";
 import LoginPage from "./pages/LoginPage";
 
-const loadContractsPage = () => import("./pages/ContractsPage");
-const loadAttendancePage = () => import("./pages/AttendancePage");
-const loadAdvancesPage = () => import("./pages/AdvancesPage");
-const loadPaymentsPage = () => import("./pages/PaymentsPage");
-const loadLaboursPage = () => import("./pages/LaboursPage");
-const loadSettledPage = () => import("./pages/SettledPage");
-const loadAdminPanel = () => import("./pages/AdminPanel");
-
-const ContractsPage = lazy(loadContractsPage);
-const AttendancePage = lazy(loadAttendancePage);
-const AdvancesPage = lazy(loadAdvancesPage);
-const PaymentsPage = lazy(loadPaymentsPage);
-const LaboursPage = lazy(loadLaboursPage);
-const SettledPage = lazy(loadSettledPage);
-const AdminPanel = lazy(loadAdminPanel);
+const ContractsPage = lazy(() => import("./pages/ContractsPage"));
+const AttendancePage = lazy(() => import("./pages/AttendancePage"));
+const AdvancesPage = lazy(() => import("./pages/AdvancesPage"));
+const PaymentsPage = lazy(() => import("./pages/PaymentsPage"));
+const LaboursPage = lazy(() => import("./pages/LaboursPage"));
+const SettledPage = lazy(() => import("./pages/SettledPage"));
+const AdminPanel = lazy(() => import("./pages/AdminPanel"));
 
 const defaultQueryClient = new QueryClient({
   defaultOptions: {
@@ -32,6 +23,7 @@ const defaultQueryClient = new QueryClient({
       gcTime: 15 * 60 * 1000,
       refetchOnWindowFocus: false,
       refetchOnMount: true,
+      refetchOnReconnect: true,
     },
   },
 });
@@ -44,89 +36,6 @@ function OpeningRossie() {
 
 function PageLoading() { return <div className="flex h-full min-h-[240px] items-center justify-center" aria-live="polite" aria-label="Loading page"><div className="h-7 w-7 animate-spin rounded-full border-2 border-orange-500 border-t-transparent" /></div>; }
 
-function DataPreloader({ children }: { children: ReactNode }) {
-  const { actor, actorReady } = useBackendActor();
-  const queryClient = useQueryClient();
-  const { isAuthenticated, status } = useAuth();
-  const [ready, setReady] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-    if (!actorReady || !actor || !isAuthenticated || status !== "approved") {
-      setReady(false);
-      return () => { cancelled = true; };
-    }
-
-    setReady(false);
-    const warm = async () => {
-      try {
-        // Load data and page chunks in parallel. Each data request is handled
-        // independently so one failed preload cannot hide the other tabs' data.
-        const [dataResults] = await Promise.all([
-          Promise.allSettled([
-            actor.getContracts(),
-            actor.getLabours(),
-            actor.getActiveLabours(),
-            actor.getAdvances(),
-            actor.getAllAttendance(),
-          ]),
-          Promise.allSettled([
-            loadContractsPage(),
-            loadAttendancePage(),
-            loadAdvancesPage(),
-            loadPaymentsPage(),
-            loadLaboursPage(),
-            loadSettledPage(),
-            loadAdminPanel(),
-          ]),
-        ]);
-
-        if (cancelled) return;
-
-        const [contractsResult, laboursResult, activeLaboursResult, advancesResult, attendanceResult] = dataResults;
-
-        if (contractsResult.status === "fulfilled") {
-          queryClient.setQueryData(["contracts"], contractsResult.value);
-          queryClient.setQueryData(["contracts", "all"], contractsResult.value);
-        }
-        if (laboursResult.status === "fulfilled") queryClient.setQueryData(["labours"], laboursResult.value);
-        if (activeLaboursResult.status === "fulfilled") queryClient.setQueryData(["labours", "active"], activeLaboursResult.value);
-        if (advancesResult.status === "fulfilled") {
-          queryClient.setQueryData(["advances"], advancesResult.value);
-          const advancesByContract = new Map<string, typeof advancesResult.value>();
-          for (const item of advancesResult.value) {
-            const key = String(item.contractId);
-            const list = advancesByContract.get(key);
-            if (list) list.push(item); else advancesByContract.set(key, [item]);
-          }
-          for (const [contractId, items] of advancesByContract) queryClient.setQueryData(["advances", contractId], items);
-        }
-        if (attendanceResult.status === "fulfilled") {
-          queryClient.setQueryData(["attendance", "all"], attendanceResult.value);
-          const attendanceByContract = new Map<string, typeof attendanceResult.value>();
-          for (const item of attendanceResult.value) {
-            const key = String(item.contractId);
-            const list = attendanceByContract.get(key);
-            if (list) list.push(item); else attendanceByContract.set(key, [item]);
-          }
-          for (const [contractId, items] of attendanceByContract) queryClient.setQueryData(["attendance", contractId], items);
-        }
-
-        await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
-        if (!cancelled) setReady(true);
-      } catch {
-        if (!cancelled) setReady(true);
-      }
-    };
-
-    void warm();
-    return () => { cancelled = true; };
-  }, [actor, actorReady, isAuthenticated, status, queryClient]);
-
-  if (isAuthenticated && status === "approved" && !ready) return <OpeningRossie />;
-  return <>{children}</>;
-}
-
 function AppContent() {
   const { isAuthenticated, isInitializing, status, mode, activeTab, setActiveTab, attendanceContractId, setAttendanceContractId } = useAuth();
   const [selectedContractId, setSelectedContractId] = useState<bigint | null>(null);
@@ -138,16 +47,16 @@ function AppContent() {
   if (!isAuthenticated) return <div className="fixed inset-0 flex items-center justify-center" style={{ background: "#0d1220" }}><div className="ambient-glow-1" aria-hidden="true" /><div className="ambient-glow-2" aria-hidden="true" /><LoginPage /></div>;
   if (status !== "approved") return <PendingApproval />;
   return <Layout><div className="flex flex-col h-full"><ErrorBoundary tabName={activeTab} key={activeTab}><Suspense fallback={<PageLoading />}>
-    {activeTab === "admin" && <AdminPanel />}
-    {mode === "view" && activeTab === "attendance" && <AttendancePage selectedContractId={selectedContractId} openColumnPickerFor={openColumnPickerFor} onColumnPickerOpened={() => setOpenColumnPickerFor(null)} />}
-    {mode === "view" && activeTab === "contracts" && <ContractsPage />}
-    {mode === "edit" && activeTab === "contracts" && <ContractsPage onViewAttendance={handleViewAttendance} />}
-    {mode === "edit" && activeTab === "attendance" && <AttendancePage selectedContractId={selectedContractId ?? attendanceContractId} onContractChange={setAttendanceContractId} openColumnPickerFor={openColumnPickerFor} onColumnPickerOpened={() => setOpenColumnPickerFor(null)} />}
-    {(mode === "edit" || mode === "view") && activeTab === "advances" && <AdvancesPage />}
-    {(mode === "edit" || mode === "view") && activeTab === "payments" && <PaymentsPage selectedContractIds={selectedContractIds} setSelectedContractIds={setSelectedContractIds} paymentData={paymentData} setPaymentData={setPaymentData} />}
-    {(mode === "edit" || mode === "view") && activeTab === "labours" && <LaboursPage />}
-    {(mode === "edit" || mode === "view") && activeTab === "settled" && <SettledPage />}
+    {activeTab === "admin" && <AdminPanel key="admin" />}
+    {mode === "view" && activeTab === "attendance" && <AttendancePage key="attendance" selectedContractId={selectedContractId} openColumnPickerFor={openColumnPickerFor} onColumnPickerOpened={() => setOpenColumnPickerFor(null)} />}
+    {mode === "view" && activeTab === "contracts" && <ContractsPage key="contracts-view" />}
+    {mode === "edit" && activeTab === "contracts" && <ContractsPage key="contracts-edit" onViewAttendance={handleViewAttendance} />}
+    {mode === "edit" && activeTab === "attendance" && <AttendancePage key="attendance-edit" selectedContractId={selectedContractId ?? attendanceContractId} onContractChange={setAttendanceContractId} openColumnPickerFor={openColumnPickerFor} onColumnPickerOpened={() => setOpenColumnPickerFor(null)} />}
+    {(mode === "edit" || mode === "view") && activeTab === "advances" && <AdvancesPage key="advances" />}
+    {(mode === "edit" || mode === "view") && activeTab === "payments" && <PaymentsPage key="payments" selectedContractIds={selectedContractIds} setSelectedContractIds={setSelectedContractIds} paymentData={paymentData} setPaymentData={setPaymentData} />}
+    {(mode === "edit" || mode === "view") && activeTab === "labours" && <LaboursPage key="labours" />}
+    {(mode === "edit" || mode === "view") && activeTab === "settled" && <SettledPage key="settled" />}
   </Suspense></ErrorBoundary></div></Layout>;
 }
 
-export default function App({ queryClient }: AppProps = {}) { const qc = queryClient ?? defaultQueryClient; return <ErrorBoundary><QueryClientProvider client={qc}><AuthProvider><DataPreloader><AppContent /></DataPreloader></AuthProvider></QueryClientProvider></ErrorBoundary>; }
+export default function App({ queryClient }: AppProps = {}) { const qc = queryClient ?? defaultQueryClient; return <ErrorBoundary><QueryClientProvider client={qc}><AuthProvider><AppContent /></AuthProvider></QueryClientProvider></ErrorBoundary>; }
