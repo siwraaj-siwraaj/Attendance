@@ -1,5 +1,5 @@
 import { AlertCircle, Eye, EyeOff, Loader2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { biometricLogin } from "../hooks/nativeBiometric";
 import { useAuth } from "../hooks/useAuth";
 
@@ -7,40 +7,35 @@ export default function LoginPage() {
   const { login } = useAuth();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [biometricBusy, setBiometricBusy] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    void (async () => {
-      const credentials = await biometricLogin();
-      if (!credentials || cancelled) return;
-
-      setBiometricBusy(true);
-      const ok = await login(credentials.username, credentials.password);
-      if (!cancelled && !ok) {
-        setBiometricBusy(false);
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [login]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!username.trim() || !password || submitting) return;
     setSubmitting(true);
     setError(null);
-    const ok = await login(username.trim(), password);
+    const ok = await login(username.trim(), password, rememberMe);
     setSubmitting(false);
     if (!ok) {
       setError("Invalid username or password");
     }
+  };
+
+  const handleBiometric = async () => {
+    if (biometricBusy || submitting) return;
+    setBiometricBusy(true);
+    setError(null);
+    const credentials = await biometricLogin();
+    if (credentials) {
+      // A successful biometric unlock is itself a remembered-login flow.
+      const ok = await login(credentials.username, credentials.password, true);
+      if (!ok) setError("Saved login expired. Please sign in again.");
+    }
+    setBiometricBusy(false);
   };
 
   return (
@@ -48,11 +43,9 @@ export default function LoginPage() {
       className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden px-4"
       style={{ background: "#0d1220" }}
     >
-      {/* Ambient glow layers */}
       <div className="ambient-glow-1" aria-hidden="true" />
       <div className="ambient-glow-2" aria-hidden="true" />
 
-      {/* App identity — icon + name + subtitle */}
       <div
         className="flex flex-col items-center mb-8 relative z-10"
         style={{ animation: "loginFadeDown 0.55s ease-out both" }}
@@ -109,7 +102,6 @@ export default function LoginPage() {
         </p>
       </div>
 
-      {/* Sign-in card */}
       <div
         className="relative z-10 w-full max-w-sm mx-auto"
         style={{ animation: "loginFadeUp 0.6s ease-out 0.15s both" }}
@@ -119,7 +111,6 @@ export default function LoginPage() {
           onSubmit={handleSubmit}
           data-ocid="login.form"
         >
-          {/* Card header */}
           <div className="mb-6 text-center">
             <h2
               className="text-xl font-bold text-white mb-1"
@@ -132,7 +123,6 @@ export default function LoginPage() {
             </p>
           </div>
 
-          {/* Validation error banner */}
           {error && (
             <div
               className="login-error mb-4"
@@ -144,7 +134,6 @@ export default function LoginPage() {
             </div>
           )}
 
-          {/* Username */}
           <div className="mb-4">
             <label className="login-label" htmlFor="login-username">
               Username
@@ -161,8 +150,7 @@ export default function LoginPage() {
             />
           </div>
 
-          {/* Password */}
-          <div className="mb-6">
+          <div className="mb-4">
             <label className="login-label" htmlFor="login-password">
               Password
             </label>
@@ -195,27 +183,29 @@ export default function LoginPage() {
             </div>
           </div>
 
-          {/* Biometric / PIN login */}
+          {/* Remember Me — controls secure persistent login, not password autofill. */}
+          <label className="mb-6 flex cursor-pointer items-center gap-2.5 select-none">
+            <input
+              type="checkbox"
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
+              className="h-4 w-4 accent-orange-500"
+              data-ocid="login.remember_me_checkbox"
+            />
+            <span className="text-sm" style={{ color: "#aab3c2" }}>
+              Remember me
+            </span>
+          </label>
+
           <button
             type="button"
-            onClick={async () => {
-              if (biometricBusy || submitting) return;
-              setBiometricBusy(true);
-              setError(null);
-              const credentials = await biometricLogin();
-              if (credentials) {
-                const ok = await login(credentials.username, credentials.password);
-                if (!ok) setError("Saved login expired. Please sign in again.");
-              }
-              setBiometricBusy(false);
-            }}
+            onClick={handleBiometric}
             className="mb-3 w-full rounded-xl border border-[#f97316]/40 bg-[#f97316]/10 py-3 font-semibold text-orange-300 transition-colors hover:bg-[#f97316]/20"
             disabled={biometricBusy || submitting}
           >
             {biometricBusy ? "Verifying…" : "🔐 Use Fingerprint / PIN"}
           </button>
 
-          {/* Submit */}
           <button
             type="submit"
             className="login-submit flex items-center justify-center gap-2"
