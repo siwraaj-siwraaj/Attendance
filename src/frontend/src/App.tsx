@@ -1,23 +1,18 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import ErrorBoundary from "./components/ErrorBoundary";
 import Layout from "./components/Layout";
 import PendingApproval from "./components/PendingApproval";
 import { AuthProvider, useAuth } from "./hooks/useAuth";
-import {
-  useAdvances,
-  useAllAttendance,
-  useContracts,
-} from "./hooks/useBackend";
 import LoginPage from "./pages/LoginPage";
 
-import ContractsPage from "./pages/ContractsPage";
-import AttendancePage from "./pages/AttendancePage";
-import AdvancesPage from "./pages/AdvancesPage";
-import PaymentsPage from "./pages/PaymentsPage";
-import LaboursPage from "./pages/LaboursPage";
-import SettledPage from "./pages/SettledPage";
-import AdminPanel from "./pages/AdminPanel";
+const ContractsPage = lazy(() => import("./pages/ContractsPage"));
+const AttendancePage = lazy(() => import("./pages/AttendancePage"));
+const AdvancesPage = lazy(() => import("./pages/AdvancesPage"));
+const PaymentsPage = lazy(() => import("./pages/PaymentsPage"));
+const LaboursPage = lazy(() => import("./pages/LaboursPage"));
+const SettledPage = lazy(() => import("./pages/SettledPage"));
+const AdminPanel = lazy(() => import("./pages/AdminPanel"));
 
 const defaultQueryClient = new QueryClient({
   defaultOptions: {
@@ -96,11 +91,12 @@ function OpeningRossie() {
   );
 }
 
-function DataPreloader() {
-  useContracts();
-  useAllAttendance();
-  useAdvances();
-  return null;
+function PageLoading() {
+  return (
+    <div className="flex h-full min-h-[240px] items-center justify-center" aria-live="polite" aria-label="Loading page">
+      <div className="h-7 w-7 animate-spin rounded-full border-2 border-orange-500 border-t-transparent" />
+    </div>
+  );
 }
 
 function AppContent() {
@@ -141,38 +137,39 @@ function AppContent() {
 
   return (
     <Layout>
-      <DataPreloader />
       <div className="flex flex-col h-full">
         <ErrorBoundary tabName={activeTab}>
-          {activeTab === "admin" && <AdminPanel />}
-          {mode === "view" && activeTab === "attendance" && (
-            <AttendancePage
-              selectedContractId={selectedContractId}
-              openColumnPickerFor={openColumnPickerFor}
-              onColumnPickerOpened={() => setOpenColumnPickerFor(null)}
-            />
-          )}
-          {mode === "view" && activeTab === "contracts" && <ContractsPage />}
-          {mode === "edit" && activeTab === "contracts" && <ContractsPage onViewAttendance={handleViewAttendance} />}
-          {mode === "edit" && activeTab === "attendance" && (
-            <AttendancePage
-              selectedContractId={selectedContractId ?? attendanceContractId}
-              onContractChange={setAttendanceContractId}
-              openColumnPickerFor={openColumnPickerFor}
-              onColumnPickerOpened={() => setOpenColumnPickerFor(null)}
-            />
-          )}
-          {(mode === "edit" || mode === "view") && activeTab === "advances" && <AdvancesPage />}
-          {(mode === "edit" || mode === "view") && activeTab === "payments" && (
-            <PaymentsPage
-              selectedContractIds={selectedContractIds}
-              setSelectedContractIds={setSelectedContractIds}
-              paymentData={paymentData}
-              setPaymentData={setPaymentData}
-            />
-          )}
-          {(mode === "edit" || mode === "view") && activeTab === "labours" && <LaboursPage />}
-          {(mode === "edit" || mode === "view") && activeTab === "settled" && <SettledPage />}
+          <Suspense fallback={<PageLoading />}>
+            {activeTab === "admin" && <AdminPanel />}
+            {mode === "view" && activeTab === "attendance" && (
+              <AttendancePage
+                selectedContractId={selectedContractId}
+                openColumnPickerFor={openColumnPickerFor}
+                onColumnPickerOpened={() => setOpenColumnPickerFor(null)}
+              />
+            )}
+            {mode === "view" && activeTab === "contracts" && <ContractsPage />}
+            {mode === "edit" && activeTab === "contracts" && <ContractsPage onViewAttendance={handleViewAttendance} />}
+            {mode === "edit" && activeTab === "attendance" && (
+              <AttendancePage
+                selectedContractId={selectedContractId ?? attendanceContractId}
+                onContractChange={setAttendanceContractId}
+                openColumnPickerFor={openColumnPickerFor}
+                onColumnPickerOpened={() => setOpenColumnPickerFor(null)}
+              />
+            )}
+            {(mode === "edit" || mode === "view") && activeTab === "advances" && <AdvancesPage />}
+            {(mode === "edit" || mode === "view") && activeTab === "payments" && (
+              <PaymentsPage
+                selectedContractIds={selectedContractIds}
+                setSelectedContractIds={setSelectedContractIds}
+                paymentData={paymentData}
+                setPaymentData={setPaymentData}
+              />
+            )}
+            {(mode === "edit" || mode === "view") && activeTab === "labours" && <LaboursPage />}
+            {(mode === "edit" || mode === "view") && activeTab === "settled" && <SettledPage />}
+          </Suspense>
         </ErrorBoundary>
       </div>
     </Layout>
