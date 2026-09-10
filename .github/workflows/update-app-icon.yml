@@ -1,0 +1,49 @@
+name: Update Android App Icon
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update-icon:
+    if: github.event_name == 'workflow_dispatch' || !contains(github.event.head_commit.message, 'Update Android launcher icon assets')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download issue #25 icon
+        run: |
+          curl -L --fail --retry 3 \
+            'https://github.com/user-attachments/assets/2eef21d8-f6f3-4a9c-9138-5c3d4e5d3c43' \
+            -o /tmp/app-icon.png
+          file /tmp/app-icon.png
+          identify /tmp/app-icon.png
+
+      - name: Generate Android launcher icons
+        run: |
+          set -e
+          base='src/frontend/android/app/src/main/res'
+          for spec in 'mipmap-mdpi:48' 'mipmap-hdpi:72' 'mipmap-xhdpi:96' 'mipmap-xxhdpi:144' 'mipmap-xxxhdpi:192'; do
+            dir="${spec%%:*}"
+            size="${spec##*:}"
+            mkdir -p "$base/$dir"
+            magick /tmp/app-icon.png -resize "${size}x${size}" "$base/$dir/ic_launcher.png"
+            cp "$base/$dir/ic_launcher.png" "$base/$dir/ic_launcher_round.png"
+          done
+
+          # Use the exact supplied bitmap for all Android versions.
+          rm -f "$base/mipmap-anydpi-v26/ic_launcher.xml" "$base/mipmap-anydpi-v26/ic_launcher_round.xml"
+          rm -f "$base/mipmap-anydpi-v26/ic_launcher_foreground.xml" 2>/dev/null || true
+
+      - name: Commit icon changes
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/frontend/android/app/src/main/res
+          git commit -m 'Update Android launcher icon assets' || exit 0
+          git push
