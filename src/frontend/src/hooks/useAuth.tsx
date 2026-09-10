@@ -9,7 +9,7 @@ import {
 } from "react";
 import { Role, UserStatus } from "../backend";
 import type { AppMode, Tab } from "../types";
-import { canEditForRole, tabsForRole } from "../types";
+import { tabsForRole } from "../types";
 import {
   clearBiometricCredentials,
   getSavedCredentials,
@@ -18,15 +18,12 @@ import {
 import { useBackendActor } from "./useBackend";
 
 const REMEMBER_ME_KEY = "rossie.rememberMe";
+const RESTORE_TIMEOUT_MS = 10000;
 
 interface AuthContextType {
-  /** True while a remembered secure session is being restored. */
   isInitializing: boolean;
-  /** True when the user has successfully signed in with a username/password. */
   isAuthenticated: boolean;
-  /** Sign in with a username/password, optionally remembering the secure login. */
   login: (username: string, password: string, rememberMe?: boolean) => Promise<boolean>;
-  /** Sign out and clear any remembered login. */
   logout: () => void;
   status: UserStatus | null;
   role: Role | null;
@@ -52,9 +49,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [roles, setRoles] = useState<Role[]>([]);
   const [isInitializing, setIsInitializing] = useState(true);
   const [activeTab, setActiveTabState] = useState<Tab>("contracts");
-  const [attendanceContractId, setAttendanceContractId] = useState<
-    bigint | null
-  >(null);
+  const [attendanceContractId, setAttendanceContractId] = useState<bigint | null>(null);
 
   const isAuthenticated = username !== null;
 
@@ -66,52 +61,77 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setRoles((result as { roles?: Role[]; role: Role }).roles ?? [result.role]);
   }, []);
 
-  // Restore an explicitly remembered login from the OS secure credential store.
-  // This runs before AppContent can render LoginPage, preventing a login flash.
   useEffect(() => {
     let cancelled = false;
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
 
-    void (async () => {
-      if (!actor) return;
+    const finishInitialization = () => {
+      if (!cancelled) setIsInitializing(false);
+    };
 
+    // Never leave the app behind an initialization screen if actor creation fails.
+    if (!actor) {
+      timeoutId = setTimeout(finishInitialization, 1500);
+      return () => {
+        cancelled = true;
+        if (timeoutId) clearTimeout(timeoutId);
+      };
+    }
+
+    const restore = async () => {
       const rememberMe = localStorage.getItem(REMEMBER_ME_KEY) === "true";
       if (!rememberMe) {
-        if (!cancelled) setIsInitializing(false);
+        finishInitialization();
         return;
       }
 
       try {
-        const credentials = await getSavedCredentials();
+        const credentials = await Promise.race([
+          getSavedCredentials(),
+          new Promise<null>((resolve) => {
+            timeoutId = setTimeout(() => resolve(null), RESTORE_TIMEOUT_MS);
+          }),
+        ]);
+
         if (!credentials || cancelled) {
-          if (!cancelled) setIsInitializing(false);
+          finishInitialization();
           return;
         }
 
-        const result = await actor.login(credentials);
-        if (!cancelled) {
-          if (result) applyLoginResult(result);
-          else {
-            localStorage.removeItem(REMEMBER_ME_KEY);
-            await clearBiometricCredentials();
-          }
-          setIsInitializing(false);
+        const result = await Promise.race([
+          actor.login(credentials),
+          new Promise<null>((resolve) => {
+            timeoutId = setTimeout(() => resolve(null), RESTORE_TIMEOUT_MS);
+          }),
+        ]);
+
+        if (cancelled) return;
+
+        if (result) {
+          applyLoginResult(result);
+        } else {
+          localStorage.removeItem(REMEMBER_ME_KEY);
+          await clearBiometricCredentials();
         }
       } catch {
-        if (!cancelled) setIsInitializing(false);
+        if (!cancelled) {
+          localStorage.removeItem(REMEMBER_ME_KEY);
+        }
+      } finally {
+        finishInitialization();
       }
-    })();
+    };
+
+    void restore();
 
     return () => {
       cancelled = true;
+      if (timeoutId) clearTimeout(timeoutId);
     };
   }, [actor, applyLoginResult]);
 
   const login = useCallback(
-    async (
-      usernameInput: string,
-      password: string,
-      rememberMe = false,
-    ): Promise<boolean> => {
+    async (usernameInput: string, password: string, rememberMe = false): Promise<boolean> => {
       if (!actor) return false;
       const result = await actor.login({ username: usernameInput, password });
       if (!result) return false;
@@ -125,7 +145,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         localStorage.removeItem(REMEMBER_ME_KEY);
         await clearBiometricCredentials();
       }
-
       return true;
     },
     [actor, applyLoginResult],
