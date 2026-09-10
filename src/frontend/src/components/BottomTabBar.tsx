@@ -85,7 +85,9 @@ export default function BottomTabBar({ activeTab, onTabChange, swipeProgress: ex
     const idx = tabs.findIndex((t) => t.key === activeTab);
     const total = tabs.length;
     if (idx < 0 || total === 0) return;
-    const visualIndex = Math.max(0, Math.min(total - 1, idx - swipeProgress));
+    // swipeProgress is deliberately inverted in handleTouchMove. Adding it
+    // here makes the indicator travel opposite to the user's finger.
+    const visualIndex = Math.max(0, Math.min(total - 1, idx + swipeProgress));
     const isSwiping = Math.abs(swipeProgress) > 0.001;
     setIndicatorStyle({
       left: `${(visualIndex / total) * 100}%`,
