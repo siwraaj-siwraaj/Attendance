@@ -62,7 +62,11 @@ export default function BottomTabBar({ activeTab, onTabChange, swipeProgress: ex
       const progress = dx / width;
       const index = tabs.indexOf(activeTab);
       const atEdge = (progress > 0 && index <= 0) || (progress < 0 && index >= tabs.length - 1);
-      setLocalSwipeProgress(atEdge ? -progress * 0.28 : -progress * 0.92);
+      // Keep the indicator tied to a single adjacent tab. A long finger swipe
+      // must not drag the indicator across two or more tabs; Layout only commits
+      // one tab per swipe.
+      const indicatorProgress = atEdge ? -progress * 0.28 : -progress * 0.92;
+      setLocalSwipeProgress(Math.max(-1, Math.min(1, indicatorProgress)));
       didSwipeRef.current = Math.abs(dx) >= 8;
     };
 
@@ -101,7 +105,9 @@ export default function BottomTabBar({ activeTab, onTabChange, swipeProgress: ex
     const idx = tabs.findIndex((t) => t.key === activeTab);
     const total = tabs.length;
     if (idx < 0 || total === 0) return;
-    const visualIndex = Math.max(0, Math.min(total - 1, idx + swipeProgress));
+    // The indicator may move only toward the immediately adjacent tab during
+    // one swipe. This prevents a long swipe from visually crossing two tabs.
+    const visualIndex = Math.max(0, Math.min(total - 1, Math.max(idx - 1, Math.min(idx + 1, idx + swipeProgress))));
     const isSwiping = Math.abs(swipeProgress) > 0.001;
     setIndicatorStyle({
       left: `${(visualIndex / total) * 100}%`,
