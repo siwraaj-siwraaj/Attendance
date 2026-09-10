@@ -28,12 +28,12 @@ export default function Layout({ children }: LayoutProps) {
   const touchStartX = useRef<number | null>(null);
   const touchStartY = useRef<number | null>(null);
   const swipeBlocked = useRef(false);
+  const swipeIntent = useRef(false);
   const swipeTabs = useAuth().allowedTabs;
+  const mainRef = useRef<HTMLElement | null>(null);
 
   useAutoBackupReminder(mode === "edit");
 
-  // Auto-close settings when switching tabs
-  // biome-ignore lint/correctness/useExhaustiveDependencies: activeTab change is intentionally the trigger
   useEffect(() => {
     setMenuOpen(false);
   }, [activeTab]);
@@ -47,75 +47,26 @@ export default function Layout({ children }: LayoutProps) {
       const data = await exportData();
       const json = safeParse<any>(data as string);
       const rows: string[][] = [];
-
-      // Contracts
       rows.push(["Contracts"]);
-      rows.push([
-        "ID",
-        "Name",
-        "Multiplier",
-        "ContractAmount",
-        "MachineExpenses",
-        "BedAmount",
-        "PaperAmount",
-        "Settled",
-      ]);
-      for (const c of json.contracts || []) {
-        rows.push([
-          String(c.id),
-          c.name,
-          String(c.multiplier),
-          String(c.contractAmount),
-          String(c.machineExpenses),
-          String(c.bedAmount),
-          String(c.paperAmount),
-          String(c.settled),
-        ]);
-      }
+      rows.push(["ID", "Name", "Multiplier", "ContractAmount", "MachineExpenses", "BedAmount", "PaperAmount", "Settled"]);
+      for (const c of json.contracts || []) rows.push([String(c.id), c.name, String(c.multiplier), String(c.contractAmount), String(c.machineExpenses), String(c.bedAmount), String(c.paperAmount), String(c.settled)]);
       rows.push([]);
-
-      // Labours
       rows.push(["Labours"]);
       rows.push(["ID", "Name"]);
-      for (const l of json.labours || []) {
-        rows.push([String(l.id), l.name]);
-      }
+      for (const l of json.labours || []) rows.push([String(l.id), l.name]);
       rows.push([]);
-
-      // Advances
       rows.push(["Advances"]);
       rows.push(["ID", "ContractID", "LabourID", "Amount", "Note"]);
-      for (const a of json.advances || []) {
-        rows.push([
-          String(a.id),
-          String(a.contractId),
-          String(a.labourId),
-          String(a.amount),
-          a.note,
-        ]);
-      }
+      for (const a of json.advances || []) rows.push([String(a.id), String(a.contractId), String(a.labourId), String(a.amount), a.note]);
       rows.push([]);
-
-      // Attendance
       rows.push(["Attendance"]);
       rows.push(["ContractID", "LabourID", "ColumnID", "ValueKind", "Value"]);
       for (const r of json.attendance || []) {
         const kind = r.value.__kind__;
         const val = kind === "partial" ? String(r.value.partial) : kind;
-        rows.push([
-          String(r.contractId),
-          String(r.labourId),
-          r.columnId,
-          kind,
-          val,
-        ]);
+        rows.push([String(r.contractId), String(r.labourId), r.columnId, kind, val]);
       }
-
-      const csv = rows
-        .map((r) =>
-          r.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","),
-        )
-        .join("\n");
+      const csv = rows.map((r) => r.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(",")).join("\n");
       const blob = new Blob([csv], { type: "text/csv" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -134,163 +85,45 @@ export default function Layout({ children }: LayoutProps) {
     try {
       const data = await exportData();
       const json = safeParse<{
-        contracts?: Array<{
-          id: bigint | number | string;
-          name?: string;
-          multiplier?: number;
-          contractAmount?: number;
-          bedAmount?: number;
-          paperAmount?: number;
-          meshAmount?: number;
-          machineExpenses?: number;
-          createdAt?: bigint | number | string;
-          settled?: boolean;
-        }>;
-        labours?: Array<{
-          id: bigint | number | string;
-          name?: string;
-          employeeId?: string;
-          joinDate?: string;
-          active?: boolean;
-          createdAt?: bigint | number | string;
-        }>;
-        advances?: Array<{
-          id: bigint | number | string;
-          contractId?: bigint | number | string;
-          labourId?: bigint | number | string;
-          amount?: number;
-          note?: string;
-          createdAt?: bigint | number | string;
-          cleared?: boolean;
-        }>;
-        attendance?: Array<{
-          contractId?: bigint | number | string;
-          labourId?: bigint | number | string;
-          columnId?: string;
-          value?: { __kind__?: string; partial?: number };
-          markedAt?: bigint | number | string;
-        }>;
+        contracts?: Array<{ id: bigint | number | string; name?: string; multiplier?: number; contractAmount?: number; bedAmount?: number; paperAmount?: number; meshAmount?: number; machineExpenses?: number; createdAt?: bigint | number | string; settled?: boolean }>;
+        labours?: Array<{ id: bigint | number | string; name?: string; employeeId?: string; joinDate?: string; active?: boolean; createdAt?: bigint | number | string }>;
+        advances?: Array<{ id: bigint | number | string; contractId?: bigint | number | string; labourId?: bigint | number | string; amount?: number; note?: string; createdAt?: bigint | number | string; cleared?: boolean }>;
+        attendance?: Array<{ contractId?: bigint | number | string; labourId?: bigint | number | string; columnId?: string; value?: { __kind__?: string; partial?: number }; markedAt?: bigint | number | string }>;
       }>(data as string);
-
-      // Build lookup maps
       const contractMap = new Map<string, string>();
-      for (const c of json.contracts || []) {
-        contractMap.set(String(c.id), c.name || "");
-      }
+      for (const c of json.contracts || []) contractMap.set(String(c.id), c.name || "");
       const labourMap = new Map<string, string>();
-      for (const l of json.labours || []) {
-        labourMap.set(String(l.id), l.name || "");
-      }
-
+      for (const l of json.labours || []) labourMap.set(String(l.id), l.name || "");
       const wb = XLSX.utils.book_new();
-
-      // Sheet 1: Contracts
       const contractRows = [
-        [
-          "Contract Name",
-          "Multiplier",
-          "Contract Amount",
-          "Bed Amount",
-          "Paper Amount",
-          "Mesh Amount",
-          "Machine Expenses",
-          "Created Date",
-        ],
-        ...(json.contracts || []).map((c) => [
-          c.name || "",
-          c.multiplier ?? "",
-          c.contractAmount ?? "",
-          c.bedAmount ?? "",
-          c.paperAmount ?? "",
-          c.meshAmount ?? "",
-          c.machineExpenses ?? "",
-          c.createdAt
-            ? new Date(
-                Number(BigInt(String(c.createdAt)) / BigInt(1_000_000)),
-              ).toLocaleDateString()
-            : "",
-        ]),
+        ["Contract Name", "Multiplier", "Contract Amount", "Bed Amount", "Paper Amount", "Mesh Amount", "Machine Expenses", "Created Date"],
+        ...(json.contracts || []).map((c) => [c.name || "", c.multiplier ?? "", c.contractAmount ?? "", c.bedAmount ?? "", c.paperAmount ?? "", c.meshAmount ?? "", c.machineExpenses ?? "", c.createdAt ? new Date(Number(BigInt(String(c.createdAt)) / BigInt(1_000_000))).toLocaleDateString() : ""]),
       ];
-      XLSX.utils.book_append_sheet(
-        wb,
-        XLSX.utils.aoa_to_sheet(contractRows),
-        "Contracts",
-      );
-
-      // Sheet 2: Labours
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(contractRows), "Contracts");
       const labourRows = [
         ["Name", "Employee ID", "Join Date", "Status"],
-        ...(json.labours || []).map((l) => [
-          l.name || "",
-          l.employeeId || "",
-          l.joinDate || "",
-          l.active === false ? "Inactive" : "Active",
-        ]),
+        ...(json.labours || []).map((l) => [l.name || "", l.employeeId || "", l.joinDate || "", l.active === false ? "Inactive" : "Active"]),
       ];
-      XLSX.utils.book_append_sheet(
-        wb,
-        XLSX.utils.aoa_to_sheet(labourRows),
-        "Labours",
-      );
-
-      // Sheet 3: Advances
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(labourRows), "Labours");
       const advanceRows = [
         ["Labour Name", "Contract Name", "Amount", "Note", "Date", "Cleared"],
-        ...(json.advances || []).map((a) => [
-          labourMap.get(String(a.labourId)) || String(a.labourId),
-          contractMap.get(String(a.contractId)) || String(a.contractId),
-          a.amount ?? "",
-          a.note || "",
-          a.createdAt
-            ? new Date(
-                Number(BigInt(String(a.createdAt)) / BigInt(1_000_000)),
-              ).toLocaleDateString()
-            : "",
-          a.cleared ? "Yes" : "No",
-        ]),
+        ...(json.advances || []).map((a) => [labourMap.get(String(a.labourId)) || String(a.labourId), contractMap.get(String(a.contractId)) || String(a.contractId), a.amount ?? "", a.note || "", a.createdAt ? new Date(Number(BigInt(String(a.createdAt)) / BigInt(1_000_000))).toLocaleDateString() : "", a.cleared ? "Yes" : "No"]),
       ];
-      XLSX.utils.book_append_sheet(
-        wb,
-        XLSX.utils.aoa_to_sheet(advanceRows),
-        "Advances",
-      );
-
-      // Sheet 4: Attendance
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(advanceRows), "Advances");
       const attendanceRows = [
         ["Contract Name", "Labour Name", "Column Name", "Value", "Date"],
         ...(json.attendance || []).map((r) => {
           const kind = r.value?.__kind__;
-          const val =
-            kind === "partial" ? String(r.value?.partial ?? "") : kind || "";
-          return [
-            contractMap.get(String(r.contractId)) || String(r.contractId),
-            labourMap.get(String(r.labourId)) || String(r.labourId),
-            r.columnId || "",
-            val,
-            r.markedAt
-              ? new Date(
-                  Number(BigInt(String(r.markedAt)) / BigInt(1_000_000)),
-                ).toLocaleDateString()
-              : "",
-          ];
+          const val = kind === "partial" ? String(r.value?.partial ?? "") : kind || "";
+          return [contractMap.get(String(r.contractId)) || String(r.contractId), labourMap.get(String(r.labourId)) || String(r.labourId), r.columnId || "", val, r.markedAt ? new Date(Number(BigInt(String(r.markedAt)) / BigInt(1_000_000))).toLocaleDateString() : ""];
         }),
       ];
-      XLSX.utils.book_append_sheet(
-        wb,
-        XLSX.utils.aoa_to_sheet(attendanceRows),
-        "Attendance",
-      );
-
-      XLSX.writeFile(
-        wb,
-        `rossie-export-${new Date().toISOString().slice(0, 10)}.xlsx`,
-      );
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(attendanceRows), "Attendance");
+      XLSX.writeFile(wb, `rossie-export-${new Date().toISOString().slice(0, 10)}.xlsx`);
     } catch {
       // silently fail
     }
   };
-
-  // JSON backup/restore removed per requirements
 
   const handleImportCSV = (file: File) => {
     setMenuOpen(false);
@@ -298,85 +131,27 @@ export default function Layout({ children }: LayoutProps) {
     reader.onload = async () => {
       try {
         const text = String(reader.result);
-        const lines = text
-          .split("\n")
-          .map((l) => l.trim())
-          .filter(Boolean);
+        const lines = text.split("\n").map((l) => l.trim()).filter(Boolean);
         const contracts: unknown[] = [];
         const labours: unknown[] = [];
         const advances: unknown[] = [];
         const attendance: unknown[] = [];
         let section = "";
         let headerSkipped = false;
-
         for (const line of lines) {
-          const cols = line
-            .split(",")
-            .map((c) => c.trim().replace(/^"|"$/g, "").replace(/""/g, '"'));
-          if (
-            cols.length === 1 &&
-            ["Contracts", "Labours", "Advances", "Attendance"].includes(cols[0])
-          ) {
-            section = cols[0];
-            headerSkipped = false;
-            continue;
-          }
-          if (!headerSkipped) {
-            headerSkipped = true;
-            continue;
-          }
-          if (section === "Contracts" && cols.length >= 8) {
-            contracts.push({
-              id: BigInt(cols[0]),
-              name: cols[1],
-              multiplier: Number(cols[2]),
-              contractAmount: Number(cols[3]),
-              machineExpenses: Number(cols[4]),
-              bedAmount: Number(cols[5]),
-              paperAmount: Number(cols[6]),
-              settled: cols[7] === "true",
-              workColumns: [],
-              createdAt: BigInt(Date.now()) * BigInt(1_000_000),
-            });
-          } else if (section === "Labours" && cols.length >= 2) {
-            labours.push({
-              id: BigInt(cols[0]),
-              name: cols[1],
-              createdAt: BigInt(Date.now()) * BigInt(1_000_000),
-            });
-          } else if (section === "Advances" && cols.length >= 5) {
-            advances.push({
-              id: BigInt(cols[0]),
-              contractId: BigInt(cols[1]),
-              labourId: BigInt(cols[2]),
-              amount: Number(cols[3]),
-              note: cols[4],
-              createdAt: BigInt(Date.now()) * BigInt(1_000_000),
-            });
-          } else if (section === "Attendance" && cols.length >= 5) {
+          const cols = line.split(",").map((c) => c.trim().replace(/^"|"$/g, "").replace(/""/g, '"'));
+          if (cols.length === 1 && ["Contracts", "Labours", "Advances", "Attendance"].includes(cols[0])) { section = cols[0]; headerSkipped = false; continue; }
+          if (!headerSkipped) { headerSkipped = true; continue; }
+          if (section === "Contracts" && cols.length >= 8) contracts.push({ id: BigInt(cols[0]), name: cols[1], multiplier: Number(cols[2]), contractAmount: Number(cols[3]), machineExpenses: Number(cols[4]), bedAmount: Number(cols[5]), paperAmount: Number(cols[6]), settled: cols[7] === "true", workColumns: [], createdAt: BigInt(Date.now()) * BigInt(1_000_000) });
+          else if (section === "Labours" && cols.length >= 2) labours.push({ id: BigInt(cols[0]), name: cols[1], createdAt: BigInt(Date.now()) * BigInt(1_000_000) });
+          else if (section === "Advances" && cols.length >= 5) advances.push({ id: BigInt(cols[0]), contractId: BigInt(cols[1]), labourId: BigInt(cols[2]), amount: Number(cols[3]), note: cols[4], createdAt: BigInt(Date.now()) * BigInt(1_000_000) });
+          else if (section === "Attendance" && cols.length >= 5) {
             const kind = cols[3];
-            const val =
-              kind === "present"
-                ? { __kind__: "present", present: null }
-                : kind === "absent"
-                  ? { __kind__: "absent", absent: null }
-                  : { __kind__: "partial", partial: Number(cols[4]) || 0 };
-            attendance.push({
-              contractId: BigInt(cols[0]),
-              labourId: BigInt(cols[1]),
-              columnId: cols[2],
-              value: val,
-            });
+            const val = kind === "present" ? { __kind__: "present", present: null } : kind === "absent" ? { __kind__: "absent", absent: null } : { __kind__: "partial", partial: Number(cols[4]) || 0 };
+            attendance.push({ contractId: BigInt(cols[0]), labourId: BigInt(cols[1]), columnId: cols[2], value: val });
           }
         }
-
-        const payload = safeStringify({
-          contracts,
-          labours,
-          advances,
-          attendance,
-        });
-        await importData(payload);
+        await importData(safeStringify({ contracts, labours, advances, attendance }));
         window.location.reload();
       } catch {
         // silently fail
@@ -390,255 +165,143 @@ export default function Layout({ children }: LayoutProps) {
     logout();
   };
 
+  const finishSwipe = (dx: number) => {
+    const main = mainRef.current;
+    if (!main) return;
+    main.style.transition = "transform 180ms cubic-bezier(0.22, 1, 0.36, 1)";
+    main.style.transform = `translate3d(${dx < 0 ? "-18px" : "18px"}, 0, 0)`;
+    requestAnimationFrame(() => {
+      onTabChange(swipeTabs[swipeTabs.indexOf(activeTab) + (dx < 0 ? 1 : -1)]);
+      requestAnimationFrame(() => {
+        main.style.transform = `translate3d(${dx < 0 ? "18px" : "-18px"}, 0, 0)`;
+        requestAnimationFrame(() => {
+          main.style.transition = "transform 180ms cubic-bezier(0.22, 1, 0.36, 1)";
+          main.style.transform = "translate3d(0, 0, 0)";
+        });
+      });
+    });
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-[#0a0f1e]">
-      <BackButtonGuard
-        enabled={mode !== null}
-        onReturnToSelection={() => {
-          logout();
-          setActiveTab("contracts");
-        }}
-      />
-      {/* Header */}
-      <header
-      className="sticky top-0 z-40 px-4 py-3 flex items-center justify-between"
-      style={{
-        background:
-          "linear-gradient(135deg, #050708 0%, #081515 45%, #0d2928 72%, #1b1308 100%)",
-        borderBottom: "1px solid rgba(249,115,22,0.22)",
-        boxShadow:
-          "inset 0 1px 0 rgba(255,200,100,0.06), 0 4px 22px rgba(0,0,0,0.35)",
-        backdropFilter: "blur(16px)",
-        WebkitBackdropFilter: "blur(16px)",
-      }}
-    >
-      <div className="flex items-center gap-3 min-w-0">
-        <div
-          className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-          style={{
-            background:
-              "linear-gradient(145deg, rgba(20,184,166,0.22), rgba(249,115,22,0.16))",
-            border: "1px solid rgba(249,115,22,0.25)",
-            boxShadow:
-              "inset 0 1px 0 rgba(255,255,255,0.08), 0 4px 12px rgba(0,0,0,0.25)",
-          }}
-        >
-          <span
-            className="text-xl font-bold"
-            style={{
-              color: "#f59e0b",
-              textShadow: "0 0 12px rgba(245,158,11,0.35)",
-            }}
-          >
-            R
-          </span>
-        </div>
-
-        <div className="min-w-0">
-          <h1
-            className="text-xl font-bold tracking-tight leading-tight"
-            style={{
-              background:
-                "linear-gradient(90deg, #ffffff 0%, #fbbf24 55%, #14b8a6 100%)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              backgroundClip: "text",
-            }}
-          >
-            Rossie
-          </h1>
-
-          <p className="text-[10px] tracking-[0.16em] uppercase text-teal-200/60">
-            Attendance Management
-          </p>
-        </div>
-      </div>
-
-      <div className="flex items-center gap-2">
-        {role && (
-          <span
-            className={`hidden sm:inline-flex px-2.5 py-1 rounded-full text-xs font-semibold ${roleBadgeClass(
-              role,
-            )}`}
-            data-ocid="header.role_badge"
-          >
-            {roleLabel(role)}
-          </span>
-        )}
-
-        {mode === "edit" && (
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => setMenuOpen((v) => !v)}
-              className="w-10 h-10 rounded-xl flex items-center justify-center text-white text-xl transition-all active:scale-95"
-              style={{
-                background: menuOpen
-                  ? "rgba(249,115,22,0.18)"
-                  : "rgba(255,255,255,0.06)",
-                border: menuOpen
-                  ? "1px solid rgba(249,115,22,0.4)"
-                  : "1px solid rgba(255,255,255,0.1)",
-                boxShadow: menuOpen
-                  ? "0 0 14px rgba(249,115,22,0.12)"
-                  : "none",
-              }}
-              aria-label="Menu"
-              data-ocid="header.menu_button"
-            >
-              ☰
-            </button>
-
-            {menuOpen && (
-              <>
-                <div
-                  className="fixed inset-0 z-30"
-                  onClick={() => setMenuOpen(false)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Escape") setMenuOpen(false);
-                  }}
-                  tabIndex={-1}
-                  role="presentation"
-                />
-
-                <div
-                  className="absolute right-0 top-12 z-40 w-56 rounded-2xl overflow-hidden"
-                  style={{
-                    background: "rgba(13,18,20,0.97)",
-                    border: "1px solid rgba(249,115,22,0.2)",
-                    boxShadow:
-                      "0 14px 35px rgba(0,0,0,0.45), 0 0 20px rgba(249,115,22,0.06)",
-                    backdropFilter: "blur(18px)",
-                    WebkitBackdropFilter: "blur(18px)",
-                  }}
-                  onClick={(e) => e.stopPropagation()}
-                  onKeyDown={(e) => {
-                    if (e.key === "Escape") setMenuOpen(false);
-                  }}
-                  role="presentation"
-                  tabIndex={-1}
-                >
-                  <div className="py-1">
-                    <button
-                      type="button"
-                      onClick={handleExportCSV}
-                      className="w-full text-left px-4 py-3 text-sm text-white hover:bg-orange-500/10 transition-colors"
-                      data-ocid="header.export_csv"
-                    >
-                      Export CSV
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={handleExportExcel}
-                      className="w-full text-left px-4 py-3 text-sm text-white hover:bg-orange-500/10 transition-colors"
-                      data-ocid="header.export_excel"
-                    >
-                      Export Excel
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setMenuOpen(false);
-                        csvInputRef.current?.click();
-                      }}
-                      className="w-full text-left px-4 py-3 text-sm text-white hover:bg-orange-500/10 transition-colors"
-                      data-ocid="header.import_csv"
-                    >
-                      Import CSV
-                    </button>
-
-                    <div className="border-t border-white/10 my-1" />
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setMenuOpen(false);
-                        setActiveTab("admin");
-                      }}
-                      className="w-full text-left px-4 py-3 text-sm text-white hover:bg-orange-500/10 transition-colors"
-                      data-ocid="header.admin_panel"
-                    >
-                      Admin Panel
-                    </button>
-
-                    <div className="border-t border-white/10 my-1" />
-
-                    <SettingsPanel onClose={() => setMenuOpen(false)} />
-
-                    <div className="border-t border-white/10 my-1" />
-
-                    <button
-                      type="button"
-                      onClick={handleLogout}
-                      className="w-full text-left px-4 py-3 text-sm text-red-400 hover:bg-red-500/10 transition-colors"
-                      data-ocid="header.logout"
-                    >
-                      Logout
-                    </button>
-                  </div>
-                </div>
-              </>
-            )}
+      <BackButtonGuard enabled={mode !== null} onReturnToSelection={() => { logout(); setActiveTab("contracts"); }} />
+      <header className="sticky top-0 z-40 px-4 py-3 flex items-center justify-between" style={{ background: "linear-gradient(135deg, #050708 0%, #081515 45%, #0d2928 72%, #1b1308 100%)", borderBottom: "1px solid rgba(249,115,22,0.22)", boxShadow: "inset 0 1px 0 rgba(255,200,100,0.06), 0 4px 22px rgba(0,0,0,0.35)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)" }}>
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "linear-gradient(145deg, rgba(20,184,166,0.22), rgba(249,115,22,0.16))", border: "1px solid rgba(249,115,22,0.25)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08), 0 4px 12px rgba(0,0,0,0.25)" }}>
+            <span className="text-xl font-bold" style={{ color: "#f59e0b", textShadow: "0 0 12px rgba(245,158,11,0.35)" }}>R</span>
           </div>
-        )}
-      </div>
-    </header>
+          <div className="min-w-0">
+            <h1 className="text-xl font-bold tracking-tight leading-tight" style={{ background: "linear-gradient(90deg, #ffffff 0%, #fbbf24 55%, #14b8a6 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>Rossie</h1>
+            <p className="text-[10px] tracking-[0.16em] uppercase text-teal-200/60">Attendance Management</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          {role && <span className={`hidden sm:inline-flex px-2.5 py-1 rounded-full text-xs font-semibold ${roleBadgeClass(role)}`} data-ocid="header.role_badge">{roleLabel(role)}</span>}
+          {mode === "edit" && <div className="relative">
+            <button type="button" onClick={() => setMenuOpen((v) => !v)} className="w-10 h-10 rounded-xl flex items-center justify-center text-white text-xl transition-all active:scale-95" style={{ background: menuOpen ? "rgba(249,115,22,0.18)" : "rgba(255,255,255,0.06)", border: menuOpen ? "1px solid rgba(249,115,22,0.4)" : "1px solid rgba(255,255,255,0.1)", boxShadow: menuOpen ? "0 0 14px rgba(249,115,22,0.12)" : "none" }} aria-label="Menu" data-ocid="header.menu_button">☰</button>
+            {menuOpen && <>
+              <div className="fixed inset-0 z-30" onClick={() => setMenuOpen(false)} onKeyDown={(e) => { if (e.key === "Escape") setMenuOpen(false); }} tabIndex={-1} role="presentation" />
+              <div className="absolute right-0 top-12 z-40 w-56 rounded-2xl overflow-hidden" style={{ background: "rgba(13,18,20,0.97)", border: "1px solid rgba(249,115,22,0.2)", boxShadow: "0 14px 35px rgba(0,0,0,0.45), 0 0 20px rgba(249,115,22,0.06)", backdropFilter: "blur(18px)", WebkitBackdropFilter: "blur(18px)" }} onClick={(e) => e.stopPropagation()} onKeyDown={(e) => { if (e.key === "Escape") setMenuOpen(false); }} role="presentation" tabIndex={-1}>
+                <div className="py-1">
+                  <button type="button" onClick={handleExportCSV} className="w-full text-left px-4 py-3 text-sm text-white hover:bg-orange-500/10 transition-colors" data-ocid="header.export_csv">Export CSV</button>
+                  <button type="button" onClick={handleExportExcel} className="w-full text-left px-4 py-3 text-sm text-white hover:bg-orange-500/10 transition-colors" data-ocid="header.export_excel">Export Excel</button>
+                  <button type="button" onClick={() => { setMenuOpen(false); csvInputRef.current?.click(); }} className="w-full text-left px-4 py-3 text-sm text-white hover:bg-orange-500/10 transition-colors" data-ocid="header.import_csv">Import CSV</button>
+                  <div className="border-t border-white/10 my-1" />
+                  <button type="button" onClick={() => { setMenuOpen(false); setActiveTab("admin"); }} className="w-full text-left px-4 py-3 text-sm text-white hover:bg-orange-500/10 transition-colors" data-ocid="header.admin_panel">Admin Panel</button>
+                  <div className="border-t border-white/10 my-1" />
+                  <SettingsPanel onClose={() => setMenuOpen(false)} />
+                  <div className="border-t border-white/10 my-1" />
+                  <button type="button" onClick={handleLogout} className="w-full text-left px-4 py-3 text-sm text-red-400 hover:bg-red-500/10 transition-colors" data-ocid="header.logout">Logout</button>
+                </div>
+              </div>
+            </>}
+          </div>}
+        </div>
+      </header>
 
-      {/* Main content — fills viewport between header and tab bar */}
       <main
+        ref={mainRef}
         onTouchStart={(e) => {
-              const target = e.target as HTMLElement | null;
-              swipeBlocked.current = !!target?.closest(
-                'table, [role="dialog"], [data-pdf-preview], input, textarea, select, button, [data-no-tab-swipe]'
-              );
-
-              touchStartX.current = e.touches[0]?.clientX ?? null;
-              touchStartY.current = e.touches[0]?.clientY ?? null;
-            }}
+          const target = e.target as HTMLElement | null;
+          swipeBlocked.current = !!target?.closest('table, [role="dialog"], [data-pdf-preview], input, textarea, select, button, [data-no-tab-swipe]');
+          swipeIntent.current = false;
+          touchStartX.current = e.touches[0]?.clientX ?? null;
+          touchStartY.current = e.touches[0]?.clientY ?? null;
+          if (!swipeBlocked.current) {
+            const main = mainRef.current;
+            if (main) {
+              main.style.transition = "none";
+              main.style.transform = "translate3d(0, 0, 0)";
+            }
+          }
+        }}
+        onTouchMove={(e) => {
+          if (swipeBlocked.current) return;
+          const startX = touchStartX.current;
+          const startY = touchStartY.current;
+          const touch = e.touches[0];
+          if (startX === null || startY === null || !touch) return;
+          const dx = touch.clientX - startX;
+          const dy = touch.clientY - startY;
+          if (!swipeIntent.current) {
+            if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+            if (Math.abs(dx) <= Math.abs(dy) * 1.15) return;
+            swipeIntent.current = true;
+          }
+          if (!swipeIntent.current) return;
+          if (Math.abs(dx) > 0) e.preventDefault();
+          const index = swipeTabs.indexOf(activeTab);
+          const atEdge = (dx > 0 && index <= 0) || (dx < 0 && index >= swipeTabs.length - 1);
+          const dampedDx = atEdge ? dx * 0.28 : dx * 0.92;
+          const main = mainRef.current;
+          if (main) main.style.transform = `translate3d(${dampedDx}px, 0, 0)`;
+        }}
         onTouchEnd={(e) => {
           const startX = touchStartX.current;
           const startY = touchStartY.current;
+          const blocked = swipeBlocked.current;
+          const horizontal = swipeIntent.current;
           touchStartX.current = null;
           touchStartY.current = null;
-            if (swipeBlocked.current) {
-              swipeBlocked.current = false;
-              touchStartX.current = null;
-              touchStartY.current = null;
-              return;
-            }
-            
-          if (startX === null || startY === null || swipeTabs.length < 2) return;
+          swipeBlocked.current = false;
+          swipeIntent.current = false;
+          if (blocked || !horizontal || startX === null || startY === null || swipeTabs.length < 2) return;
           const dx = e.changedTouches[0]?.clientX - startX;
           const dy = e.changedTouches[0]?.clientY - startY;
-          if (Math.abs(dx) < 70 || Math.abs(dx) < Math.abs(dy) * 1.3) return;
           const index = swipeTabs.indexOf(activeTab);
-          if (index < 0) return;
           const nextIndex = dx < 0 ? index + 1 : index - 1;
-          if (nextIndex >= 0 && nextIndex < swipeTabs.length) onTabChange(swipeTabs[nextIndex]);
+          const valid = Math.abs(dx) >= 55 && Math.abs(dx) > Math.abs(dy) * 1.15 && nextIndex >= 0 && nextIndex < swipeTabs.length;
+          const main = mainRef.current;
+          if (!main) return;
+          main.style.transition = "transform 180ms cubic-bezier(0.22, 1, 0.36, 1)";
+          if (!valid) {
+            main.style.transform = "translate3d(0, 0, 0)";
+            return;
+          }
+          const width = Math.max(main.clientWidth, 320);
+          main.style.transform = `translate3d(${dx < 0 ? -width : width}px, 0, 0)`;
+          setTimeout(() => {
+            onTabChange(swipeTabs[nextIndex]);
+            requestAnimationFrame(() => {
+              const current = mainRef.current;
+              if (!current) return;
+              current.style.transition = "none";
+              current.style.transform = `translate3d(${dx < 0 ? width : -width}px, 0, 0)`;
+              requestAnimationFrame(() => {
+                current.style.transition = "transform 220ms cubic-bezier(0.22, 1, 0.36, 1)";
+                current.style.transform = "translate3d(0, 0, 0)";
+              });
+            });
+          }, 180);
         }}
         className="flex-1 overflow-hidden flex flex-col"
-        style={{ height: "calc(100dvh - 56px - 64px)" }}
+        style={{ height: "calc(100dvh - 56px - 64px)", willChange: "transform", touchAction: "pan-y" }}
       >
         {children}
       </main>
 
-      {/* Bottom tab bar */}
       {mode && <BottomTabBar activeTab={activeTab} onTabChange={onTabChange} />}
-
-      {/* Hidden file inputs */}
-      <input
-        ref={csvInputRef}
-        type="file"
-        accept=".csv"
-        className="hidden"
-        onChange={(e) => {
-          const file = e.target.files?.[0];
-          if (file) handleImportCSV(file);
-          e.target.value = "";
-        }}
-      />
+      <input ref={csvInputRef} type="file" accept=".csv" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) handleImportCSV(file); e.target.value = ""; }} />
     </div>
   );
 }
