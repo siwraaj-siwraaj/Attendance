@@ -1,487 +1,114 @@
-import React, {
-  memo,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
-
-import { useAuth } from "../hooks/useAuth";
-
-import { useAddLabour, useLabours, useUpdateLabour } from "../hooks/useBackend";
-
-import { LayoutGrid, List, UserCheck, UserX, Users } from "lucide-react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Search, UserPlus, Users, UserCheck, UserX, Pencil, X, BriefcaseBusiness, CalendarDays, BadgeCheck } from "lucide-react";
 import { toast } from "sonner";
-import SkeletonLoader, { SkeletonCardList } from "../components/SkeletonLoader";
+import { useAuth } from "../hooks/useAuth";
+import { useAddLabour, useLabours, useUpdateLabour } from "../hooks/useBackend";
+import SkeletonLoader from "../components/SkeletonLoader";
 
 function LaboursPage() {
   const { isAdmin } = useAuth();
   const { data: labours = [], isLoading } = useLabours();
   const addLabour = useAddLabour();
   const updateLabour = useUpdateLabour();
-
+  const [query, setQuery] = useState("");
+  const [filter, setFilter] = useState<"all" | "active" | "inactive">("active");
   const [showForm, setShowForm] = useState(false);
-  const [editingLabour, setEditingLabour] = useState<any | null>(null);
+  const [editing, setEditing] = useState<any | null>(null);
   const [name, setName] = useState("");
   const [employeeId, setEmployeeId] = useState("");
   const [joinDate, setJoinDate] = useState("");
-  const [isActiveForm, setIsActiveForm] = useState(true);
+  const [active, setActive] = useState(true);
   const [error, setError] = useState("");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [viewMode, setViewMode] = useState<"list" | "card">("list");
+  const nameRef = useRef<HTMLInputElement>(null);
 
-  const labourNameRef = useRef<HTMLInputElement>(null);
-  useEffect(() => {
-    if (showForm) {
-      const t = setTimeout(() => labourNameRef.current?.focus(), 50);
-      return () => clearTimeout(t);
-    }
-  }, [showForm]);
+  const activeCount = useMemo(() => labours.filter((l: any) => l.isActive !== false).length, [labours]);
+  const inactiveCount = labours.length - activeCount;
+  const filtered = useMemo(() => labours.filter((l: any) => {
+    const statusOk = filter === "all" || (filter === "active" ? l.isActive !== false : l.isActive === false);
+    const q = query.trim().toLowerCase();
+    return statusOk && (!q || String(l.name ?? "").toLowerCase().includes(q) || String(l.employeeId ?? "").toLowerCase().includes(q));
+  }), [labours, filter, query]);
+
+  useEffect(() => { if (showForm) setTimeout(() => nameRef.current?.focus(), 80); }, [showForm]);
 
   const openAdd = useCallback(() => {
-    setEditingLabour(null);
-    setName("");
-    setEmployeeId("");
-    setJoinDate("");
-    setIsActiveForm(true);
-    setError("");
-    setShowForm(true);
+    setEditing(null); setName(""); setEmployeeId(""); setJoinDate(""); setActive(true); setError(""); setShowForm(true);
   }, []);
   const openEdit = useCallback((l: any) => {
-    setEditingLabour(l);
-    setName(l.name);
-    setEmployeeId(l.employeeId ?? "");
-    setJoinDate(l.joinDate ?? "");
-    setIsActiveForm(l.isActive !== false);
-    setError("");
-    setShowForm(true);
+    setEditing(l); setName(l.name ?? ""); setEmployeeId(l.employeeId ?? ""); setJoinDate(l.joinDate ?? ""); setActive(l.isActive !== false); setError(""); setShowForm(true);
   }, []);
+  const save = useCallback(() => {
+    if (!name.trim()) { setError("Name is required"); return; }
+    setShowForm(false); setError("");
+    const onError = (e: unknown) => toast.error(e instanceof Error ? e.message : "Failed to save labour");
+    if (editing) updateLabour.mutate({ id: editing.id, name: name.trim(), employeeId: employeeId.trim(), joinDate: joinDate.trim(), isActive: active }, { onError });
+    else addLabour.mutate({ name: name.trim(), employeeId: employeeId.trim(), joinDate: joinDate.trim() }, { onError });
+  }, [name, employeeId, joinDate, active, editing, addLabour, updateLabour]);
 
-  const handleSave = useCallback(() => {
-    if (!name.trim()) {
-      setError("Name is required");
-      return;
-    }
-    // Close the form immediately — the optimistic update in the mutation
-    // already reflects the change in the list, so the user never waits on
-    // the canister round-trip. Errors surface via toast without blocking.
-    setShowForm(false);
-    setError("");
-    const onError = (err: unknown) => {
-      const msg = err instanceof Error ? err.message : "Failed to save";
-      console.error("Save labour error:", msg);
-      toast.error(msg);
-    };
-    if (editingLabour) {
-      updateLabour.mutate(
-        {
-          id: editingLabour.id,
-          name: name.trim(),
-          employeeId: employeeId.trim(),
-          joinDate: joinDate.trim(),
-          isActive: isActiveForm,
-        },
-        { onError },
-      );
-    } else {
-      addLabour.mutate(
-        {
-          name: name.trim(),
-          employeeId: employeeId.trim(),
-          joinDate: joinDate.trim(),
-        },
-        { onError },
-      );
-    }
-  }, [
-    name,
-    employeeId,
-    joinDate,
-    isActiveForm,
-    editingLabour,
-    updateLabour,
-    addLabour,
-  ]);
-
-  const _handleToggleActive = useCallback(
-    (l: any) => {
-      updateLabour.mutate(
-        {
-          id: l.id,
-          name: l.name,
-          employeeId: l.employeeId ?? "",
-          joinDate: l.joinDate ?? "",
-          isActive: !l.isActive,
-        },
-        {
-          onError: (err) => {
-            const msg = err instanceof Error ? err.message : "Failed to update";
-            console.error("Toggle active error:", err);
-            toast.error(msg);
-          },
-        },
-      );
-    },
-    [updateLabour],
-  );
-
-  const activeLabours = useMemo(
-    () => labours.filter((l: any) => l.isActive !== false),
-    [labours],
-  );
-  const inactiveLabours = useMemo(
-    () => labours.filter((l: any) => l.isActive === false),
-    [labours],
-  );
-
-  const filteredActive = useMemo(
-    () =>
-      activeLabours.filter((l: any) => {
-        if (!searchQuery.trim()) return true;
-        return l.name.toLowerCase().includes(searchQuery.toLowerCase());
-      }),
-    [activeLabours, searchQuery],
-  );
-  const filteredInactive = useMemo(
-    () =>
-      inactiveLabours.filter((l: any) => {
-        if (!searchQuery.trim()) return true;
-        return l.name.toLowerCase().includes(searchQuery.toLowerCase());
-      }),
-    [inactiveLabours, searchQuery],
-  );
-
-  function renderLabourCard(l: any, idx: number) {
-    if (viewMode === "card") {
-      return (
-        <div
-          key={l.id.toString()}
-          className={`glass-card rounded-xl p-4 flex flex-col gap-2 border border-orange-500/15 hover:border-orange-500/40 transition-colors ${
-            l.isActive === false ? "opacity-60" : ""
-          }`}
-          data-ocid={`labour.item.${idx + 1}`}
-        >
-          <p className="text-white font-semibold text-base leading-tight">
-            {l.name}
-          </p>
-          {l.employeeId && (
-            <p className="text-xs text-gray-400">
-              ID: <span className="text-gray-300">{l.employeeId}</span>
-            </p>
-          )}
-          {l.joinDate && (
-            <p className="text-xs text-gray-400">
-              Joined: <span className="text-gray-300">{l.joinDate}</span>
-            </p>
-          )}
-          {isAdmin && (
-            <div className="flex items-center justify-end mt-1 pt-2 border-t border-white/10">
-              <button
-                type="button"
-                onClick={() => openEdit(l)}
-                className="text-orange-400 hover:text-orange-300 text-xs"
-                data-ocid="labours.edit_button"
-              >
-                Edit
-              </button>
-            </div>
-          )}
-        </div>
-      );
-    }
-
-    // LIST view — true single-line compact rows
-    return (
-      <button
-        key={l.id.toString()}
-        type="button"
-        className={`w-full flex items-center gap-3 px-3 py-2.5 hover:bg-white/[0.05] active:bg-white/[0.08] transition-colors cursor-pointer ${
-          l.isActive === false ? "opacity-60" : ""
-        }`}
-        onClick={() => (isAdmin ? openEdit(l) : undefined)}
-        aria-label={`Labour: ${l.name}`}
-        data-ocid={`labour.item.${idx + 1}`}
-      >
-        <span className="flex-1 min-w-0 text-sm font-medium text-white truncate text-left">
-          {l.name}
-        </span>
-        {l.joinDate ? (
-          <span className="text-white/40 text-xs shrink-0">{l.joinDate}</span>
-        ) : null}
-        <svg
-          className="w-4 h-4 text-white/20 shrink-0"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <title>Open</title>
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M9 5l7 7-7 7"
-          />
-        </svg>
-      </button>
-    );
-  }
-
-  if (isLoading)
-    return (
-      <div
-        className="flex flex-col h-full px-4 pt-4"
-        data-ocid="labours.loading_state"
-      >
-        <SkeletonCardList count={4} />
-      </div>
-    );
+  if (isLoading) return <div className="h-full p-4"><SkeletonLoader /></div>;
 
   return (
-    <div className="flex flex-col h-full bg-[#0a0f1e] text-white font-['Figtree',sans-serif]">
-      {/* FROZEN sticky header */}
-      <div className="shrink-0 space-y-3 px-4 pt-4 pb-3 bg-[#0a0f1e] sticky top-0 z-10">
-        <div className="flex items-center justify-between">
-          <h1 className="text-base font-semibold text-white flex items-center gap-2">
-            <Users className="w-4 h-4 text-[#f97316]" />
-            Labours
-          </h1>
-          <div className="flex items-center gap-2" />
-        </div>
-
-        {/* Search + View Toggle */}
-        <div className="flex items-center gap-2">
-          <div className="relative flex-1">
-            <svg
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30 pointer-events-none"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <title>Search</title>
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z"
-              />
-            </svg>
-            <input
-              type="text"
-              placeholder="Search labours..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full rounded-full bg-[#1a2035] border border-white/15 px-4 py-2 pl-10 text-white/80 placeholder-white/30 focus:outline-none focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/30 transition-all text-sm"
-              data-ocid="labours.search_input"
-            />
-          </div>
-          <button
-            type="button"
-            onClick={() => setViewMode(viewMode === "list" ? "card" : "list")}
-            className="p-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-colors shrink-0"
-            aria-label={
-              viewMode === "list"
-                ? "Switch to card view"
-                : "Switch to list view"
-            }
-            data-ocid="labours.view_toggle"
-          >
-            {viewMode === "list" ? (
-              <LayoutGrid className="w-4 h-4 text-white/60" />
-            ) : (
-              <List className="w-4 h-4 text-white/60" />
-            )}
-          </button>
-        </div>
-      </div>
-
-      {/* Scrollable content */}
-      <div
-        className="flex-1 overflow-y-auto px-4 pb-24"
-        style={{
-          height: "calc(100vh - 200px)",
-          maxHeight: "calc(100vh - 200px)",
-        }}
-      >
-        {labours.length === 0 ? (
-          <div className="glass-card rounded-2xl p-8 text-center text-gray-400 mt-2">
-            No labours yet. {isAdmin && 'Tap "+" to add a labour.'}
-          </div>
-        ) : (
-          <div className="space-y-4">
+    <div className="h-full overflow-hidden bg-[#080d1b] text-white font-['Figtree',sans-serif]">
+      <div className="h-full overflow-y-auto px-4 pt-4 pb-28">
+        {/* Hero */}
+        <section className="relative overflow-hidden rounded-[26px] border border-orange-400/15 bg-gradient-to-br from-[#172039] via-[#10182b] to-[#0d1323] p-5 shadow-xl">
+          <div className="absolute -right-12 -top-12 h-36 w-36 rounded-full bg-orange-500/10 blur-2xl" />
+          <div className="relative flex items-start justify-between gap-3">
             <div>
-              <h2 className="text-sm font-semibold text-green-400 flex items-center gap-2 mb-2">
-                <UserCheck className="w-4 h-4 text-green-400" />
-                Active Labours ({activeLabours.length})
-              </h2>
-              <div className="rounded-xl overflow-hidden border border-white/10">
-                {filteredActive.map((l: any, idx: number) =>
-                  renderLabourCard(l, idx),
-                )}
-              </div>
+              <div className="mb-2 flex items-center gap-2 text-orange-400"><BriefcaseBusiness className="h-4 w-4"/><span className="text-[11px] font-bold uppercase tracking-[0.18em]">Workforce</span></div>
+              <h1 className="text-2xl font-bold tracking-tight">Labours</h1>
+              <p className="mt-1 text-xs text-white/45">Manage your team and availability</p>
             </div>
-            {inactiveLabours.length > 0 && (
-              <div>
-                <h2 className="text-sm font-semibold text-gray-500 mb-2 flex items-center gap-2">
-                  <UserX className="w-4 h-4 text-gray-500" />
-                  Inactive Labours ({inactiveLabours.length})
-                </h2>
-                <div className="rounded-xl overflow-hidden border border-white/10">
-                  {filteredInactive.map((l: any, idx: number) =>
-                    renderLabourCard(l, idx + activeLabours.length),
-                  )}
-                </div>
-              </div>
-            )}
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-500/15 text-orange-400"><Users className="h-6 w-6"/></div>
           </div>
-        )}
-      </div>
+          <div className="relative mt-5 grid grid-cols-3 gap-2">
+            <div className="rounded-2xl bg-white/[0.055] p-3"><p className="text-[10px] uppercase tracking-wider text-white/35">Total</p><p className="mt-1 text-xl font-bold">{labours.length}</p></div>
+            <div className="rounded-2xl bg-emerald-500/10 p-3"><p className="text-[10px] uppercase tracking-wider text-emerald-300/55">Active</p><p className="mt-1 text-xl font-bold text-emerald-300">{activeCount}</p></div>
+            <div className="rounded-2xl bg-white/[0.055] p-3"><p className="text-[10px] uppercase tracking-wider text-white/35">Inactive</p><p className="mt-1 text-xl font-bold text-white/60">{inactiveCount}</p></div>
+          </div>
+        </section>
 
-      {/* Floating Action Button */}
-      {isAdmin && (
-        <button
-          type="button"
-          onClick={openAdd}
-          className="fixed bottom-24 right-4 w-14 h-14 rounded-full flex items-center justify-center shadow-lg z-30 bg-gradient-to-br from-orange-500 to-orange-600 text-white"
-          aria-label="Add Labour"
-          data-ocid="labours.add_button"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={2.5}
-            stroke="currentColor"
-            className="w-6 h-6"
-          >
-            <title>Add Labour</title>
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M12 4.5v15m7.5-7.5h-15"
-            />
-          </svg>
-        </button>
-      )}
-
-      {showForm && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setShowForm(false);
-          }}
-          onKeyDown={(e) => {
-            if (e.key === "Escape") setShowForm(false);
-          }}
-          role="presentation"
-          tabIndex={-1}
-        >
-          <div className="glass-dialog rounded-2xl p-6 w-full max-w-sm">
-            <h2 className="text-xl font-bold text-white mb-4">
-              {editingLabour ? "Edit Labour" : "Add Labour"}
-            </h2>
-            <div className="space-y-3">
-              <div>
-                <label
-                  htmlFor="labour-name"
-                  className="text-gray-400 text-xs mb-1 block"
-                >
-                  Name <span className="text-red-400">*</span>
-                </label>
-                <input
-                  ref={labourNameRef}
-                  id="labour-name"
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="w-full bg-white/5 border border-orange-500/30 focus:border-orange-500 rounded-lg px-3 py-2 text-white outline-none"
-                  placeholder="Labour name"
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="labour-empid"
-                  className="text-gray-400 text-xs mb-1 block"
-                >
-                  Employee ID
-                </label>
-                <input
-                  id="labour-empid"
-                  type="text"
-                  value={employeeId}
-                  onChange={(e) => setEmployeeId(e.target.value)}
-                  className="w-full bg-white/5 border border-orange-500/30 focus:border-orange-500 rounded-lg px-3 py-2 text-white outline-none"
-                  placeholder="Employee ID"
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="labour-joindate"
-                  className="text-gray-400 text-xs mb-1 block"
-                >
-                  Join Date
-                </label>
-                <input
-                  id="labour-joindate"
-                  type="date"
-                  value={joinDate}
-                  onChange={(e) => setJoinDate(e.target.value)}
-                  className="w-full bg-white/5 border border-orange-500/30 focus:border-orange-500 rounded-lg px-3 py-2 text-white outline-none"
-                />
-              </div>
-              {/* Active / Inactive toggle — only in edit form */}
-              <div className="flex items-center justify-between py-2.5 px-3 rounded-lg bg-white/5 border border-white/10">
-                <div>
-                  <p className="text-sm font-medium text-white">Status</p>
-                  <p className="text-xs text-gray-400">
-                    {isActiveForm
-                      ? "Active — appears in new contracts"
-                      : "Inactive — hidden from new contracts"}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setIsActiveForm((v) => !v)}
-                  className={`relative w-12 h-6 rounded-full transition-colors duration-200 focus:outline-none shrink-0 ${
-                    isActiveForm ? "bg-green-500" : "bg-gray-600"
-                  }`}
-                  aria-label={isActiveForm ? "Mark inactive" : "Mark active"}
-                  data-ocid="labour.status_toggle"
-                >
-                  <span
-                    className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200 ${
-                      isActiveForm ? "translate-x-6" : "translate-x-0"
-                    }`}
-                  />
-                </button>
-              </div>
-            </div>
-            {error && <p className="text-red-400 text-sm mt-2">{error}</p>}
-            <div className="flex gap-3 mt-4">
-              <button
-                type="button"
-                onClick={handleSave}
-                disabled={addLabour.isPending || updateLabour.isPending}
-                className="btn-orange flex-1 py-2.5 rounded-xl font-semibold disabled:opacity-50"
-                data-ocid="labours.save_button"
-              >
-                {addLabour.isPending || updateLabour.isPending
-                  ? "Saving..."
-                  : "Save"}
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowForm(false)}
-                className="px-4 text-gray-400 hover:text-white"
-              >
-                Cancel
-              </button>
-            </div>
+        {/* Search */}
+        <div className="sticky top-0 z-10 -mx-1 mt-4 bg-[#080d1b]/95 py-1 backdrop-blur-md">
+          <div className="relative">
+            <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30"/>
+            <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search by name or employee ID" className="w-full rounded-2xl border border-white/10 bg-[#121a2c] py-3 pl-11 pr-4 text-sm text-white outline-none transition focus:border-orange-500/50" data-ocid="labours.search_input"/>
+          </div>
+          <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
+            {([['active',`Active ${activeCount}`],['all',`All ${labours.length}`],['inactive',`Inactive ${inactiveCount}`]] as const).map(([key,label]) => <button key={key} type="button" onClick={() => setFilter(key)} className={`shrink-0 rounded-full px-4 py-2 text-xs font-semibold transition ${filter===key?'bg-orange-500 text-white shadow-lg shadow-orange-500/20':'bg-white/[0.06] text-white/50 border border-white/10'}`}>{label}</button>)}
           </div>
         </div>
-      )}
+
+        {/* List */}
+        <div className="mt-4 space-y-2">
+          {filtered.length === 0 ? <div className="rounded-3xl border border-dashed border-white/10 bg-white/[0.025] p-10 text-center"><Users className="mx-auto h-8 w-8 text-white/15"/><p className="mt-3 text-sm font-semibold text-white/55">No labours found</p><p className="mt-1 text-xs text-white/30">Try another search or filter</p></div> : filtered.map((l: any, index: number) => {
+            const isActive = l.isActive !== false;
+            return <button key={String(l.id)} type="button" onClick={() => isAdmin && openEdit(l)} className="group flex w-full items-center gap-3 rounded-2xl border border-white/[0.07] bg-[#10182a] p-3 text-left transition active:scale-[0.99] hover:border-orange-500/25" data-ocid={`labour.item.${index+1}`}>
+              <div className={`relative flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-sm font-bold ${isActive?'bg-orange-500/15 text-orange-400':'bg-white/5 text-white/30'}`}>{String(l.name ?? '?').trim().charAt(0).toUpperCase() || '?' }<span className={`absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-[#10182a] ${isActive?'bg-emerald-400':'bg-white/20'}`}/></div>
+              <div className="min-w-0 flex-1"><div className="flex items-center gap-2"><p className="truncate text-sm font-semibold">{l.name}</p>{isActive && <BadgeCheck className="h-3.5 w-3.5 shrink-0 text-emerald-400"/>}</div><div className="mt-1 flex items-center gap-3 text-[11px] text-white/35">{l.employeeId && <span>ID {l.employeeId}</span>}{l.joinDate && <span className="flex items-center gap-1"><CalendarDays className="h-3 w-3"/>{l.joinDate}</span>}</div></div>
+              <div className="shrink-0 rounded-xl bg-white/5 p-2 text-white/25 group-hover:text-orange-400"><Pencil className="h-4 w-4"/></div>
+            </button>;
+          })}
+        </div>
+      </div>
+
+      {isAdmin && <button type="button" onClick={openAdd} className="fixed bottom-24 right-5 z-30 flex h-14 w-14 items-center justify-center rounded-[20px] bg-gradient-to-br from-orange-400 to-orange-600 text-white shadow-xl shadow-orange-900/30 active:scale-95" aria-label="Add Labour" data-ocid="labours.add_button"><UserPlus className="h-6 w-6"/></button>}
+
+      {showForm && <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-0 backdrop-blur-sm sm:items-center sm:p-4" onClick={e => {if(e.target===e.currentTarget)setShowForm(false)}}>
+        <div className="w-full max-w-md rounded-t-[28px] border border-white/10 bg-[#111a2c] p-5 shadow-2xl sm:rounded-[28px]">
+          <div className="mb-5 flex items-center justify-between"><div><p className="text-[10px] font-bold uppercase tracking-[0.18em] text-orange-400">Workforce</p><h2 className="mt-1 text-xl font-bold">{editing?'Edit Labour':'Add Labour'}</h2></div><button type="button" onClick={()=>setShowForm(false)} className="rounded-xl bg-white/5 p-2 text-white/50"><X className="h-5 w-5"/></button></div>
+          <div className="space-y-3">
+            <label className="block"><span className="mb-1.5 block text-xs text-white/45">Full name *</span><input ref={nameRef} value={name} onChange={e=>setName(e.target.value)} placeholder="Enter labour name" className="w-full rounded-2xl border border-white/10 bg-[#0a1020] px-4 py-3 text-sm outline-none focus:border-orange-500/60"/></label>
+            <label className="block"><span className="mb-1.5 block text-xs text-white/45">Employee ID</span><input value={employeeId} onChange={e=>setEmployeeId(e.target.value)} placeholder="Optional employee ID" className="w-full rounded-2xl border border-white/10 bg-[#0a1020] px-4 py-3 text-sm outline-none focus:border-orange-500/60"/></label>
+            <label className="block"><span className="mb-1.5 block text-xs text-white/45">Join date</span><input type="date" value={joinDate} onChange={e=>setJoinDate(e.target.value)} className="w-full rounded-2xl border border-white/10 bg-[#0a1020] px-4 py-3 text-sm outline-none focus:border-orange-500/60"/></label>
+            {editing && <button type="button" onClick={()=>setActive(v=>!v)} className="flex w-full items-center justify-between rounded-2xl border border-white/10 bg-white/[0.035] p-4"><span className="flex items-center gap-3">{active?<UserCheck className="h-5 w-5 text-emerald-400"/>:<UserX className="h-5 w-5 text-white/35"/>}<span className="text-sm font-semibold">{active?'Active labour':'Inactive labour'}</span></span><span className={`h-6 w-11 rounded-full p-1 transition ${active?'bg-emerald-500':'bg-white/15'}`}><span className={`block h-4 w-4 rounded-full bg-white transition ${active?'translate-x-5':''}`}/></span></button>}
+            {error && <p className="text-xs text-red-400">{error}</p>}
+            <button type="button" onClick={save} className="w-full rounded-2xl bg-gradient-to-r from-orange-500 to-orange-600 py-3.5 text-sm font-bold shadow-lg shadow-orange-900/20">{editing?'Save changes':'Add labour'}</button>
+          </div>
+        </div>
+      </div>}
     </div>
   );
 }
 
-export default memo(LaboursPage);
+export default LaboursPage;
