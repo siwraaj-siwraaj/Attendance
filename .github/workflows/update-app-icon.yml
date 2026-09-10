@@ -22,7 +22,6 @@ jobs:
             'https://github.com/user-attachments/assets/2eef21d8-f6f3-4a9c-9138-5c3d4e5d3c43' \
             -o /tmp/app-icon.png
           file /tmp/app-icon.png
-          identify /tmp/app-icon.png
 
       - name: Generate Android launcher icons
         run: |
