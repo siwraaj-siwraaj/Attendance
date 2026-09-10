@@ -60,35 +60,30 @@ function DataPreloader({ children }: { children: ReactNode }) {
     setReady(false);
     const warm = async () => {
       try {
-        // Warm both the data cache and all page chunks before the first app
-        // screen is released. This prevents the first visit to any tab from
-        // racing lazy-module loading against React Query rendering on mobile.
-        const [, , , , , , , pageModules] = await Promise.all([
+        // Fetch each data set exactly once, while loading every lazy page chunk
+        // in parallel. The cache is populated before the first tab is rendered.
+        const dataPromise = Promise.all([
           actor.getContracts(),
           actor.getLabours(),
           actor.getActiveLabours(),
           actor.getAdvances(),
           actor.getAllAttendance(),
+        ]);
+        const pagesPromise = Promise.all([
           loadContractsPage(),
           loadAttendancePage(),
-          Promise.all([
-            loadAdvancesPage(),
-            loadPaymentsPage(),
-            loadLaboursPage(),
-            loadSettledPage(),
-            loadAdminPanel(),
-          ]),
+          loadAdvancesPage(),
+          loadPaymentsPage(),
+          loadLaboursPage(),
+          loadSettledPage(),
+          loadAdminPanel(),
         ]);
+
+        const [
+          [contractsResult, laboursResult, activeLaboursResult, advancesResult, attendanceResult],
+        ] = await Promise.all([dataPromise, pagesPromise]);
 
         if (cancelled) return;
-
-        const [contractsResult, laboursResult, activeLaboursResult, advancesResult, attendanceResult] = await Promise.all([
-          actor.getContracts(),
-          actor.getLabours(),
-          actor.getActiveLabours(),
-          actor.getAdvances(),
-          actor.getAllAttendance(),
-        ]);
 
         queryClient.setQueryData(["contracts"], contractsResult);
         queryClient.setQueryData(["contracts", "all"], contractsResult);
