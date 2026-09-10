@@ -1,0 +1,78 @@
+/* Rossie — global mobile layout contract
+   One owner for each global concern: page scroll areas own their bottom
+   content padding; the fixed tab bar owns its safe-area inset; dialogs own
+   their own viewport clearance. */
+
+:root {
+  --rossie-nav-clearance: calc(96px + env(safe-area-inset-bottom, 0px));
+  --rossie-dialog-clearance: calc(16px + env(safe-area-inset-top, 0px) + env(safe-area-inset-bottom, 0px));
+}
+
+/* The page components already own their scroll-container bottom padding
+   (pb-24 / pb-28). Do not add a second padding layer to <main>. */
+body:has([data-ocid="bottom_tab_bar"]) main {
+  padding-bottom: 0 !important;
+  min-width: 0;
+}
+
+body:has([data-ocid="bottom_tab_bar"]) main > div {
+  min-width: 0;
+  min-height: 0;
+}
+
+/* Every floating primary action uses the same clearance above the dock. */
+body:has([data-ocid="bottom_tab_bar"]) [data-ocid$=".add_button"] {
+  bottom: var(--rossie-nav-clearance) !important;
+}
+
+/* Keep the scroll position from ending underneath the floating dock even
+   while the page-specific padding remains the actual layout reservation. */
+body:has([data-ocid="bottom_tab_bar"]) main [class*="overflow-y-auto"] {
+  scroll-padding-bottom: var(--rossie-nav-clearance);
+}
+
+/* Custom Rossie dialogs: one consistent viewport-safe rule for every screen. */
+.glass-dialog {
+  box-sizing: border-box;
+  max-height: calc(100dvh - var(--rossie-dialog-clearance));
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* Radix dialogs use the same viewport contract. */
+[data-slot="dialog-content"] {
+  box-sizing: border-box;
+  max-height: calc(100dvh - var(--rossie-dialog-clearance));
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+[data-slot="dialog-overlay"] {
+  z-index: 80 !important;
+}
+
+[data-slot="dialog-content"] {
+  z-index: 81 !important;
+}
+
+/* Buttons and inputs must never inherit an accidental flex shrink from a
+   surrounding responsive row. */
+button,
+input,
+select,
+textarea {
+  box-sizing: border-box;
+}
+
+/* Prevent horizontal page drift when tables/cards are wider than the phone. */
+main,
+main > div {
+  max-width: 100%;
+}
+
+/* Modern mobile viewport: use the visible viewport for full-height layouts. */
+.min-h-screen {
+  min-height: 100dvh;
+}
