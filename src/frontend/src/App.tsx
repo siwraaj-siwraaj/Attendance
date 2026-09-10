@@ -60,53 +60,57 @@ function DataPreloader({ children }: { children: ReactNode }) {
     setReady(false);
     const warm = async () => {
       try {
-        // Fetch each data set exactly once, while loading every lazy page chunk
-        // in parallel. The cache is populated before the first tab is rendered.
-        const dataPromise = Promise.all([
-          actor.getContracts(),
-          actor.getLabours(),
-          actor.getActiveLabours(),
-          actor.getAdvances(),
-          actor.getAllAttendance(),
+        // Load data and page chunks in parallel. Each data request is handled
+        // independently so one failed preload cannot hide the other tabs' data.
+        const [dataResults] = await Promise.all([
+          Promise.allSettled([
+            actor.getContracts(),
+            actor.getLabours(),
+            actor.getActiveLabours(),
+            actor.getAdvances(),
+            actor.getAllAttendance(),
+          ]),
+          Promise.allSettled([
+            loadContractsPage(),
+            loadAttendancePage(),
+            loadAdvancesPage(),
+            loadPaymentsPage(),
+            loadLaboursPage(),
+            loadSettledPage(),
+            loadAdminPanel(),
+          ]),
         ]);
-        const pagesPromise = Promise.all([
-          loadContractsPage(),
-          loadAttendancePage(),
-          loadAdvancesPage(),
-          loadPaymentsPage(),
-          loadLaboursPage(),
-          loadSettledPage(),
-          loadAdminPanel(),
-        ]);
-
-        const [
-          [contractsResult, laboursResult, activeLaboursResult, advancesResult, attendanceResult],
-        ] = await Promise.all([dataPromise, pagesPromise]);
 
         if (cancelled) return;
 
-        queryClient.setQueryData(["contracts"], contractsResult);
-        queryClient.setQueryData(["contracts", "all"], contractsResult);
-        queryClient.setQueryData(["labours"], laboursResult);
-        queryClient.setQueryData(["labours", "active"], activeLaboursResult);
-        queryClient.setQueryData(["advances"], advancesResult);
-        queryClient.setQueryData(["attendance", "all"], attendanceResult);
+        const [contractsResult, laboursResult, activeLaboursResult, advancesResult, attendanceResult] = dataResults;
 
-        const advancesByContract = new Map<string, typeof advancesResult>();
-        for (const item of advancesResult) {
-          const key = String(item.contractId);
-          const list = advancesByContract.get(key);
-          if (list) list.push(item); else advancesByContract.set(key, [item]);
+        if (contractsResult.status === "fulfilled") {
+          queryClient.setQueryData(["contracts"], contractsResult.value);
+          queryClient.setQueryData(["contracts", "all"], contractsResult.value);
         }
-        for (const [contractId, items] of advancesByContract) queryClient.setQueryData(["advances", contractId], items);
-
-        const attendanceByContract = new Map<string, typeof attendanceResult>();
-        for (const item of attendanceResult) {
-          const key = String(item.contractId);
-          const list = attendanceByContract.get(key);
-          if (list) list.push(item); else attendanceByContract.set(key, [item]);
+        if (laboursResult.status === "fulfilled") queryClient.setQueryData(["labours"], laboursResult.value);
+        if (activeLaboursResult.status === "fulfilled") queryClient.setQueryData(["labours", "active"], activeLaboursResult.value);
+        if (advancesResult.status === "fulfilled") {
+          queryClient.setQueryData(["advances"], advancesResult.value);
+          const advancesByContract = new Map<string, typeof advancesResult.value>();
+          for (const item of advancesResult.value) {
+            const key = String(item.contractId);
+            const list = advancesByContract.get(key);
+            if (list) list.push(item); else advancesByContract.set(key, [item]);
+          }
+          for (const [contractId, items] of advancesByContract) queryClient.setQueryData(["advances", contractId], items);
         }
-        for (const [contractId, items] of attendanceByContract) queryClient.setQueryData(["attendance", contractId], items);
+        if (attendanceResult.status === "fulfilled") {
+          queryClient.setQueryData(["attendance", "all"], attendanceResult.value);
+          const attendanceByContract = new Map<string, typeof attendanceResult.value>();
+          for (const item of attendanceResult.value) {
+            const key = String(item.contractId);
+            const list = attendanceByContract.get(key);
+            if (list) list.push(item); else attendanceByContract.set(key, [item]);
+          }
+          for (const [contractId, items] of attendanceByContract) queryClient.setQueryData(["attendance", contractId], items);
+        }
 
         await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
         if (!cancelled) setReady(true);
