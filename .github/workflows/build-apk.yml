@@ -1,10 +1,15 @@
-
 name: Build APK
 
 on:
   push:
     branches: [main]
   workflow_dispatch:
+
+# Keep only the newest APK build for main. If a new commit is pushed while
+# an older build is running, GitHub Actions cancels the older run.
+concurrency:
+  group: build-apk-main
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -57,6 +62,3 @@ jobs:
         with:
           name: Attendance-debug-apk
           path: src/frontend/android/app/build/outputs/apk/debug/app-debug.apk
-
-# Rebuild trigger to refresh the downloadable APK artifact.
-# Triggered after custom work-column name fix.
