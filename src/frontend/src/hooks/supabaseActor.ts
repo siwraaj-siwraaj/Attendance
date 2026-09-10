@@ -40,12 +40,7 @@ function mapLabour(row: any) {
 }
 
 function mapColumn(row: any) {
-  const fallbackNames: Record<string, string> = {
-    bed: "Bed",
-    paper: "Paper",
-    mesh: "Mesh",
-  };
-
+  const fallbackNames: Record<string, string> = { bed: "Bed", paper: "Paper", mesh: "Mesh" };
   return {
     id: row.id,
     contractId: BigInt(row.contract_id),
@@ -56,54 +51,30 @@ function mapColumn(row: any) {
 
 function mapContract(row: any, columns: any[] = []) {
   return {
-    id: BigInt(row.id),
-    name: row.name,
-    multiplier: Number(row.multiplier),
-    contractAmount: Number(row.contract_amount),
-    machineExpenses: Number(row.machine_expenses),
-    bedAmount: Number(row.bed_amount),
-    paperAmount: Number(row.paper_amount),
-    meshAmount: Number(row.mesh_amount),
-    settled: Boolean(row.settled),
-    createdAt: ns(row.created_at),
-    workColumns: columns
-      .filter((c) => String(c.contract_id) === String(row.id))
-      .map(mapColumn)
-      .sort((a, b) => {
-        const order: Record<string, number> = { bed: 0, paper: 1, mesh: 2 };
-        const typeA = String(a.workType).toLowerCase();
-        const typeB = String(b.workType).toLowerCase();
-        const typeCompare = (order[typeA] ?? 99) - (order[typeB] ?? 99);
-        if (typeCompare !== 0) return typeCompare;
-        const baseA = order[typeA] === 0 ? "Bed" : order[typeA] === 1 ? "Paper" : "Mesh";
-        const baseB = order[typeB] === 0 ? "Bed" : order[typeB] === 1 ? "Paper" : "Mesh";
-        const numberA = String(a.name) === baseA ? 1 : Number(String(a.name).slice(baseA.length)) || 1;
-        const numberB = String(b.name) === baseB ? 1 : Number(String(b.name).slice(baseB.length)) || 1;
-        return numberA - numberB;
-      }),
+    id: BigInt(row.id), name: row.name, multiplier: Number(row.multiplier),
+    contractAmount: Number(row.contract_amount), machineExpenses: Number(row.machine_expenses),
+    bedAmount: Number(row.bed_amount), paperAmount: Number(row.paper_amount), meshAmount: Number(row.mesh_amount),
+    settled: Boolean(row.settled), createdAt: ns(row.created_at),
+    workColumns: columns.filter((c) => String(c.contract_id) === String(row.id)).map(mapColumn).sort((a, b) => {
+      const order: Record<string, number> = { bed: 0, paper: 1, mesh: 2 };
+      const typeA = String(a.workType).toLowerCase(), typeB = String(b.workType).toLowerCase();
+      const typeCompare = (order[typeA] ?? 99) - (order[typeB] ?? 99);
+      if (typeCompare !== 0) return typeCompare;
+      const baseA = order[typeA] === 0 ? "Bed" : order[typeA] === 1 ? "Paper" : "Mesh";
+      const baseB = order[typeB] === 0 ? "Bed" : order[typeB] === 1 ? "Paper" : "Mesh";
+      const numberA = String(a.name) === baseA ? 1 : Number(String(a.name).slice(baseA.length)) || 1;
+      const numberB = String(b.name) === baseB ? 1 : Number(String(b.name).slice(baseB.length)) || 1;
+      return numberA - numberB;
+    }),
   };
 }
 
 function mapAdvance(row: any) {
-  return {
-    id: BigInt(row.id),
-    contractId: BigInt(row.contract_id),
-    labourId: BigInt(row.labour_id),
-    amount: Number(row.amount),
-    note: row.note ?? "",
-    createdAt: ns(row.created_at),
-    cleared: Boolean(row.cleared),
-  };
+  return { id: BigInt(row.id), contractId: BigInt(row.contract_id), labourId: BigInt(row.labour_id), amount: Number(row.amount), note: row.note ?? "", createdAt: ns(row.created_at), cleared: Boolean(row.cleared) };
 }
 
 function mapAttendance(row: any) {
-  return {
-    contractId: BigInt(row.contract_id),
-    labourId: BigInt(row.labour_id),
-    columnId: row.column_id,
-    value: attendanceValue(row),
-    markedAt: ns(row.created_at),
-  };
+  return { contractId: BigInt(row.contract_id), labourId: BigInt(row.labour_id), columnId: row.column_id, value: attendanceValue(row), markedAt: ns(row.created_at) };
 }
 
 async function accessToken() {
@@ -111,28 +82,17 @@ async function accessToken() {
   return data.session?.access_token ?? null;
 }
 
-async function rest(
-  table: string,
-  options: { method?: string; query?: string; body?: any; headers?: Record<string, string> } = {}
-) {
+async function rest(table: string, options: { method?: string; query?: string; body?: any; headers?: Record<string, string> } = {}) {
   const token = await accessToken();
   const response = await fetch(`${SUPABASE_URL}/rest/v1/${table}${options.query ?? ""}`, {
     method: options.method ?? "GET",
-    headers: {
-      apikey: SUPABASE_KEY,
-      Authorization: `Bearer ${token ?? SUPABASE_KEY}`,
-      "Content-Type": "application/json",
-      Prefer: "return=representation",
-      ...(options.headers ?? {}),
-    },
+    headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${token ?? SUPABASE_KEY}`, "Content-Type": "application/json", Prefer: "return=representation", ...(options.headers ?? {}) },
     body: options.body === undefined ? undefined : JSON.stringify(options.body),
   });
   const text = await response.text();
   let data: any = null;
   try { data = text ? JSON.parse(text) : null; } catch { data = text; }
-  if (!response.ok) {
-    throw new Error(typeof data === "object" && data?.message ? data.message : `Supabase request failed (${response.status})`);
-  }
+  if (!response.ok) throw new Error(typeof data === "object" && data?.message ? data.message : `Supabase request failed (${response.status})`);
   return data;
 }
 
@@ -146,9 +106,7 @@ async function functionCall(name: string, body: any) {
   const text = await response.text();
   let data: any = null;
   try { data = text ? JSON.parse(text) : null; } catch { data = text; }
-  if (!response.ok) {
-    throw new Error(typeof data === "object" && data?.error ? data.error : `Function ${name} failed (${response.status})`);
-  }
+  if (!response.ok) throw new Error(typeof data === "object" && data?.error ? data.error : `Function ${name} failed (${response.status})`);
   return data;
 }
 
@@ -182,52 +140,49 @@ export function createSupabaseActor() {
       return rows?.[0]?.roles ?? (rows?.[0]?.role ? [rows[0].role] : []);
     },
     async getLabours() {
-      const rows = await rest("labours", { query: "?select=*&order=id.asc" });
+      const rows = await rest("labours", { query: "?select=id,name,employee_id,join_date,is_active,created_at&order=id.asc" });
       return rows.map(mapLabour);
     },
     async getActiveLabours() {
-      const rows = await rest("labours", { query: "?select=*&is_active=eq.true&order=id.asc" });
+      const rows = await rest("labours", { query: "?select=id,name,employee_id,join_date,is_active,created_at&is_active=eq.true&order=id.asc" });
       return rows.map(mapLabour);
     },
     async addLabour(name: string, employeeId: string, joinDate: string) {
       try {
-        const rows = await rest("labours", {
-          method: "POST",
-          headers: { Prefer: "return=representation" },
-          body: { name, employee_id: employeeId, join_date: joinDate ? new Date(joinDate).toISOString() : null, is_active: true },
-        });
+        const rows = await rest("labours", { method: "POST", headers: { Prefer: "return=representation" }, body: { name, employee_id: employeeId, join_date: joinDate ? new Date(joinDate).toISOString() : null, is_active: true } });
         return ok(mapLabour(rows[0]));
       } catch (e: any) { return err(e.message); }
     },
     async updateLabour(id: bigint, name: string, employeeId: string, joinDate: string, active: boolean) {
       try {
-        const rows = await rest("labours", {
-          method: "PATCH",
-          query: `?id=eq.${id}`,
-          body: { name, employee_id: employeeId, join_date: joinDate ? new Date(joinDate).toISOString() : null, is_active: active },
-        });
+        const rows = await rest("labours", { method: "PATCH", query: `?id=eq.${id}`, body: { name, employee_id: employeeId, join_date: joinDate ? new Date(joinDate).toISOString() : null, is_active: active } });
         if (!rows?.length) return err("Labour not found");
         return ok(mapLabour(rows[0]));
       } catch (e: any) { return err(e.message); }
     },
     async getContracts() {
-      const rows = await rest("contracts", { query: "?select=*&order=id.asc" });
-      const columns = await rest("work_columns", { query: "?select=*&order=id.asc" });
-      return rows.map((row: any) => mapContract(row, columns));
+      const [rows, columns] = await Promise.all([
+        rest("contracts", { query: "?select=id,name,multiplier,contract_amount,machine_expenses,bed_amount,paper_amount,mesh_amount,settled,created_at&order=id.asc" }),
+        rest("work_columns", { query: "?select=id,contract_id,name,work_type&order=id.asc" }),
+      ]);
+      const columnsByContract = new Map<string, any[]>();
+      for (const column of columns) {
+        const key = String(column.contract_id);
+        const list = columnsByContract.get(key);
+        if (list) list.push(column); else columnsByContract.set(key, [column]);
+      }
+      return rows.map((row: any) => mapContract(row, columnsByContract.get(String(row.id)) ?? []));
     },
     async addContract(name: string, multiplier: number, contractAmount: number, machineExpenses: number, bedAmount: number, paperAmount: number, meshAmount: number | null) {
       try {
-        const rows = await rest("contracts", {
-          method: "POST", headers: { Prefer: "return=representation" },
-          body: { name, multiplier, contract_amount: contractAmount, machine_expenses: machineExpenses, bed_amount: bedAmount, paper_amount: paperAmount, mesh_amount: meshAmount ?? 0, settled: false },
-        });
+        const rows = await rest("contracts", { method: "POST", headers: { Prefer: "return=representation" }, body: { name, multiplier, contract_amount: contractAmount, machine_expenses: machineExpenses, bed_amount: bedAmount, paper_amount: paperAmount, mesh_amount: meshAmount ?? 0, settled: false } });
         return ok(mapContract(rows[0], []));
       } catch (e: any) { return err(e.message); }
     },
     async updateContract(id: bigint, name: string, multiplier: number, contractAmount: number, machineExpenses: number, bedAmount: number, paperAmount: number, meshAmount: number | null) {
       try {
         const rows = await rest("contracts", { method: "PATCH", query: `?id=eq.${id}`, body: { name, multiplier, contract_amount: contractAmount, machine_expenses: machineExpenses, bed_amount: bedAmount, paper_amount: paperAmount, mesh_amount: meshAmount ?? 0 } });
-        const columns = await rest("work_columns", { query: `?contract_id=eq.${id}&select=*` });
+        const columns = await rest("work_columns", { query: `?contract_id=eq.${id}&select=id,contract_id,name,work_type` });
         return ok(mapContract(rows[0], columns));
       } catch (e: any) { return err(e.message); }
     },
@@ -253,29 +208,31 @@ export function createSupabaseActor() {
         }
         const requestedName = String(name ?? "").trim();
         const columnName = requestedName || (maxNumber === 0 ? baseName : `${baseName}${maxNumber + 1}`);
-        await rest("work_columns", { method: "POST", query: "?select=*", body: { id: crypto.randomUUID(), contract_id: contractId.toString(), name: columnName, work_type: normalizedType } });
-        const contractRows = await rest("contracts", { query: `?select=*&id=eq.${encodeURIComponent(contractId.toString())}` });
-        const columns = await rest("work_columns", { query: `?select=*&contract_id=eq.${encodeURIComponent(contractId.toString())}&order=id.asc` });
+        await rest("work_columns", { method: "POST", query: "?select=id,contract_id,name,work_type", body: { id: crypto.randomUUID(), contract_id: contractId.toString(), name: columnName, work_type: normalizedType } });
+        const [contractRows, columns] = await Promise.all([
+          rest("contracts", { query: `?select=id,name,multiplier,contract_amount,machine_expenses,bed_amount,paper_amount,mesh_amount,settled,created_at&id=eq.${encodeURIComponent(contractId.toString())}` }),
+          rest("work_columns", { query: `?select=id,contract_id,name,work_type&contract_id=eq.${encodeURIComponent(contractId.toString())}&order=id.asc` }),
+        ]);
         if (!contractRows.length) return err("Contract not found");
         return ok(mapContract(contractRows[0], columns));
       } catch (e: any) { return err(e.message); }
     },
     async updateWorkColumn(_contractId: bigint, columnId: string, name: string) {
       try {
-        const rows = await rest("work_columns", { method: "PATCH", query: `?id=eq.${encodeURIComponent(columnId)}&select=*`, body: { name: String(name ?? "").trim() } });
+        const rows = await rest("work_columns", { method: "PATCH", query: `?id=eq.${encodeURIComponent(columnId)}&select=id,contract_id,name,work_type`, body: { name: String(name ?? "").trim() } });
         if (!rows.length) return err("Work column not found");
         return ok(mapColumn(rows[0]));
       } catch (e: any) { return err(e.message); }
     },
-    async removeWorkColumn(contractId: bigint, columnId: string) {
+    async removeWorkColumn(_contractId: bigint, columnId: string) {
       try { await rest("work_columns", { method: "DELETE", query: `?id=eq.${encodeURIComponent(columnId)}` }); return ok(true); } catch (e: any) { return err(e.message); }
     },
     async getAllAttendance() {
-      const rows = await rest("attendance", { query: "?select=*&order=id.asc" });
+      const rows = await rest("attendance", { query: "?select=contract_id,labour_id,column_id,value_type,partial_value,created_at&order=id.asc" });
       return rows.map(mapAttendance);
     },
     async getAttendance(contractId: bigint) {
-      const rows = await rest("attendance", { query: `?contract_id=eq.${contractId}&select=*` });
+      const rows = await rest("attendance", { query: `?contract_id=eq.${contractId}&select=contract_id,labour_id,column_id,value_type,partial_value,created_at` });
       return rows.map(mapAttendance);
     },
     async setAttendance(contractId: bigint, labourId: bigint, columnId: string, value: any) {
@@ -284,28 +241,35 @@ export function createSupabaseActor() {
         let partialValue: number | null = null;
         if (value?.__kind__ === "absent") valueType = "absent";
         else if (value?.__kind__ === "partial") { valueType = "partial"; partialValue = Number((value as any)?.partial ?? 0); }
-        const rows = await rest("attendance", {
-          method: "POST", query: "?on_conflict=contract_id,labour_id,column_id&select=*",
-          headers: { Prefer: "resolution=merge-duplicates,return=representation" },
-          body: { contract_id: contractId.toString(), labour_id: labourId.toString(), column_id: columnId, value_type: valueType, partial_value: partialValue },
-        });
+        const rows = await rest("attendance", { method: "POST", query: "?on_conflict=contract_id,labour_id,column_id&select=contract_id,labour_id,column_id,value_type,partial_value,created_at", headers: { Prefer: "resolution=merge-duplicates,return=representation" }, body: { contract_id: contractId.toString(), labour_id: labourId.toString(), column_id: columnId, value_type: valueType, partial_value: partialValue } });
         return ok(rows?.[0] ? mapAttendance(rows[0]) : true);
       } catch (e: any) { return err(e.message); }
     },
     async batchSaveAttendance(updates: Array<[bigint, bigint, string, any]>) {
-      const results: boolean[] = [];
-      for (const [contractId, labourId, columnId, value] of updates) {
-        const result = await this.setAttendance(contractId, labourId, columnId, value);
-        results.push(result.__kind__ === "ok");
+      if (updates.length === 0) return [];
+      try {
+        const payload = updates.map(([contractId, labourId, columnId, value]) => ({
+          contract_id: contractId.toString(), labour_id: labourId.toString(), column_id: columnId,
+          value_type: value?.__kind__ === "absent" ? "absent" : value?.__kind__ === "partial" ? "partial" : "present",
+          partial_value: value?.__kind__ === "partial" ? Number(value.partial ?? 0) : null,
+        }));
+        await rest("attendance", {
+          method: "POST",
+          query: "?on_conflict=contract_id,labour_id,column_id",
+          headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
+          body: payload,
+        });
+        return updates.map(() => true);
+      } catch {
+        return updates.map(() => false);
       }
-      return results;
     },
     async getAdvances() {
-      const rows = await rest("advances", { query: "?select=*&order=id.asc" });
+      const rows = await rest("advances", { query: "?select=id,contract_id,labour_id,amount,note,created_at,cleared&order=id.asc" });
       return rows.map(mapAdvance);
     },
     async getAdvancesByContract(contractId: bigint) {
-      const rows = await rest("advances", { query: `?contract_id=eq.${contractId}&select=*&order=id.asc` });
+      const rows = await rest("advances", { query: `?contract_id=eq.${contractId}&select=id,contract_id,labour_id,amount,note,created_at,cleared&order=id.asc` });
       return rows.map(mapAdvance);
     },
     async addAdvance(contractId: bigint, labourId: bigint, amount: number, note: string) {
@@ -336,10 +300,8 @@ export function createSupabaseActor() {
     },
     async exportData() {
       const [contracts, labours, advances, attendance, columns] = await Promise.all([
-        rest("contracts", { query: "?select=*&order=id.asc" }),
-        rest("labours", { query: "?select=*&order=id.asc" }),
-        rest("advances", { query: "?select=*&order=id.asc" }),
-        rest("attendance", { query: "?select=*&order=id.asc" }),
+        rest("contracts", { query: "?select=*&order=id.asc" }), rest("labours", { query: "?select=*&order=id.asc" }),
+        rest("advances", { query: "?select=*&order=id.asc" }), rest("attendance", { query: "?select=*&order=id.asc" }),
         rest("work_columns", { query: "?select=*&order=id.asc" }),
       ]);
       const contractColumns = columns.reduce((result: any, column: any) => {
@@ -350,9 +312,7 @@ export function createSupabaseActor() {
       }, {});
       return JSON.stringify({
         contracts: contracts.map((row: any) => ({ ...mapContract(row, contractColumns[String(row.id)] ?? []) })),
-        labours: labours.map(mapLabour),
-        advances: advances.map(mapAdvance),
-        attendance: attendance.map(mapAttendance),
+        labours: labours.map(mapLabour), advances: advances.map(mapAdvance), attendance: attendance.map(mapAttendance),
       }, (_key, value) => typeof value === "bigint" ? value.toString() : value);
     },
     async importData(_json: string) { throw new Error("Import is not available in the first Supabase migration version."); },
