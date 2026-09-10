@@ -7,13 +7,21 @@ import { AuthProvider, useAuth } from "./hooks/useAuth";
 import { useBackendActor } from "./hooks/useBackend";
 import LoginPage from "./pages/LoginPage";
 
-const ContractsPage = lazy(() => import("./pages/ContractsPage"));
-const AttendancePage = lazy(() => import("./pages/AttendancePage"));
-const AdvancesPage = lazy(() => import("./pages/AdvancesPage"));
-const PaymentsPage = lazy(() => import("./pages/PaymentsPage"));
-const LaboursPage = lazy(() => import("./pages/LaboursPage"));
-const SettledPage = lazy(() => import("./pages/SettledPage"));
-const AdminPanel = lazy(() => import("./pages/AdminPanel"));
+const loadContractsPage = () => import("./pages/ContractsPage");
+const loadAttendancePage = () => import("./pages/AttendancePage");
+const loadAdvancesPage = () => import("./pages/AdvancesPage");
+const loadPaymentsPage = () => import("./pages/PaymentsPage");
+const loadLaboursPage = () => import("./pages/LaboursPage");
+const loadSettledPage = () => import("./pages/SettledPage");
+const loadAdminPanel = () => import("./pages/AdminPanel");
+
+const ContractsPage = lazy(loadContractsPage);
+const AttendancePage = lazy(loadAttendancePage);
+const AdvancesPage = lazy(loadAdvancesPage);
+const PaymentsPage = lazy(loadPaymentsPage);
+const LaboursPage = lazy(loadLaboursPage);
+const SettledPage = lazy(loadSettledPage);
+const AdminPanel = lazy(loadAdminPanel);
 
 const defaultQueryClient = new QueryClient({
   defaultOptions: {
@@ -52,7 +60,29 @@ function DataPreloader({ children }: { children: ReactNode }) {
     setReady(false);
     const warm = async () => {
       try {
-        const results = await Promise.allSettled([
+        // Warm both the data cache and all page chunks before the first app
+        // screen is released. This prevents the first visit to any tab from
+        // racing lazy-module loading against React Query rendering on mobile.
+        const [, , , , , , , pageModules] = await Promise.all([
+          actor.getContracts(),
+          actor.getLabours(),
+          actor.getActiveLabours(),
+          actor.getAdvances(),
+          actor.getAllAttendance(),
+          loadContractsPage(),
+          loadAttendancePage(),
+          Promise.all([
+            loadAdvancesPage(),
+            loadPaymentsPage(),
+            loadLaboursPage(),
+            loadSettledPage(),
+            loadAdminPanel(),
+          ]),
+        ]);
+
+        if (cancelled) return;
+
+        const [contractsResult, laboursResult, activeLaboursResult, advancesResult, attendanceResult] = await Promise.all([
           actor.getContracts(),
           actor.getLabours(),
           actor.getActiveLabours(),
@@ -60,50 +90,29 @@ function DataPreloader({ children }: { children: ReactNode }) {
           actor.getAllAttendance(),
         ]);
 
-        if (cancelled) return;
+        queryClient.setQueryData(["contracts"], contractsResult);
+        queryClient.setQueryData(["contracts", "all"], contractsResult);
+        queryClient.setQueryData(["labours"], laboursResult);
+        queryClient.setQueryData(["labours", "active"], activeLaboursResult);
+        queryClient.setQueryData(["advances"], advancesResult);
+        queryClient.setQueryData(["attendance", "all"], attendanceResult);
 
-        const [contractsResult, laboursResult, activeLaboursResult, advancesResult, attendanceResult] = results;
+        const advancesByContract = new Map<string, typeof advancesResult>();
+        for (const item of advancesResult) {
+          const key = String(item.contractId);
+          const list = advancesByContract.get(key);
+          if (list) list.push(item); else advancesByContract.set(key, [item]);
+        }
+        for (const [contractId, items] of advancesByContract) queryClient.setQueryData(["advances", contractId], items);
 
-        if (contractsResult.status === "fulfilled") {
-          const contracts = contractsResult.value;
-          queryClient.setQueryData(["contracts"], contracts);
-          queryClient.setQueryData(["contracts", "all"], contracts);
+        const attendanceByContract = new Map<string, typeof attendanceResult>();
+        for (const item of attendanceResult) {
+          const key = String(item.contractId);
+          const list = attendanceByContract.get(key);
+          if (list) list.push(item); else attendanceByContract.set(key, [item]);
         }
-        if (laboursResult.status === "fulfilled") {
-          queryClient.setQueryData(["labours"], laboursResult.value);
-        }
-        if (activeLaboursResult.status === "fulfilled") {
-          queryClient.setQueryData(["labours", "active"], activeLaboursResult.value);
-        }
-        if (advancesResult.status === "fulfilled") {
-          const advances = advancesResult.value;
-          queryClient.setQueryData(["advances"], advances);
-          const byContract = new Map<string, typeof advances>();
-          for (const item of advances) {
-            const key = String(item.contractId);
-            const list = byContract.get(key);
-            if (list) list.push(item); else byContract.set(key, [item]);
-          }
-          for (const [contractId, items] of byContract) {
-            queryClient.setQueryData(["advances", contractId], items);
-          }
-        }
-        if (attendanceResult.status === "fulfilled") {
-          const attendance = attendanceResult.value;
-          queryClient.setQueryData(["attendance", "all"], attendance);
-          const byContract = new Map<string, typeof attendance>();
-          for (const item of attendance) {
-            const key = String(item.contractId);
-            const list = byContract.get(key);
-            if (list) list.push(item); else byContract.set(key, [item]);
-          }
-          for (const [contractId, items] of byContract) {
-            queryClient.setQueryData(["attendance", contractId], items);
-          }
-        }
+        for (const [contractId, items] of attendanceByContract) queryClient.setQueryData(["attendance", contractId], items);
 
-        // Give React one paint after the cache is populated. This prevents the
-        // first page mount from racing the cache writes on mobile WebView.
         await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
         if (!cancelled) setReady(true);
       } catch {
