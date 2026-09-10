@@ -1,5 +1,6 @@
 import { type ReactNode, useEffect, useRef, useState } from "react";
 import * as XLSX from "xlsx";
+import { Bell, FileText, LogOut, Menu, Settings, ShieldCheck, Upload, UserCircle, X } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import {
   markBackupDownloaded,
@@ -7,7 +8,7 @@ import {
 } from "../hooks/useAutoBackupReminder";
 import { useExportData, useImportData } from "../hooks/useBackend";
 import { safeParse, safeStringify } from "../lib/bigintJson";
-import type { AppMode, Tab } from "../types";
+import type { Tab } from "../types";
 import { roleBadgeClass, roleLabel } from "../types";
 import { BackButtonGuard } from "./BackButtonGuard";
 import BottomTabBar from "./BottomTabBar";
@@ -18,7 +19,7 @@ interface LayoutProps {
 }
 
 export default function Layout({ children }: LayoutProps) {
-  const { mode, activeTab, setActiveTab, logout, role } = useAuth();
+  const { mode, activeTab, setActiveTab, logout, role, username } = useAuth();
   const exportDataMutation = useExportData();
   const importDataMutation = useImportData();
   const exportData = exportDataMutation.mutateAsync;
@@ -166,42 +167,110 @@ export default function Layout({ children }: LayoutProps) {
     logout();
   };
 
+  const profileName = username?.trim() || "User";
+  const profileInitial = profileName.charAt(0).toUpperCase();
+
   return (
     <div className="min-h-screen flex flex-col bg-[#0a0f1e]">
       <BackButtonGuard enabled={mode !== null} onReturnToSelection={() => { logout(); setActiveTab("contracts"); }} />
-      <header className="sticky top-0 z-40 px-4 py-3 flex items-center justify-between" style={{ background: "linear-gradient(135deg, #050708 0%, #081515 45%, #0d2928 72%, #1b1308 100%)", borderBottom: "1px solid rgba(249,115,22,0.22)", boxShadow: "inset 0 1px 0 rgba(255,200,100,0.06), 0 4px 22px rgba(0,0,0,0.35)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)" }}>
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "linear-gradient(145deg, rgba(20,184,166,0.22), rgba(249,115,22,0.16))", border: "1px solid rgba(249,115,22,0.25)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08), 0 4px 12px rgba(0,0,0,0.25)" }}>
-            <span className="text-xl font-bold" style={{ color: "#f59e0b", textShadow: "0 0 12px rgba(245,158,11,0.35)" }}>R</span>
+
+      <header
+        className="sticky top-0 z-40 overflow-hidden rounded-b-[34px] border-b"
+        style={{
+          background: "linear-gradient(135deg, #040913 0%, #071321 42%, #0a1726 67%, #12100e 100%)",
+          borderColor: "rgba(116,143,181,0.28)",
+          boxShadow: "0 10px 32px rgba(0,0,0,0.30), inset 0 -1px 0 rgba(249,115,22,0.16)",
+          paddingTop: "max(14px, env(safe-area-inset-top))",
+        }}
+      >
+        <div className="pointer-events-none absolute -right-16 -top-16 h-52 w-52 rounded-full" style={{ background: "radial-gradient(circle, rgba(249,115,22,0.48) 0%, rgba(249,115,22,0.16) 42%, transparent 72%)" }} />
+        <div className="pointer-events-none absolute right-0 bottom-0 h-20 w-72" style={{ background: "linear-gradient(120deg, transparent 0%, rgba(249,115,22,0.10) 45%, rgba(249,115,22,0.52) 100%)", borderTopLeftRadius: "100%" }} />
+        <div className="relative flex min-h-[118px] items-center justify-between gap-3 px-4 pb-4 pt-3 sm:px-6">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[18px]" style={{ background: "linear-gradient(145deg, rgba(14,22,36,0.96), rgba(18,19,24,0.96))", border: "2px solid rgba(249,115,22,0.78)", boxShadow: "0 0 0 1px rgba(249,115,22,0.10), 0 8px 24px rgba(0,0,0,0.35)" }}>
+              <span className="text-3xl font-black" style={{ color: "#f59e0b", textShadow: "0 0 16px rgba(245,158,11,0.35)" }}>R</span>
+            </div>
+            <div className="min-w-0">
+              <h1 className="truncate text-[26px] font-extrabold leading-none tracking-tight text-white">Rossie</h1>
+              <p className="mt-2 truncate text-[11px] font-medium uppercase tracking-[0.18em] text-slate-300/80">Attendance Management</p>
+            </div>
           </div>
-          <div className="min-w-0">
-            <h1 className="text-xl font-bold tracking-tight leading-tight" style={{ background: "linear-gradient(90deg, #ffffff 0%, #fbbf24 55%, #14b8a6 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>Rossie</h1>
-            <p className="text-[10px] tracking-[0.16em] uppercase text-teal-200/60">Attendance Management</p>
+
+          <div className="flex shrink-0 items-center gap-2">
+            <button type="button" onClick={() => setMenuOpen(true)} className="relative flex h-11 w-11 items-center justify-center rounded-full text-white/90 transition-all active:scale-95" aria-label="Open menu" data-ocid="header.notification_button">
+              <Bell size={24} strokeWidth={2} />
+              <span className="absolute right-[8px] top-[7px] h-2.5 w-2.5 rounded-full" style={{ background: "#f97316", boxShadow: "0 0 8px rgba(249,115,22,0.8)" }} />
+            </button>
+            <button type="button" onClick={() => setMenuOpen(true)} className="flex h-12 items-center gap-2 rounded-2xl px-2.5 text-white transition-all active:scale-[0.98]" style={{ background: "rgba(3,10,19,0.72)", border: "1px solid rgba(130,153,185,0.30)", boxShadow: "0 6px 18px rgba(0,0,0,0.25)" }} aria-label={`Open profile for ${profileName}`} data-ocid="header.profile_button">
+              <span className="flex h-9 w-9 items-center justify-center rounded-full" style={{ background: "linear-gradient(145deg, #162338, #0c1421)", border: "1px solid rgba(249,115,22,0.55)" }}>
+                <UserCircle size={23} strokeWidth={1.8} />
+              </span>
+              <span className="hidden max-w-[120px] text-left sm:block">
+                <span className="block truncate text-xs font-semibold text-white">{profileName}</span>
+                {role && <span className="block truncate text-[10px] text-slate-400">{roleLabel(role)}</span>}
+              </span>
+              <Menu size={20} className="text-slate-300" />
+            </button>
           </div>
-        </div>
-        <div className="flex items-center gap-2">
-          {role && <span className={`hidden sm:inline-flex px-2.5 py-1 rounded-full text-xs font-semibold ${roleBadgeClass(role)}`} data-ocid="header.role_badge">{roleLabel(role)}</span>}
-          {mode === "edit" && <div className="relative">
-            <button type="button" onClick={() => setMenuOpen((v) => !v)} className="w-10 h-10 rounded-xl flex items-center justify-center text-white text-xl transition-all active:scale-95" style={{ background: menuOpen ? "rgba(249,115,22,0.18)" : "rgba(255,255,255,0.06)", border: menuOpen ? "1px solid rgba(249,115,22,0.4)" : "1px solid rgba(255,255,255,0.1)", boxShadow: menuOpen ? "0 0 14px rgba(249,115,22,0.12)" : "none" }} aria-label="Menu" data-ocid="header.menu_button">☰</button>
-            {menuOpen && <>
-              <div className="fixed inset-0 z-30" onClick={() => setMenuOpen(false)} onKeyDown={(e) => { if (e.key === "Escape") setMenuOpen(false); }} tabIndex={-1} role="presentation" />
-              <div className="absolute right-0 top-12 z-40 w-56 rounded-2xl overflow-hidden" style={{ background: "rgba(13,18,20,0.97)", border: "1px solid rgba(249,115,22,0.2)", boxShadow: "0 14px 35px rgba(0,0,0,0.45), 0 0 20px rgba(249,115,22,0.06)", backdropFilter: "blur(18px)", WebkitBackdropFilter: "blur(18px)" }} onClick={(e) => e.stopPropagation()} onKeyDown={(e) => { if (e.key === "Escape") setMenuOpen(false); }} role="presentation" tabIndex={-1}>
-                <div className="py-1">
-                  <button type="button" onClick={handleExportCSV} className="w-full text-left px-4 py-3 text-sm text-white hover:bg-orange-500/10 transition-colors" data-ocid="header.export_csv">Export CSV</button>
-                  <button type="button" onClick={handleExportExcel} className="w-full text-left px-4 py-3 text-sm text-white hover:bg-orange-500/10 transition-colors" data-ocid="header.export_excel">Export Excel</button>
-                  <button type="button" onClick={() => { setMenuOpen(false); csvInputRef.current?.click(); }} className="w-full text-left px-4 py-3 text-sm text-white hover:bg-orange-500/10 transition-colors" data-ocid="header.import_csv">Import CSV</button>
-                  <div className="border-t border-white/10 my-1" />
-                  <button type="button" onClick={() => { setMenuOpen(false); setActiveTab("admin"); }} className="w-full text-left px-4 py-3 text-sm text-white hover:bg-orange-500/10 transition-colors" data-ocid="header.admin_panel">Admin Panel</button>
-                  <div className="border-t border-white/10 my-1" />
-                  <SettingsPanel onClose={() => setMenuOpen(false)} />
-                  <div className="border-t border-white/10 my-1" />
-                  <button type="button" onClick={handleLogout} className="w-full text-left px-4 py-3 text-sm text-red-400 hover:bg-red-500/10 transition-colors" data-ocid="header.logout">Logout</button>
-                </div>
-              </div>
-            </>}
-          </div>}
         </div>
       </header>
+
+      {menuOpen && <>
+        <div className="fixed inset-0 z-[60] bg-black/55 backdrop-blur-[2px]" onClick={() => setMenuOpen(false)} aria-hidden="true" />
+        <aside className="fixed right-0 top-0 z-[70] flex h-[100dvh] w-[min(88vw,380px)] flex-col overflow-hidden border-l" style={{ background: "linear-gradient(180deg, #08111f 0%, #0a1422 45%, #080e18 100%)", borderColor: "rgba(249,115,22,0.28)", boxShadow: "-18px 0 45px rgba(0,0,0,0.42)" }} aria-label="Settings and navigation sidebar">
+          <div className="relative overflow-hidden border-b px-5 pb-5 pt-[max(18px,env(safe-area-inset-top))]" style={{ borderColor: "rgba(116,143,181,0.18)" }}>
+            <div className="pointer-events-none absolute -right-12 -top-20 h-48 w-48 rounded-full" style={{ background: "radial-gradient(circle, rgba(249,115,22,0.30) 0%, transparent 68%)" }} />
+            <div className="relative flex items-center justify-between gap-3">
+              <div className="flex min-w-0 items-center gap-3">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full" style={{ background: "linear-gradient(145deg, #17263c, #0d1522)", border: "1px solid rgba(249,115,22,0.60)" }}>
+                  <UserCircle size={28} className="text-slate-200" strokeWidth={1.7} />
+                </div>
+                <div className="min-w-0">
+                  <p className="truncate text-base font-bold text-white">{profileName}</p>
+                  {role && <p className="mt-0.5 text-xs text-orange-300/80">{roleLabel(role)}</p>}
+                </div>
+              </div>
+              <button type="button" onClick={() => setMenuOpen(false)} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-slate-300 transition-colors hover:bg-white/5" aria-label="Close sidebar" data-ocid="sidebar.close_button"><X size={22} /></button>
+            </div>
+          </div>
+
+          <div className="flex-1 overflow-y-auto px-3 py-4">
+            <p className="px-3 pb-2 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">Account & settings</p>
+            <div className="space-y-1">
+              {mode === "edit" && <button type="button" onClick={() => { setMenuOpen(false); setActiveTab("admin"); }} className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium text-white transition-colors hover:bg-white/5" data-ocid="sidebar.admin_panel">
+                <ShieldCheck size={19} className="text-orange-400" />
+                <span>Admin Panel</span>
+              </button>}
+              <button type="button" onClick={handleExportCSV} className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium text-white transition-colors hover:bg-white/5" data-ocid="sidebar.export_csv">
+                <FileText size={19} className="text-slate-300" />
+                <span>Export CSV</span>
+              </button>
+              <button type="button" onClick={handleExportExcel} className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium text-white transition-colors hover:bg-white/5" data-ocid="sidebar.export_excel">
+                <FileText size={19} className="text-slate-300" />
+                <span>Export Excel</span>
+              </button>
+              <button type="button" onClick={() => { setMenuOpen(false); csvInputRef.current?.click(); }} className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium text-white transition-colors hover:bg-white/5" data-ocid="sidebar.import_csv">
+                <Upload size={19} className="text-slate-300" />
+                <span>Import CSV</span>
+              </button>
+            </div>
+
+            <div className="my-4 border-t border-white/10" />
+            <div className="flex items-center gap-2 px-3 pb-2">
+              <Settings size={15} className="text-orange-400" />
+              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-orange-300/80">Settings</p>
+            </div>
+            <SettingsPanel onClose={() => setMenuOpen(false)} />
+          </div>
+
+          <div className="border-t p-3 pb-[max(12px,env(safe-area-inset-bottom))]" style={{ borderColor: "rgba(116,143,181,0.18)" }}>
+            <button type="button" onClick={handleLogout} className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-semibold text-red-300 transition-colors hover:bg-red-500/10" data-ocid="sidebar.logout">
+              <LogOut size={19} />
+              <span>Logout</span>
+            </button>
+          </div>
+        </aside>
+      </>}
 
       <main
         ref={mainRef}
@@ -281,11 +350,7 @@ export default function Layout({ children }: LayoutProps) {
         className="flex-1 min-h-0 overflow-hidden flex flex-col"
         style={{ height: "calc(100dvh - 56px - 64px)", touchAction: "pan-y" }}
       >
-        <div
-          ref={swipeContentRef}
-          className="flex-1 min-h-0 min-w-0 flex flex-col"
-          style={{ width: "100%", willChange: "transform" }}
-        >
+        <div ref={swipeContentRef} className="flex-1 min-h-0 min-w-0 flex flex-col" style={{ width: "100%", willChange: "transform" }}>
           {children}
         </div>
       </main>
