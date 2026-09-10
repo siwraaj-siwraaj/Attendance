@@ -35,7 +35,12 @@ export default function BottomTabBar({ activeTab, onTabChange, swipeProgress: ex
   const didSwipeRef = useRef(false);
   const [localSwipeProgress, setLocalSwipeProgress] = useState(0);
   const [indicatorStyle, setIndicatorStyle] = useState<React.CSSProperties>({});
-  const swipeProgress = Math.abs(externalSwipeProgress) > 0.001 ? externalSwipeProgress : localSwipeProgress;
+  const rawSwipeProgress = Math.abs(externalSwipeProgress) > 0.001 ? externalSwipeProgress : localSwipeProgress;
+
+  // Never apply a stale gesture offset after Layout has committed the new tab.
+  // Without this guard, a long swipe could be interpreted as:
+  // new active tab + old one-tab offset = a visual two-tab jump.
+  const swipeProgress = prevTabRef.current !== activeTab ? 0 : rawSwipeProgress;
 
   useEffect(() => {
     const handleTouchStart = (e: TouchEvent) => {
@@ -62,20 +67,21 @@ export default function BottomTabBar({ activeTab, onTabChange, swipeProgress: ex
       const progress = dx / width;
       const index = tabs.indexOf(activeTab);
       const atEdge = (progress > 0 && index <= 0) || (progress < 0 && index >= tabs.length - 1);
-      // Keep the indicator tied to a single adjacent tab. A long finger swipe
-      // must not drag the indicator across two or more tabs; Layout only commits
-      // one tab per swipe.
+
+      // Opposite to the finger, but limited to one adjacent tab.
       const indicatorProgress = atEdge ? -progress * 0.28 : -progress * 0.92;
       setLocalSwipeProgress(Math.max(-1, Math.min(1, indicatorProgress)));
-      didSwipeRef.current = Math.abs(dx) >= 8;
+      // Match Layout's actual swipe commit threshold.
+      didSwipeRef.current = Math.abs(dx) >= 55 && Math.abs(dx) > Math.abs(dy) * 1.15;
     };
 
     const handleTouchEnd = () => {
       touchStartX.current = null;
       touchStartY.current = null;
-      // Keep the dragged indicator position until Layout commits the new tab.
-      // Resetting immediately caused the indicator to visibly jump back.
+      // A swipe that does not commit to another tab must return to the active tab.
+      // For a committed swipe, the activeTab change below clears the temporary offset.
       if (!didSwipeRef.current) setLocalSwipeProgress(0);
+      didSwipeRef.current = false;
     };
 
     window.addEventListener("touchstart", handleTouchStart, { passive: true });
@@ -91,31 +97,21 @@ export default function BottomTabBar({ activeTab, onTabChange, swipeProgress: ex
   }, [activeTab, tabs]);
 
   useEffect(() => {
-    if (!didSwipeRef.current) return;
-    // Layout changes activeTab after its 180ms content transition. Give that
-    // transition time to finish before clearing the temporary indicator offset.
-    const timer = window.setTimeout(() => {
-      setLocalSwipeProgress(0);
-      didSwipeRef.current = false;
-    }, 260);
-    return () => window.clearTimeout(timer);
-  }, [activeTab]);
-
-  useEffect(() => {
     const idx = tabs.findIndex((t) => t.key === activeTab);
     const total = tabs.length;
     if (idx < 0 || total === 0) return;
-    // The indicator may move only toward the immediately adjacent tab during
-    // one swipe. This prevents a long swipe from visually crossing two tabs.
-    const visualIndex = Math.max(0, Math.min(total - 1, Math.max(idx - 1, Math.min(idx + 1, idx + swipeProgress))));
+
+    const visualIndex = Math.max(-0, Math.min(total - 1, idx + swipeProgress));
     const isSwiping = Math.abs(swipeProgress) > 0.001;
+    const tabChanged = prevTabRef.current !== activeTab;
+
     setIndicatorStyle({
       left: `${(visualIndex / total) * 100}%`,
       width: `${100 / total}%`,
       boxShadow: "0 0 8px rgba(249, 115, 22, 0.7)",
       transition: isSwiping
         ? "none"
-        : prevTabRef.current !== activeTab
+        : tabChanged
           ? "left 0.18s cubic-bezier(0.22,1,0.36,1), width 0.18s cubic-bezier(0.22,1,0.36,1)"
           : "none",
     });
