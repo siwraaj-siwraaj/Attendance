@@ -23,20 +23,82 @@ function OpeningRossie() {
 }
 function PageLoading() { return <div className="flex h-full min-h-[240px] items-center justify-center" aria-live="polite" aria-label="Loading page"><div className="h-7 w-7 animate-spin rounded-full border-2 border-orange-500 border-t-transparent" /></div>; }
 
-function DataPreloader() {
+function DataPreloader({ children }: { children: React.ReactNode }) {
   const { actor, actorReady } = useBackendActor();
   const queryClient = useQueryClient();
   const { isAuthenticated, status } = useAuth();
+  const [ready, setReady] = useState(false);
+
   useEffect(() => {
-    if (!actorReady || !actor || !isAuthenticated || status !== "approved") return;
-    void Promise.allSettled([
-      queryClient.prefetchQuery({ queryKey: ["contracts"], queryFn: () => actor.getContracts(), staleTime: 10 * 60 * 1000 }),
-      queryClient.prefetchQuery({ queryKey: ["labours"], queryFn: () => actor.getLabours(), staleTime: 10 * 60 * 1000 }),
-      queryClient.prefetchQuery({ queryKey: ["advances"], queryFn: () => actor.getAdvances(), staleTime: 10 * 60 * 1000 }),
-      queryClient.prefetchQuery({ queryKey: ["attendance", "all"], queryFn: () => actor.getAllAttendance(), staleTime: 10 * 60 * 1000 }),
-    ]);
+    let cancelled = false;
+    if (!actorReady || !actor || !isAuthenticated || status !== "approved") {
+      setReady(false);
+      return () => { cancelled = true; };
+    }
+
+    setReady(false);
+    const warm = async () => {
+      const results = await Promise.allSettled([
+        actor.getContracts(),
+        actor.getLabours(),
+        actor.getActiveLabours(),
+        actor.getAdvances(),
+        actor.getAllAttendance(),
+      ]);
+
+      if (cancelled) return;
+
+      const [contractsResult, laboursResult, activeLaboursResult, advancesResult, attendanceResult] = results;
+
+      if (contractsResult.status === "fulfilled") {
+        const contracts = contractsResult.value;
+        queryClient.setQueryData(["contracts"], contracts);
+        queryClient.setQueryData(["contracts", "all"], contracts);
+      }
+      if (laboursResult.status === "fulfilled") {
+        queryClient.setQueryData(["labours"], laboursResult.value);
+      }
+      if (activeLaboursResult.status === "fulfilled") {
+        queryClient.setQueryData(["labours", "active"], activeLaboursResult.value);
+      }
+      if (advancesResult.status === "fulfilled") {
+        const advances = advancesResult.value;
+        queryClient.setQueryData(["advances"], advances);
+        const byContract = new Map<string, typeof advances>();
+        for (const item of advances) {
+          const key = String(item.contractId);
+          const list = byContract.get(key);
+          if (list) list.push(item);
+          else byContract.set(key, [item]);
+        }
+        for (const [contractId, items] of byContract) {
+          queryClient.setQueryData(["advances", contractId], items);
+        }
+      }
+      if (attendanceResult.status === "fulfilled") {
+        const attendance = attendanceResult.value;
+        queryClient.setQueryData(["attendance", "all"], attendance);
+        const byContract = new Map<string, typeof attendance>();
+        for (const item of attendance) {
+          const key = String(item.contractId);
+          const list = byContract.get(key);
+          if (list) list.push(item);
+          else byContract.set(key, [item]);
+        }
+        for (const [contractId, items] of byContract) {
+          queryClient.setQueryData(["attendance", contractId], items);
+        }
+      }
+
+      setReady(true);
+    };
+
+    void warm();
+    return () => { cancelled = true; };
   }, [actor, actorReady, isAuthenticated, status, queryClient]);
-  return null;
+
+  if (isAuthenticated && status === "approved" && !ready) return <OpeningRossie />;
+  return <>{children}</>;
 }
 
 function AppContent() {
@@ -61,4 +123,4 @@ function AppContent() {
     {(mode === "edit" || mode === "view") && activeTab === "settled" && <SettledPage />}
   </Suspense></ErrorBoundary></div></Layout>;
 }
-export default function App({ queryClient }: AppProps = {}) { const qc = queryClient ?? defaultQueryClient; return <ErrorBoundary><QueryClientProvider client={qc}><AuthProvider><DataPreloader /><div className="ambient-glow-1" aria-hidden="true" /><div className="ambient-glow-2" aria-hidden="true" /><AppContent /></AuthProvider></QueryClientProvider></ErrorBoundary>; }
+export default function App({ queryClient }: AppProps = {}) { const qc = queryClient ?? defaultQueryClient; return <ErrorBoundary><QueryClientProvider client={qc}><AuthProvider><DataPreloader><AppContent /></DataPreloader></AuthProvider></QueryClientProvider></ErrorBoundary>; }
