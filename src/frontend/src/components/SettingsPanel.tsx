@@ -4,7 +4,7 @@ interface SettingsPanelProps {
   onClose?: () => void;
 }
 
-/** Settings dropdown rows — rendered inside the admin header dropdown menu */
+/** Settings rows rendered inside the right-side account/settings drawer. */
 export default function SettingsPanel({
   onClose: _onClose,
 }: SettingsPanelProps) {
@@ -16,7 +16,6 @@ export default function SettingsPanel({
   );
   const [saved, setSaved] = useState(false);
 
-  // Keep localStorage in sync whenever values change
   useEffect(() => {
     const num = Number(bedBase);
     if (!Number.isNaN(num) && num > 0) {
