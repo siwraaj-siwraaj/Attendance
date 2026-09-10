@@ -88,7 +88,7 @@ export default function LoginPage() {
           {error && <div className="login-error mb-4" role="alert" data-ocid="login.error"><AlertCircle size={16} aria-hidden="true" /><span>{error}</span></div>}
 
           <div className="mb-4">
-            <label className="login-label" htmlFor="login-username">Username</label>
+            <label className="login-label" htmlFor="login-username" style={{ color: "#b3bdcc" }}>Username</label>
             <div className="relative">
               <UserRound size={19} strokeWidth={1.8} className="pointer-events-none absolute left-4 top-1/2 z-10 -translate-y-1/2 text-[#aab5c7]" aria-hidden="true" />
               <input id="login-username" type="text" autoComplete="username" value={username} onChange={(e) => { setUsername(e.target.value); if (error) setError(null); }} className={`login-input h-12 pl-12 pr-4 ${error ? "login-input-error" : ""}`} style={{ color: "#ffffff", WebkitTextFillColor: "#ffffff", caretColor: "#f97316" }} placeholder="Enter your username" data-ocid="login.username_input" />
@@ -96,7 +96,7 @@ export default function LoginPage() {
           </div>
 
           <div className="mb-4">
-            <label className="login-label" htmlFor="login-password">Password</label>
+            <label className="login-label" htmlFor="login-password" style={{ color: "#b3bdcc" }}>Password</label>
             <div className="relative">
               <LockKeyhole size={19} strokeWidth={1.8} className="pointer-events-none absolute left-4 top-1/2 z-10 -translate-y-1/2 text-[#aab5c7]" aria-hidden="true" />
               <input id="login-password" type={showPassword ? "text" : "password"} autoComplete="current-password" value={password} onChange={(e) => { setPassword(e.target.value); if (error) setError(null); }} className={`login-input h-12 pl-12 pr-12 ${error ? "login-input-error" : ""}`} style={{ color: "#ffffff", WebkitTextFillColor: "#ffffff", caretColor: "#f97316" }} placeholder="Enter your password" data-ocid="login.password_input" />
@@ -107,7 +107,8 @@ export default function LoginPage() {
           </div>
 
           <label className="mb-5 flex min-h-6 cursor-pointer items-center gap-2.5 select-none">
-            <input type="checkbox" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} className="login-checkbox" data-ocid="login.remember_me_checkbox" />
+            <input type="checkbox" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} className="peer sr-only" data-ocid="login.remember_me_checkbox" />
+            <span aria-hidden="true" className="flex h-5 w-5 shrink-0 items-center justify-center rounded-[5px] border border-[#7d899d] bg-white/[0.03] text-[13px] font-bold leading-none text-white transition-all peer-checked:border-orange-500 peer-checked:bg-orange-500 peer-checked:shadow-[0_0_12px_rgba(249,115,22,0.25)] peer-focus-visible:ring-2 peer-focus-visible:ring-orange-500/50 after:content-['✓'] after:scale-0 after:transition-transform peer-checked:after:scale-100" />
             <span className="text-sm font-medium" style={{ color: "#f4f6fa" }}>Remember me</span>
           </label>
 
