@@ -57,3 +57,5 @@ jobs:
         with:
           name: Attendance-debug-apk
           path: src/frontend/android/app/build/outputs/apk/debug/app-debug.apk
+
+# Rebuild trigger to refresh the downloadable APK artifact.
