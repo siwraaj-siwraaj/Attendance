@@ -3,6 +3,11 @@ import { NativeBiometric } from "@capgo/capacitor-native-biometric";
 
 const SERVER = "https://sduxdklpycjrydqdtdtc.supabase.co";
 
+export type SavedCredentials = {
+  username: string;
+  password: string;
+};
+
 export async function saveBiometricCredentials(
   username: string,
   password: string,
@@ -16,14 +21,32 @@ export async function saveBiometricCredentials(
       server: SERVER,
     });
   } catch {
-    // Biometric setup is optional; normal login still works.
+    // Secure credential storage is optional; normal login still works.
   }
 }
 
-export async function biometricLogin(): Promise<{
-  username: string;
-  password: string;
-} | null> {
+/**
+ * Reads credentials from the OS secure credential store without showing a
+ * biometric prompt. Used only for an explicit "Remember me" choice.
+ */
+export async function getSavedCredentials(): Promise<SavedCredentials | null> {
+  if (!Capacitor.isNativePlatform()) return null;
+
+  try {
+    const saved = await NativeBiometric.isCredentialsSaved({
+      server: SERVER,
+    });
+    if (!saved.isSaved) return null;
+
+    return await NativeBiometric.getCredentials({
+      server: SERVER,
+    });
+  } catch {
+    return null;
+  }
+}
+
+export async function biometricLogin(): Promise<SavedCredentials | null> {
   if (!Capacitor.isNativePlatform()) return null;
 
   try {
