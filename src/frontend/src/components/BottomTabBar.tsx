@@ -30,6 +30,7 @@ export default function BottomTabBar({ activeTab, onTabChange, swipeProgress = 0
   const { allowedTabs } = useAuth();
   const tabs = ALL_TAB_DEFS.filter((t) => allowedTabs.includes(t.key));
   const prevTabRef = useRef<Tab>(activeTab);
+  const indicatorRef = useRef<HTMLDivElement | null>(null);
   const [indicatorStyle, setIndicatorStyle] = useState<React.CSSProperties>({});
 
   useEffect(() => {
@@ -37,9 +38,6 @@ export default function BottomTabBar({ activeTab, onTabChange, swipeProgress = 0
     const total = tabs.length;
     if (idx < 0 || total === 0) return;
 
-    // Layout is the single owner of the swipe gesture. The indicator receives
-    // its progress here instead of independently listening to touch events.
-    // A negative finger swipe therefore produces a positive indicator offset.
     const boundedProgress = Math.max(-0.5, Math.min(0.5, swipeProgress));
     const visualIndex = Math.max(0, Math.min(total - 1, idx + boundedProgress));
     const isSwiping = Math.abs(boundedProgress) > 0.001;
@@ -49,12 +47,30 @@ export default function BottomTabBar({ activeTab, onTabChange, swipeProgress = 0
       left: `${(visualIndex / total) * 100}%`,
       width: `${100 / total}%`,
       boxShadow: "0 0 8px rgba(249, 115, 22, 0.7)",
-      transition: isSwiping
-        ? "none"
-        : tabChanged
-          ? "left 220ms cubic-bezier(0.22, 1, 0.36, 1)"
-          : "none",
+      transition: isSwiping ? "none" : tabChanged ? "left 220ms cubic-bezier(0.22, 1, 0.36, 1)" : "none",
+      transformOrigin: "center",
     });
+
+    if (tabChanged && !isSwiping) {
+      requestAnimationFrame(() => {
+        const indicator = indicatorRef.current;
+        if (!indicator) return;
+        indicator.animate(
+          [
+            { transform: "scaleX(1)", offset: 0 },
+            { transform: "scaleX(1.5)", offset: 0.35 },
+            { transform: "scaleX(0.82)", offset: 0.72 },
+            { transform: "scaleX(1)", offset: 1 },
+          ],
+          {
+            duration: 360,
+            easing: "cubic-bezier(0.22, 1, 0.36, 1)",
+            fill: "none",
+          },
+        );
+      });
+    }
+
     prevTabRef.current = activeTab;
   }, [activeTab, tabs, swipeProgress]);
 
@@ -107,7 +123,11 @@ export default function BottomTabBar({ activeTab, onTabChange, swipeProgress = 0
             </button>
           );
         })}
-        <div className="absolute bottom-0 h-0.5 bg-[#f97316] rounded-full pointer-events-none" style={indicatorStyle} />
+        <div
+          ref={indicatorRef}
+          className="absolute bottom-0 h-0.5 bg-[#f97316] rounded-full pointer-events-none"
+          style={indicatorStyle}
+        />
       </div>
     </nav>
   );
