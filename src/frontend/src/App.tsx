@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/react-query";
-import { lazy, Suspense, useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState, type ReactNode } from "react";
 import ErrorBoundary from "./components/ErrorBoundary";
 import Layout from "./components/Layout";
 import PendingApproval from "./components/PendingApproval";
@@ -23,7 +23,7 @@ function OpeningRossie() {
 }
 function PageLoading() { return <div className="flex h-full min-h-[240px] items-center justify-center" aria-live="polite" aria-label="Loading page"><div className="h-7 w-7 animate-spin rounded-full border-2 border-orange-500 border-t-transparent" /></div>; }
 
-function DataPreloader({ children }: { children: React.ReactNode }) {
+function DataPreloader({ children }: { children: ReactNode }) {
   const { actor, actorReady } = useBackendActor();
   const queryClient = useQueryClient();
   const { isAuthenticated, status } = useAuth();
