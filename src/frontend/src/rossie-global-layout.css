@@ -27,9 +27,8 @@ body {
   overscroll-behavior: none;
 }
 
-/* Layout is the single viewport owner. Individual pages must scroll inside
-   their own flex child instead of making the document scroll behind the
-   sticky header or floating navigation. */
+/* Layout is the single viewport owner. Individual pages scroll inside their
+   own flex child instead of making the document scroll behind the header. */
 body:has([data-ocid="bottom_tab_bar"]) main {
   flex: 1 1 auto;
   min-width: 0;
@@ -58,7 +57,7 @@ body:has([data-ocid="bottom_tab_bar"]) main [class*="overflow-y-auto"] {
 }
 
 /* Contracts had a legacy fixed viewport height. Flex layout now determines
-   the available height, so the list can never fight the header/dock. */
+   the available height, so the list can never fight the header or dock. */
 body:has([data-ocid="contracts.search_input"]) main [class*="overflow-y-auto"] {
   height: auto !important;
   max-height: none !important;
@@ -74,12 +73,17 @@ body:has([data-ocid="bottom_tab_bar"]) [data-ocid$=".add_button"] {
   bottom: var(--rossie-nav-clearance) !important;
 }
 
-/* Edge-to-edge header: its background continues behind the Android status
-   bar, while its inner content keeps the safe-area inset. */
+/* Edge-to-edge header.
+   IMPORTANT: do not use a negative top margin here. The header already owns
+   the status-bar inset through its padding, so a negative margin makes main
+   start too early and causes every tab's first content to slide underneath
+   the header. */
 body:has([data-ocid="bottom_tab_bar"]) header {
-  margin-top: calc(-1 * env(safe-area-inset-top, 0px));
-  padding-top: calc(env(safe-area-inset-top, 0px) + 0px) !important;
+  margin-top: 0 !important;
+  padding-top: env(safe-area-inset-top, 0px) !important;
+  box-sizing: border-box;
   flex-shrink: 0;
+  z-index: 40;
 }
 
 /* Dialogs always sit above the dock and have their own viewport clearance. */
@@ -101,7 +105,7 @@ body:has([data-ocid="bottom_tab_bar"]) header {
   z-index: 81 !important;
 }
 
-/* Keep custom overlays/dialogs above the bottom dock as well. */
+/* Custom overlays/dialogs must also remain above the bottom dock. */
 .glass-dialog {
   position: relative;
   z-index: 81;
