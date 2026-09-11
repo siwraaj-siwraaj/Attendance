@@ -1,11 +1,12 @@
-/* Rossie — global mobile layout contract
-   Pages scroll independently. Modal layers are a separate top-level visual state:
-   when a dialog is open, the application underneath is completely hidden. */
+/* Rossie — global mobile layout contract */
 
 :root {
   --rossie-nav-clearance: calc(112px + env(safe-area-inset-bottom, 0px));
-  --rossie-dialog-top: max(12px, env(safe-area-inset-top, 0px));
-  --rossie-dialog-bottom: max(12px, env(safe-area-inset-bottom, 0px));
+  --rossie-header-height: calc(92px + env(safe-area-inset-top, 0px));
+  --rossie-dialog-range-top: var(--rossie-header-height);
+  --rossie-dialog-range-bottom: var(--rossie-nav-clearance);
+  --rossie-dialog-range-height: max(1px, calc(100dvh - var(--rossie-dialog-range-top) - var(--rossie-dialog-range-bottom)));
+  --rossie-dialog-max-height: max(1px, var(--rossie-dialog-range-height));
 }
 
 html,
@@ -25,10 +26,9 @@ button, input, select, textarea { box-sizing: border-box; }
 main, main > div { max-width: 100%; overflow-x: hidden; }
 .min-h-screen { min-height: 100dvh; }
 
-/* ========================= MODAL SYSTEM =========================
-   Every dialog owns the whole viewport. The page/header/navigation are never
-   visible behind an open dialog. Tall content scrolls inside the dialog. */
-
+/* Dialog stage: the usable range starts at the bottom edge of the app header
+   and ends above the bottom navigation clearance. Every dialog is centered in
+   this exact range, not in the raw viewport. */
 [data-slot="dialog-overlay"] {
   position: fixed !important;
   inset: 0 !important;
@@ -42,12 +42,12 @@ main, main > div { max-width: 100%; overflow-x: hidden; }
 
 [data-slot="dialog-content"] {
   position: fixed !important;
-  top: 50% !important;
+  top: calc(var(--rossie-dialog-range-top) + (var(--rossie-dialog-range-height) / 2)) !important;
   left: 50% !important;
   right: auto !important;
   width: min(720px, calc(100vw - 32px)) !important;
   max-width: min(720px, calc(100vw - 32px)) !important;
-  max-height: calc(100dvh - var(--rossie-dialog-top) - var(--rossie-dialog-bottom)) !important;
+  max-height: var(--rossie-dialog-max-height) !important;
   margin: 0 !important;
   transform: translate(-50%, -50%) !important;
   z-index: 1001 !important;
@@ -61,7 +61,7 @@ main, main > div { max-width: 100%; overflow-x: hidden; }
 
 .glass-dialog {
   box-sizing: border-box;
-  max-height: calc(100dvh - var(--rossie-dialog-top) - var(--rossie-dialog-bottom));
+  max-height: var(--rossie-dialog-max-height) !important;
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
@@ -70,7 +70,8 @@ main, main > div { max-width: 100%; overflow-x: hidden; }
   z-index: 1001 !important;
 }
 
-/* Legacy page dialogs are true centered modal shells. */
+/* Legacy custom dialogs use an absolute shell so flexbox cannot introduce
+   any unexpected vertical drift. */
 body:has([data-ocid="bottom_tab_bar"]) .fixed.inset-0[class*="bg-black/"] {
   position: fixed !important;
   inset: 0 !important;
@@ -79,12 +80,9 @@ body:has([data-ocid="bottom_tab_bar"]) .fixed.inset-0[class*="bg-black/"] {
   max-width: none !important;
   max-height: none !important;
   margin: 0 !important;
-  padding: var(--rossie-dialog-top) 16px var(--rossie-dialog-bottom) !important;
+  padding: 0 !important;
   box-sizing: border-box !important;
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: center !important;
-  justify-content: center !important;
+  display: block !important;
   overflow: hidden !important;
   z-index: 1000 !important;
   background: rgba(2, 6, 14, 0.985) !important;
@@ -93,49 +91,42 @@ body:has([data-ocid="bottom_tab_bar"]) .fixed.inset-0[class*="bg-black/"] {
 }
 
 body:has([data-ocid="bottom_tab_bar"]) .fixed.inset-0[class*="bg-black/"] > div {
-  width: 100% !important;
+  position: absolute !important;
+  top: calc(var(--rossie-dialog-range-top) + (var(--rossie-dialog-range-height) / 2)) !important;
+  left: 50% !important;
+  right: auto !important;
+  width: min(720px, calc(100vw - 32px)) !important;
   max-width: 720px !important;
-  max-height: calc(100dvh - var(--rossie-dialog-top) - var(--rossie-dialog-bottom)) !important;
+  max-height: var(--rossie-dialog-max-height) !important;
   min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
   box-sizing: border-box !important;
+  transform: translate(-50%, -50%) !important;
   overflow-x: hidden !important;
   overflow-y: auto !important;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
   touch-action: pan-y;
-  flex: 0 1 auto !important;
   z-index: 1001 !important;
-}
-
-/* Keep the requested dialogs visually centered even when their internal
-   content is taller than the available viewport. */
-[data-ocid="combined_flow.dialog"],
-[data-ocid="attendance.quick_mark.dialog"],
-[data-ocid="payments.overview.dialog"] {
-  align-items: center !important;
-  justify-content: center !important;
 }
 
 [data-ocid="combined_flow.dialog"] > div,
 [data-ocid="attendance.quick_mark.dialog"] > div,
 [data-ocid="payments.overview.dialog"] > div {
+  top: calc(var(--rossie-dialog-range-top) + (var(--rossie-dialog-range-height) / 2)) !important;
   margin-top: 0 !important;
   margin-bottom: 0 !important;
 }
 
-/* ========================= A4 PDF PREVIEW =========================
-   A4 is 210 × 297 mm. The preview keeps that portrait aspect ratio while
-   scaling to the phone width, with Close/Save actions outside the paper. */
-
+/* A4 PDF preview remains a separate full-screen document viewer. */
 body:has(.fixed.inset-0.z-\[9999\]) .fixed.inset-0.z-\[9999\] {
   position: fixed !important;
   inset: 0 !important;
   width: 100vw !important;
   height: 100dvh !important;
-  max-width: none !important;
-  max-height: none !important;
   margin: 0 !important;
-  padding: 12px 12px max(12px, env(safe-area-inset-bottom, 0px)) !important;
+  padding: 12px !important;
   box-sizing: border-box !important;
   display: flex !important;
   align-items: center !important;
@@ -150,7 +141,6 @@ body:has(.fixed.inset-0.z-\[9999\]) .fixed.inset-0.z-\[9999\] > div {
   max-width: 794px !important;
   height: min(calc(100dvh - 24px), calc((100vw - 24px) * 1.4142857 + 66px)) !important;
   max-height: calc(100dvh - 24px) !important;
-  min-height: 0 !important;
   margin: 0 !important;
   padding: 0 !important;
   background: transparent !important;
@@ -160,7 +150,6 @@ body:has(.fixed.inset-0.z-\[9999\]) .fixed.inset-0.z-\[9999\] > div {
   align-items: center !important;
   justify-content: center !important;
   gap: 10px !important;
-  box-shadow: none !important;
 }
 
 body:has(.fixed.inset-0.z-\[9999\]) .fixed.inset-0.z-\[9999\] > div > div:first-child {
