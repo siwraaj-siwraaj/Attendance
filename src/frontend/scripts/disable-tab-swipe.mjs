@@ -69,6 +69,7 @@ source = source
   .replace(/\n  const swipeTabs = allowedTabs;/, "")
   .replace(/\n  const swipeContentRef = useRef<HTMLDivElement \| null>\(null\);/, "")
   .replace(/\n  const mainRef = useRef<HTMLElement \| null>\(null\);/, "")
+  .replace(/\n        ref=\{mainRef\}/, "")
   .replace(/, allowedTabs } = useAuth\(\);/, " } = useAuth();")
   .replace(/ style=\{\{ width: "100%", willChange: "transform" \}\}/g, "");
 
