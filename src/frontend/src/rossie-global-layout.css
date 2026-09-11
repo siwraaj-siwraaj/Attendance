@@ -1,60 +1,96 @@
 /* Rossie — global mobile layout contract
-   One owner for each global concern: page scroll areas own their bottom
-   content padding; the fixed tab bar owns its safe-area inset; dialogs own
-   their own viewport clearance. */
+   Global responsibilities:
+   1. Layout owns the viewport and header.
+   2. Each page owns its own scroll container.
+   3. The floating bottom dock never owns page spacing.
+   4. Floating actions and dialogs have independent safe-area clearance.
+*/
 
 :root {
   --rossie-nav-clearance: calc(96px + env(safe-area-inset-bottom, 0px));
-  --rossie-dialog-clearance: calc(16px + env(safe-area-inset-top, 0px) + env(safe-area-inset-bottom, 0px));
+  --rossie-dialog-clearance: calc(24px + env(safe-area-inset-top, 0px) + env(safe-area-inset-bottom, 0px));
 }
 
-/* The page components already own their scroll-container bottom padding
-   (pb-24 / pb-28). Do not add a second padding layer to <main>. */
-body:has([data-ocid="bottom_tab_bar"]) main {
-  padding-bottom: 0 !important;
+html,
+body,
+#root {
+  width: 100%;
   min-width: 0;
+  height: 100%;
+  min-height: 100%;
+  margin: 0;
+  background: #040913;
+}
+
+body {
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+/* Layout is the single viewport owner. Individual pages must scroll inside
+   their own flex child instead of making the document scroll behind the
+   sticky header or floating navigation. */
+body:has([data-ocid="bottom_tab_bar"]) main {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+  padding: 0 !important;
 }
 
 body:has([data-ocid="bottom_tab_bar"]) main > div {
   min-width: 0;
   min-height: 0;
+  max-width: 100%;
 }
 
-/* Contracts already uses flex-1 for its list. Its old fixed 100vh height
-   conflicts with the edge-to-edge header and the fixed bottom navigation. */
+/* Page-owned scroll regions. Existing pages use pb-24/pb-28; preserve that
+   architecture rather than adding another main-level padding layer. */
+body:has([data-ocid="bottom_tab_bar"]) main [class*="overflow-y-auto"] {
+  min-width: 0;
+  min-height: 0;
+  overscroll-behavior-y: contain;
+  scroll-padding-top: 8px;
+  scroll-padding-bottom: var(--rossie-nav-clearance);
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Contracts had a legacy fixed viewport height. Flex layout now determines
+   the available height, so the list can never fight the header/dock. */
 body:has([data-ocid="contracts.search_input"]) main [class*="overflow-y-auto"] {
   height: auto !important;
   max-height: none !important;
-  min-height: 0;
 }
 
-/* Every floating primary action uses the same clearance above the dock. */
+/* The floating dock sits above page content. It must never cover dialogs. */
+[data-ocid="bottom_tab_bar"] {
+  z-index: 40 !important;
+}
+
+/* Every floating Add action shares the same clearance above the dock. */
 body:has([data-ocid="bottom_tab_bar"]) [data-ocid$=".add_button"] {
   bottom: var(--rossie-nav-clearance) !important;
 }
 
-/* Keep the scroll position from ending underneath the floating dock even
-   while the page-specific padding remains the actual layout reservation. */
-body:has([data-ocid="bottom_tab_bar"]) main [class*="overflow-y-auto"] {
-  scroll-padding-bottom: var(--rossie-nav-clearance);
+/* Edge-to-edge header: its background continues behind the Android status
+   bar, while its inner content keeps the safe-area inset. */
+body:has([data-ocid="bottom_tab_bar"]) header {
+  margin-top: calc(-1 * env(safe-area-inset-top, 0px));
+  padding-top: calc(env(safe-area-inset-top, 0px) + 0px) !important;
+  flex-shrink: 0;
 }
 
-/* Custom Rossie dialogs: one consistent viewport-safe rule for every screen. */
-.glass-dialog {
-  box-sizing: border-box;
-  max-height: calc(100dvh - var(--rossie-dialog-clearance));
-  overflow-x: hidden;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-}
-
-/* Radix dialogs use the same viewport contract. */
+/* Dialogs always sit above the dock and have their own viewport clearance. */
+.glass-dialog,
 [data-slot="dialog-content"] {
   box-sizing: border-box;
   max-height: calc(100dvh - var(--rossie-dialog-clearance));
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 [data-slot="dialog-overlay"] {
@@ -65,8 +101,12 @@ body:has([data-ocid="bottom_tab_bar"]) main [class*="overflow-y-auto"] {
   z-index: 81 !important;
 }
 
-/* Buttons and inputs must never inherit an accidental flex shrink from a
-   surrounding responsive row. */
+/* Keep custom overlays/dialogs above the bottom dock as well. */
+.glass-dialog {
+  position: relative;
+  z-index: 81;
+}
+
 button,
 input,
 select,
@@ -74,13 +114,15 @@ textarea {
   box-sizing: border-box;
 }
 
-/* Prevent horizontal page drift when tables/cards are wider than the phone. */
+/* Prevent wide tables/cards from widening the phone viewport. Tables retain
+   their own horizontal scrolling containers where the page provides them. */
 main,
 main > div {
   max-width: 100%;
+  overflow-x: hidden;
 }
 
-/* Modern mobile viewport: use the visible viewport for full-height layouts. */
+/* Full-height utility should follow the modern dynamic viewport. */
 .min-h-screen {
   min-height: 100dvh;
 }
