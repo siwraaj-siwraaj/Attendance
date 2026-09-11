@@ -1,8 +1,5 @@
 /* Rossie — PDF preview: true fullscreen desktop-width document viewer. */
 
-/* The tab swipe wrapper creates a transformed containing block. While the
-   PDF preview is open, remove that wrapper's layout box entirely so the
-   fullscreen viewer cannot inherit the swipe/transform hierarchy. */
 body.rossie-pdf-open main > div {
   display: contents !important;
   transform: none !important;
@@ -21,7 +18,6 @@ body.rossie-pdf-open [data-ocid="bottom_tab_bar"] {
   pointer-events: none !important;
 }
 
-/* True viewport-level PDF surface. */
 body.rossie-pdf-open [data-pdf-preview],
 body.rossie-pdf-open [class~="z-[9999]"],
 body:has([data-pdf-preview]) [data-pdf-preview],
@@ -48,9 +44,7 @@ body:has([class~="z-[9999]"]) [class~="z-[9999]"] {
   touch-action: auto !important;
 }
 
-/* The overlay has two children: document surface + action bar.
-   Do NOT give both children height:100%; that makes the action bar consume
-   a second full viewport and pushes the document into the upper half. */
+/* Overlay children must not both receive viewport height. */
 body.rossie-pdf-open [data-pdf-preview] > div,
 body.rossie-pdf-open [class~="z-[9999]"] > div,
 body:has([data-pdf-preview]) [data-pdf-preview] > div,
@@ -70,7 +64,7 @@ body:has([class~="z-[9999]"]) [class~="z-[9999]"] > div {
   touch-action: auto !important;
 }
 
-/* ONLY the document area scrolls. Horizontal pan remains available. */
+/* Only the document surface scrolls. */
 body.rossie-pdf-open [data-pdf-preview] > div > div:first-child,
 body.rossie-pdf-open [class~="z-[9999]"] > div > div:first-child,
 body:has([data-pdf-preview]) [data-pdf-preview] > div > div:first-child,
@@ -94,7 +88,7 @@ body:has([class~="z-[9999]"]) [class~="z-[9999]"] > div > div:first-child {
 body.rossie-pdf-open [data-pdf-preview] .report,
 body.rossie-pdf-open [class~="z-[9999]"] .report,
 body:has([data-pdf-preview]) [data-pdf-preview] .report,
-body:has([class~="z-[9999]"]) [class~="z-[9999"] .report {
+body:has([class~="z-[9999]"]) [class~="z-[9999]"] .report {
   width: 820px !important;
   min-width: 820px !important;
   max-width: 820px !important;
