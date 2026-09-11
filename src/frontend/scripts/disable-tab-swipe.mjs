@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 const here = path.dirname(fileURLToPath(import.meta.url));
 const frontendRoot = path.resolve(here, "..");
 const layoutPath = path.join(frontendRoot, "src/components/Layout.tsx");
+const attendanceActorPath = path.join(frontendRoot, "src/hooks/supabaseActor.ts");
 
 let source = fs.readFileSync(layoutPath, "utf8");
 
@@ -76,4 +77,23 @@ source = source
   .replace(/ style=\{\{ width: "100%", willChange: "transform" \}\}/g, "");
 
 fs.writeFileSync(layoutPath, source);
-console.log("Horizontal swipe-to-switch-tabs gesture has been disabled.");
+
+// Supabase stores partial attendance in partial_value. The UI model uses the
+// `partial` field, so normalize the mapper before Vite bundles the app.
+let attendanceActor = fs.readFileSync(attendanceActorPath, "utf8");
+attendanceActor = attendanceActor
+  .replace(
+    'return { __kind__: "partial", value: Number(row.partial_value ?? 0) };',
+    'return { __kind__: "partial", partial: Number(row.partial_value ?? 0) };',
+  )
+  .replace(
+    'if (row.value_type === "absent") return { __kind__: "absent" };',
+    'if (row.value_type === "absent") return { __kind__: "absent", absent: null };',
+  )
+  .replace(
+    'return { __kind__: "present" };',
+    'return { __kind__: "present", present: null };',
+  );
+fs.writeFileSync(attendanceActorPath, attendanceActor);
+
+console.log("Horizontal tab swipe disabled; attendance partial values normalized.");
