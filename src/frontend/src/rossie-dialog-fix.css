@@ -19,8 +19,7 @@ body:has(.fixed.inset-0) main {
   overflow: hidden !important;
 }
 
-/* ---- Mark Attendance + Payment Overview ----
-   Override the older global range-centering rule explicitly. */
+/* ---- Mark Attendance + Payment Overview ---- */
 body:has([data-ocid="attendance.quick_mark.dialog"]) .fixed.inset-0[data-ocid="attendance.quick_mark.dialog"],
 body:has([data-ocid="payments.overview.dialog"]) .fixed.inset-0[data-ocid="payments.overview.dialog"] {
   position: fixed !important;
@@ -66,10 +65,8 @@ body:has([data-ocid="payments.overview.dialog"]) .fixed.inset-0[data-ocid="payme
   z-index: 1001 !important;
 }
 
-/* ---- PDF preview ----
-   Full-screen white document viewer. No A4 card, no margins, no header/nav
-   visible through the viewer. */
-body:has(.fixed.inset-0.z-\[9999\]) .fixed.inset-0.z-\[9999\] {
+/* ---- PDF preview ---- */
+body:has(.fixed.inset-0.z-\\[9999\\]) .fixed.inset-0.z-\\[9999\\] {
   position: fixed !important;
   inset: 0 !important;
   top: 0 !important;
@@ -90,7 +87,7 @@ body:has(.fixed.inset-0.z-\[9999\]) .fixed.inset-0.z-\[9999\] {
   touch-action: none !important;
 }
 
-body:has(.fixed.inset-0.z-\[9999\]) .fixed.inset-0.z-\[9999\] > div {
+body:has(.fixed.inset-0.z-\\[9999\\]) .fixed.inset-0.z-\\[9999\\] > div {
   position: relative !important;
   inset: auto !important;
   top: auto !important;
@@ -115,7 +112,7 @@ body:has(.fixed.inset-0.z-\[9999\]) .fixed.inset-0.z-\[9999\] > div {
   z-index: 1101 !important;
 }
 
-body:has(.fixed.inset-0.z-\[9999\]) .fixed.inset-0.z-\[9999\] > div > div:first-child {
+body:has(.fixed.inset-0.z-\\[9999\\]) .fixed.inset-0.z-\\[9999\\] > div > div:first-child {
   flex: 1 1 auto !important;
   min-height: 0 !important;
   width: 100% !important;
@@ -129,7 +126,7 @@ body:has(.fixed.inset-0.z-\[9999\]) .fixed.inset-0.z-\[9999\] > div > div:first-
   background: #fff !important;
 }
 
-body:has(.fixed.inset-0.z-\[9999\]) .fixed.inset-0.z-\[9999\] .report {
+body:has(.fixed.inset-0.z-\\[9999\\]) .fixed.inset-0.z-\\[9999\\] .report {
   width: 100% !important;
   max-width: none !important;
   min-height: 100% !important;
@@ -138,7 +135,7 @@ body:has(.fixed.inset-0.z-\[9999\]) .fixed.inset-0.z-\[9999\] .report {
   box-shadow: none !important;
 }
 
-body:has(.fixed.inset-0.z-\[9999\]) .fixed.inset-0.z-\[9999\] > div > div:last-child {
+body:has(.fixed.inset-0.z-\\[9999\\]) .fixed.inset-0.z-\\[9999\\] > div > div:last-child {
   flex: 0 0 auto !important;
   width: 100% !important;
   max-width: none !important;
@@ -150,26 +147,29 @@ body:has(.fixed.inset-0.z-\[9999\]) .fixed.inset-0.z-\[9999\] > div > div:last-c
   gap: 10px !important;
 }
 
-/* Hide navigation chrome while a full-screen viewer is active. */
-body:has(.fixed.inset-0.z-\[9999\]) header,
-body:has(.fixed.inset-0.z-\[9999\]) [data-ocid="bottom_tab_bar"] {
+body:has(.fixed.inset-0.z-\\[9999\\]) header,
+body:has(.fixed.inset-0.z-\\[9999\\]) [data-ocid="bottom_tab_bar"] {
   visibility: hidden !important;
   pointer-events: none !important;
 }
 
-/* Add Labour / Add Advance and other legacy full-screen forms: use the same
-   viewport-centred behavior, but keep their normal panel sizing. */
+/* ---- Global legacy dialog sizing ----
+   Dialogs stay compact when content is short, but can scroll internally when
+   the Android viewport is small. This prevents dialogs from being stretched
+   to the full screen or pushed behind the status/navigation areas. */
 body:has(.fixed.inset-0) .fixed.inset-0[class*="bg-black/"] {
   position: fixed !important;
   inset: 0 !important;
   top: 0 !important;
   left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
   width: 100vw !important;
   height: 100dvh !important;
   max-width: none !important;
   max-height: none !important;
   margin: 0 !important;
-  padding: 8px !important;
+  padding: 12px !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -187,13 +187,227 @@ body:has(.fixed.inset-0) .fixed.inset-0[class*="bg-black/"] > div {
   bottom: auto !important;
   transform: none !important;
   margin: 0 !important;
-  width: min(720px, calc(100vw - 16px)) !important;
+  width: min(720px, calc(100vw - 24px)) !important;
   max-width: 720px !important;
-  max-height: calc(100dvh - 16px) !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: calc(100dvh - 24px) !important;
   overflow-x: hidden !important;
   overflow-y: auto !important;
   overscroll-behavior: contain !important;
+  -webkit-overflow-scrolling: touch !important;
   touch-action: pan-y !important;
   box-sizing: border-box !important;
   z-index: 1001 !important;
+}
+
+/* =========================
+   ADD ADVANCE — redesigned
+   ========================= */
+body:has(#adv-amount) .fixed.inset-0 .glass-dialog {
+  width: min(420px, calc(100vw - 24px)) !important;
+  max-width: 420px !important;
+  max-height: min(620px, calc(100dvh - 24px)) !important;
+  overflow-y: auto !important;
+  padding: 0 !important;
+  border: 1px solid rgba(249,115,22,.20) !important;
+  border-radius: 26px !important;
+  background: linear-gradient(180deg, #151f35 0%, #0d1425 100%) !important;
+  box-shadow: 0 24px 70px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.03) inset !important;
+}
+
+body:has(#adv-amount) .fixed.inset-0 .glass-dialog::before {
+  content: "";
+  display: block;
+  height: 4px;
+  width: 100%;
+  background: linear-gradient(90deg, #f97316, #fb923c, #f97316);
+}
+
+body:has(#adv-amount) .fixed.inset-0 .glass-dialog h2 {
+  margin: 0 !important;
+  padding: 22px 22px 4px !important;
+  font-size: 22px !important;
+  line-height: 1.15 !important;
+  letter-spacing: -.02em !important;
+}
+
+body:has(#adv-amount) .fixed.inset-0 .glass-dialog > .space-y-3 {
+  padding: 14px 22px 22px !important;
+}
+
+body:has(#adv-amount) .fixed.inset-0 .glass-dialog label {
+  display: block !important;
+}
+
+body:has(#adv-amount) .fixed.inset-0 .glass-dialog label > span {
+  color: rgba(255,255,255,.52) !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  letter-spacing: .08em !important;
+  text-transform: uppercase !important;
+  margin-bottom: 7px !important;
+}
+
+body:has(#adv-amount) .fixed.inset-0 .glass-dialog select,
+body:has(#adv-amount) .fixed.inset-0 .glass-dialog input {
+  min-height: 48px !important;
+  border-radius: 15px !important;
+  border: 1px solid rgba(255,255,255,.09) !important;
+  background: rgba(4,9,19,.72) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.025) !important;
+  padding: 0 14px !important;
+  transition: border-color .18s ease, box-shadow .18s ease, background .18s ease !important;
+}
+
+body:has(#adv-amount) .fixed.inset-0 .glass-dialog select:focus,
+body:has(#adv-amount) .fixed.inset-0 .glass-dialog input:focus {
+  border-color: rgba(249,115,22,.72) !important;
+  box-shadow: 0 0 0 3px rgba(249,115,22,.10), inset 0 1px 0 rgba(255,255,255,.03) !important;
+  outline: none !important;
+}
+
+body:has(#adv-amount) #adv-amount {
+  min-height: 58px !important;
+  font-size: 22px !important;
+  font-weight: 800 !important;
+  color: #fb923c !important;
+  border-color: rgba(249,115,22,.28) !important;
+}
+
+body:has(#adv-amount) #adv-amount::placeholder {
+  color: rgba(255,255,255,.18) !important;
+}
+
+body:has(#adv-amount) .fixed.inset-0 .glass-dialog .mt-4 {
+  margin: 2px 22px 22px !important;
+}
+
+body:has(#adv-amount) .fixed.inset-0 .glass-dialog .mt-4 button {
+  min-height: 48px !important;
+  border-radius: 15px !important;
+  font-weight: 700 !important;
+}
+
+body:has(#adv-amount) .fixed.inset-0 .glass-dialog .mt-4 button:first-child {
+  padding: 0 16px !important;
+  background: rgba(255,255,255,.05) !important;
+  color: rgba(255,255,255,.58) !important;
+}
+
+body:has(#adv-amount) .fixed.inset-0 .glass-dialog .mt-4 .btn-orange {
+  background: linear-gradient(135deg,#f97316,#ea580c) !important;
+  box-shadow: 0 10px 24px rgba(249,115,22,.20) !important;
+}
+
+/* =========================
+   ADD LABOUR — redesigned
+   ========================= */
+body:has(input[placeholder="Enter labour name"]) .fixed.inset-0 > div {
+  width: min(420px, calc(100vw - 24px)) !important;
+  max-width: 420px !important;
+  max-height: min(680px, calc(100dvh - 24px)) !important;
+  overflow-y: auto !important;
+  padding: 0 !important;
+  border: 1px solid rgba(249,115,22,.20) !important;
+  border-radius: 26px !important;
+  background: linear-gradient(180deg, #151f35 0%, #0d1425 100%) !important;
+  box-shadow: 0 24px 70px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.03) inset !important;
+}
+
+body:has(input[placeholder="Enter labour name"]) .fixed.inset-0 > div::before {
+  content: "";
+  display: block;
+  height: 4px;
+  width: 100%;
+  background: linear-gradient(90deg, #f97316, #fb923c, #f97316);
+}
+
+body:has(input[placeholder="Enter labour name"]) .fixed.inset-0 > div > div:first-child {
+  margin: 0 !important;
+  padding: 20px 22px 8px !important;
+}
+
+body:has(input[placeholder="Enter labour name"]) .fixed.inset-0 > div > div:first-child p {
+  font-size: 10px !important;
+  letter-spacing: .20em !important;
+}
+
+body:has(input[placeholder="Enter labour name"]) .fixed.inset-0 > div > div:first-child h2 {
+  font-size: 22px !important;
+  letter-spacing: -.02em !important;
+}
+
+body:has(input[placeholder="Enter labour name"]) .fixed.inset-0 > div > div:first-child button {
+  width: 40px !important;
+  height: 40px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border: 1px solid rgba(255,255,255,.08) !important;
+  background: rgba(255,255,255,.055) !important;
+  border-radius: 13px !important;
+}
+
+body:has(input[placeholder="Enter labour name"]) .fixed.inset-0 > div > .space-y-3 {
+  padding: 10px 22px 22px !important;
+}
+
+body:has(input[placeholder="Enter labour name"]) .fixed.inset-0 > div label > span {
+  color: rgba(255,255,255,.52) !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  letter-spacing: .08em !important;
+  text-transform: uppercase !important;
+  margin-bottom: 7px !important;
+}
+
+body:has(input[placeholder="Enter labour name"]) .fixed.inset-0 > div label input {
+  min-height: 50px !important;
+  border-radius: 15px !important;
+  border: 1px solid rgba(255,255,255,.09) !important;
+  background: rgba(4,9,19,.72) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.025) !important;
+  padding: 0 14px !important;
+  transition: border-color .18s ease, box-shadow .18s ease, background .18s ease !important;
+}
+
+body:has(input[placeholder="Enter labour name"]) .fixed.inset-0 > div label input:focus {
+  border-color: rgba(249,115,22,.72) !important;
+  box-shadow: 0 0 0 3px rgba(249,115,22,.10), inset 0 1px 0 rgba(255,255,255,.03) !important;
+  outline: none !important;
+}
+
+body:has(input[placeholder="Enter labour name"]) .fixed.inset-0 > div > .space-y-3 > button:not(:last-child) {
+  min-height: 58px !important;
+  border-radius: 16px !important;
+  background: rgba(255,255,255,.035) !important;
+  border-color: rgba(255,255,255,.09) !important;
+}
+
+body:has(input[placeholder="Enter labour name"]) .fixed.inset-0 > div > .space-y-3 > button:last-child {
+  min-height: 50px !important;
+  margin-top: 4px !important;
+  border-radius: 15px !important;
+  background: linear-gradient(135deg,#f97316,#ea580c) !important;
+  box-shadow: 0 10px 24px rgba(249,115,22,.20) !important;
+}
+
+/* Keep compact confirmation dialogs compact too. */
+body:has(.fixed.inset-0) .glass-dialog {
+  height: auto !important;
+  min-height: 0 !important;
+}
+
+@media (max-width: 480px) {
+  body:has(.fixed.inset-0) .fixed.inset-0[class*="bg-black/"] {
+    padding: 10px !important;
+  }
+
+  body:has(#adv-amount) .fixed.inset-0 .glass-dialog,
+  body:has(input[placeholder="Enter labour name"]) .fixed.inset-0 > div {
+    width: calc(100vw - 20px) !important;
+    max-height: calc(100dvh - 20px) !important;
+    border-radius: 24px !important;
+  }
 }
