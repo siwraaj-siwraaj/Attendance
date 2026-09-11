@@ -4,8 +4,8 @@
 
 :root {
   --rossie-nav-clearance: calc(112px + env(safe-area-inset-bottom, 0px));
-  --rossie-dialog-top: max(16px, env(safe-area-inset-top, 0px));
-  --rossie-dialog-bottom: max(16px, env(safe-area-inset-bottom, 0px));
+  --rossie-dialog-top: max(12px, env(safe-area-inset-top, 0px));
+  --rossie-dialog-bottom: max(12px, env(safe-area-inset-bottom, 0px));
 }
 
 html,
@@ -42,14 +42,14 @@ main, main > div { max-width: 100%; overflow-x: hidden; }
 
 [data-slot="dialog-content"] {
   position: fixed !important;
-  top: var(--rossie-dialog-top) !important;
-  left: 16px !important;
-  right: 16px !important;
-  width: auto !important;
+  top: 50% !important;
+  left: 50% !important;
+  right: auto !important;
+  width: min(720px, calc(100vw - 32px)) !important;
   max-width: min(720px, calc(100vw - 32px)) !important;
   max-height: calc(100dvh - var(--rossie-dialog-top) - var(--rossie-dialog-bottom)) !important;
-  margin: 0 auto !important;
-  transform: none !important;
+  margin: 0 !important;
+  transform: translate(-50%, -50%) !important;
   z-index: 1001 !important;
   box-sizing: border-box;
   overflow-x: hidden !important;
@@ -70,8 +70,7 @@ main, main > div { max-width: 100%; overflow-x: hidden; }
   z-index: 1001 !important;
 }
 
-/* Legacy page dialogs are now full-viewport modal layers. This covers the
-   existing Contracts, Attendance, Payments and Advances custom dialogs. */
+/* Legacy page dialogs: true centered modal shells. */
 body:has([data-ocid="bottom_tab_bar"]) .fixed.inset-0[class*="bg-black/"] {
   position: fixed !important;
   inset: 0 !important;
@@ -85,7 +84,7 @@ body:has([data-ocid="bottom_tab_bar"]) .fixed.inset-0[class*="bg-black/"] {
   display: flex !important;
   flex-direction: column !important;
   align-items: center !important;
-  justify-content: flex-start !important;
+  justify-content: center !important;
   overflow: hidden !important;
   z-index: 1000 !important;
   background: rgba(2, 6, 14, 0.985) !important;
@@ -108,11 +107,97 @@ body:has([data-ocid="bottom_tab_bar"]) .fixed.inset-0[class*="bg-black/"] > div 
   z-index: 1001 !important;
 }
 
+/* Explicit modal surfaces whose contents must remain visually centered. */
+[data-ocid="combined_flow.dialog"],
+[data-ocid="attendance.quick_mark.dialog"],
+[data-ocid="payments.overview.dialog"] {
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+[data-ocid="combined_flow.dialog"] > div,
+[data-ocid="attendance.quick_mark.dialog"] > div,
+[data-ocid="payments.overview.dialog"] > div {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+/* PDF preview: the document itself is an A4 portrait sheet (210 × 297 mm,
+   aspect ratio 1 : sqrt(2)). Controls live outside the paper so the preview
+   never stretches the document to the device viewport. */
+[data-ocid="payments.pdf_preview.overlay"] {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100dvh !important;
+  z-index: 1100 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 10px !important;
+  padding: 12px 12px max(12px, env(safe-area-inset-bottom, 0px)) !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+  background: rgba(2, 6, 14, 0.985) !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+[data-ocid="payments.pdf_preview.sheet_frame"] {
+  width: min(794px, calc(100vw - 24px)) !important;
+  max-width: 794px !important;
+  height: min(calc(100dvh - 92px), calc((100vw - 24px) * 1.4142857)) !important;
+  aspect-ratio: 210 / 297 !important;
+  flex: 0 1 auto !important;
+  min-height: 0 !important;
+  overflow: auto !important;
+  background: #cbd0d8 !important;
+  border-radius: 4px !important;
+  box-shadow: 0 20px 60px rgba(0,0,0,.45) !important;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+[data-ocid="payments.pdf_preview.page"] {
+  width: 100% !important;
+  min-height: 100% !important;
+  box-sizing: border-box !important;
+  background: #fff !important;
+  overflow: visible !important;
+}
+
+[data-ocid="payments.pdf_preview.page"] .report {
+  width: 100% !important;
+  max-width: none !important;
+  min-height: 100% !important;
+  margin: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+[data-ocid="payments.pdf_preview.actions"] {
+  width: min(794px, calc(100vw - 24px)) !important;
+  max-width: 794px !important;
+  flex: 0 0 auto !important;
+  display: flex !important;
+  gap: 10px !important;
+}
+
+[data-ocid="payments.pdf_preview.actions"] button {
+  min-height: 46px !important;
+  border-radius: 12px !important;
+  font-weight: 700 !important;
+}
+
 body:has(.fixed.inset-0[class*="bg-black/"]) [data-ocid="bottom_tab_bar"],
-body:has([data-slot="dialog-overlay"]) [data-ocid="bottom_tab_bar"] {
+body:has([data-slot="dialog-overlay"]) [data-ocid="bottom_tab_bar"],
+body:has([data-ocid="payments.pdf_preview.overlay"]) [data-ocid="bottom_tab_bar"] {
   visibility: hidden !important;
   pointer-events: none !important;
 }
 
-body:has(.fixed.inset-0[class*="bg-black/"]) main { overflow: hidden !important; }
-body:has(.fixed.inset-0[class*="bg-black/"]) header { visibility: hidden !important; pointer-events: none !important; }
+body:has(.fixed.inset-0[class*="bg-black/"]) main,
+body:has([data-ocid="payments.pdf_preview.overlay"]) main { overflow: hidden !important; }
+body:has(.fixed.inset-0[class*="bg-black/"]) header,
+body:has([data-ocid="payments.pdf_preview.overlay"]) header { visibility: hidden !important; pointer-events: none !important; }
