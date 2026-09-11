@@ -15,9 +15,42 @@
     <link rel="stylesheet" href="./src/rossie-tabs-redesign.css" />
     <link rel="stylesheet" href="./src/rossie-global-layout.css" />
     <link rel="stylesheet" href="./src/rossie-dialog-fix.css" />
+    <link rel="stylesheet" href="./src/rossie-pdf-preview-fix.css" />
   </head>
   <body style="margin:0; min-height:100%; background:#040913; color-scheme:dark;">
     <div id="root"></div>
+    <script>
+      // PDF preview is a document viewer, not an app-tab swipe surface.
+      // Stop the Layout touch handlers from receiving only this preview's
+      // touch sequence while leaving native vertical scrolling and clicks intact.
+      (function () {
+        var pdfTouchActive = false;
+        function isPdfTarget(target) {
+          return target instanceof Element && !!target.closest('[class~="z-[9999]"]');
+        }
+        document.addEventListener('touchstart', function (event) {
+          if (isPdfTarget(event.target)) {
+            pdfTouchActive = true;
+            event.stopPropagation();
+          }
+        }, true);
+        document.addEventListener('touchmove', function (event) {
+          if (pdfTouchActive) event.stopPropagation();
+        }, true);
+        document.addEventListener('touchend', function (event) {
+          if (pdfTouchActive) {
+            event.stopPropagation();
+            pdfTouchActive = false;
+          }
+        }, true);
+        document.addEventListener('touchcancel', function (event) {
+          if (pdfTouchActive) {
+            event.stopPropagation();
+            pdfTouchActive = false;
+          }
+        }, true);
+      })();
+    </script>
     <script type="module" src="./src/main.tsx"></script>
   </body>
 </html>
