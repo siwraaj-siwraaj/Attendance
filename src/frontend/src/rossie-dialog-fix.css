@@ -1,29 +1,19 @@
-/* Rossie — definitive dialog positioning fix.
-   Page dialogs are deliberately centered in the actual viewport. The header and
-   bottom dock are hidden while a modal is open, so using a guessed header/nav
-   range only introduces vertical drift on Android WebView. */
+/* Rossie — definitive viewport modal fix. */
 
-/* CRITICAL: Layout wraps every page in the swipe animation container. A CSS
-   transform on that ancestor creates a new containing block for position:fixed,
-   which makes dialogs appear shifted/down the page. Freeze that container while
-   any full-screen modal is open so fixed positioning is truly viewport-relative. */
-body:has([data-ocid="attendance.quick_mark.dialog"]) [style*="will-change: transform"],
-body:has([data-ocid="payments.overview.dialog"]) [style*="will-change: transform"],
-body:has([data-ocid="combined_flow.dialog"]) [style*="will-change: transform"] {
+/* Disable Layout's swipe transform for every full-screen modal. */
+body:has(.fixed.inset-0) [style*="will-change: transform"] {
   transform: none !important;
   transition: none !important;
   will-change: auto !important;
 }
 
-[data-ocid="attendance.quick_mark.dialog"],
-[data-ocid="payments.overview.dialog"],
-[data-ocid="combined_flow.dialog"] {
+/* All custom full-screen modal overlays. */
+.fixed.inset-0[class*="bg-black/"] {
   position: fixed !important;
   inset: 0 !important;
   width: 100vw !important;
   height: 100vh !important;
   height: 100dvh !important;
-  padding: 12px !important;
   margin: 0 !important;
   box-sizing: border-box !important;
   display: flex !important;
@@ -35,9 +25,8 @@ body:has([data-ocid="combined_flow.dialog"]) [style*="will-change: transform"] {
   z-index: 1000 !important;
 }
 
-[data-ocid="attendance.quick_mark.dialog"] > div,
-[data-ocid="payments.overview.dialog"] > div,
-[data-ocid="combined_flow.dialog"] > div {
+/* Center the modal panel itself; never use top/left/translate positioning. */
+.fixed.inset-0[class*="bg-black/"] > div {
   position: relative !important;
   inset: auto !important;
   top: auto !important;
@@ -47,7 +36,7 @@ body:has([data-ocid="combined_flow.dialog"]) [style*="will-change: transform"] {
   transform: none !important;
   margin: 0 !important;
   box-sizing: border-box !important;
-  width: min(720px, 100%) !important;
+  width: min(720px, calc(100vw - 24px)) !important;
   max-width: 720px !important;
   height: calc(100vh - 24px) !important;
   height: calc(100dvh - 24px) !important;
@@ -62,30 +51,81 @@ body:has([data-ocid="combined_flow.dialog"]) [style*="will-change: transform"] {
 }
 
 @media (max-width: 600px) {
-  [data-ocid="attendance.quick_mark.dialog"] > div,
-  [data-ocid="payments.overview.dialog"] > div,
-  [data-ocid="combined_flow.dialog"] > div {
-    width: 100% !important;
-    max-width: 100% !important;
+  .fixed.inset-0[class*="bg-black/"] > div {
+    width: calc(100vw - 16px) !important;
+    max-width: calc(100vw - 16px) !important;
   }
 }
 
+/* Explicitly cover the reported dialog types. */
 [data-ocid="attendance.quick_mark.dialog"] > div,
-[data-ocid="payments.overview.dialog"] > div {
+[data-ocid="payments.overview.dialog"] > div,
+[data-ocid="combined_flow.dialog"] > div,
+[data-ocid="labours.add.dialog"] > div,
+[data-ocid="advances.add.dialog"] > div {
   height: calc(100dvh - 24px) !important;
   max-height: calc(100dvh - 24px) !important;
 }
 
-body:has([data-ocid="attendance.quick_mark.dialog"]),
-body:has([data-ocid="payments.overview.dialog"]),
-body:has([data-ocid="combined_flow.dialog"]) {
+/* Lock the page behind any modal. */
+body:has(.fixed.inset-0) {
   overflow: hidden !important;
   overscroll-behavior: none !important;
-  touch-action: none !important;
+}
+body:has(.fixed.inset-0) main {
+  overflow: hidden !important;
 }
 
-body:has([data-ocid="attendance.quick_mark.dialog"]) main,
-body:has([data-ocid="payments.overview.dialog"]) main,
-body:has([data-ocid="combined_flow.dialog"]) main {
+/* PDF preview: full viewport overlay, with its document surface centered. */
+.fixed.inset-0.z-\[9999\] {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  margin: 0 !important;
+  padding: 12px !important;
+  box-sizing: border-box !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
   overflow: hidden !important;
+  touch-action: none !important;
+  overscroll-behavior: none !important;
+  z-index: 1100 !important;
+}
+
+.fixed.inset-0.z-\[9999\] > div {
+  position: relative !important;
+  inset: auto !important;
+  top: auto !important;
+  left: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  transform: none !important;
+  margin: 0 !important;
+  width: min(100%, 900px) !important;
+  max-width: 900px !important;
+  height: calc(100dvh - 24px) !important;
+  max-height: calc(100dvh - 24px) !important;
+  overflow: hidden !important;
+  touch-action: pan-y !important;
+  z-index: 1101 !important;
+}
+
+/* Add Labour / Add Advance may use a different backdrop class, so force
+   viewport centering directly on their modal roots too. */
+[data-ocid="labours.add.dialog"],
+[data-ocid="advances.add.dialog"] {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  margin: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow: hidden !important;
+  z-index: 1000 !important;
 }
