@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "node scripts/ensure-pdf-portal.mjs && vite build && pnpm copy:env",
+    "build": "node scripts/ensure-pdf-portal.mjs && node scripts/disable-tab-swipe.mjs && vite build && pnpm copy:env",
     "copy:env": "cp env.json dist/",
     "test": "vitest run --environment jsdom",
     "typecheck": "tsc --noEmit",
