@@ -1,17 +1,15 @@
 /* Rossie — PDF preview: true fullscreen desktop-width document viewer. */
 
-/* The tab swipe implementation moves Layout's content wrapper with a CSS
-   translate3d(). That transform creates a new containing block in Android
-   WebView and can make position:fixed PDF previews behave like dialogs.
-   Disable the transform completely while the PDF viewer is present. */
+/* The tab swipe wrapper creates a transformed containing block. While the
+   PDF preview is open, remove that wrapper's layout box entirely so the
+   fullscreen viewer cannot inherit the swipe/transform hierarchy. */
 body.rossie-pdf-open main > div {
+  display: contents !important;
   transform: none !important;
   transition: none !important;
   will-change: auto !important;
 }
 
-/* Lock only the page behind the viewer. Never disable touch handling on the
-   viewer ancestors: Android WebView intersects touch-action through them. */
 body.rossie-pdf-open {
   overflow: hidden !important;
   overscroll-behavior: none !important;
@@ -23,7 +21,7 @@ body.rossie-pdf-open [data-ocid="bottom_tab_bar"] {
   pointer-events: none !important;
 }
 
-/* Target the explicit marker first, with the old class as a fallback. */
+/* True viewport-level PDF surface. */
 body.rossie-pdf-open [data-pdf-preview],
 body.rossie-pdf-open [class~="z-[9999]"],
 body:has([data-pdf-preview]) [data-pdf-preview],
@@ -50,7 +48,6 @@ body:has([class~="z-[9999]"]) [class~="z-[9999]"] {
   touch-action: auto !important;
 }
 
-/* Fullscreen viewer shell — no dialog sizing, centering, or rounded card. */
 body.rossie-pdf-open [data-pdf-preview] > div,
 body.rossie-pdf-open [class~="z-[9999]"] > div,
 body:has([data-pdf-preview]) [data-pdf-preview] > div,
@@ -72,8 +69,7 @@ body:has([class~="z-[9999]"]) [class~="z-[9999]"] > div {
   touch-action: auto !important;
 }
 
-/* This is the ONLY scrolling surface. Keep the report at desktop/A4 width so
-   phones can pan horizontally across the complete desktop document. */
+/* ONLY the document area scrolls. Horizontal pan remains available. */
 body.rossie-pdf-open [data-pdf-preview] > div > div:first-child,
 body.rossie-pdf-open [class~="z-[9999]"] > div > div:first-child,
 body:has([data-pdf-preview]) [data-pdf-preview] > div > div:first-child,
@@ -94,7 +90,6 @@ body:has([class~="z-[9999]"]) [class~="z-[9999]"] > div > div:first-child {
   background: #ffffff !important;
 }
 
-/* Desktop report canvas. Do NOT shrink it to the phone width. */
 body.rossie-pdf-open [data-pdf-preview] .report,
 body.rossie-pdf-open [class~="z-[9999]"] .report,
 body:has([data-pdf-preview]) [data-pdf-preview] .report,
@@ -108,7 +103,6 @@ body:has([class~="z-[9999]"]) [class~="z-[9999]"] .report {
   min-height: 100% !important;
 }
 
-/* Keep action buttons pinned below the document and outside its scroll area. */
 body.rossie-pdf-open [data-pdf-preview] > div > div:last-child,
 body.rossie-pdf-open [class~="z-[9999]"] > div > div:last-child,
 body:has([data-pdf-preview]) [data-pdf-preview] > div > div:last-child,
