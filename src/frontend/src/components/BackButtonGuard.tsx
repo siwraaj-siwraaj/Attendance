@@ -1,8 +1,32 @@
+import { App } from "@capacitor/app";
 import { useEffect, useState } from "react";
 
 interface BackButtonGuardProps {
   onReturnToSelection: () => void;
   enabled: boolean;
+}
+
+function closeOpenModal(): boolean {
+  const modal = document.querySelector<HTMLElement>(
+    '.fixed.inset-0[class*="bg-black/"], [data-slot="dialog-content"]',
+  );
+  if (!modal) return false;
+
+  const closeButton = modal.querySelector<HTMLElement>(
+    '[aria-label*="Close" i], [data-ocid$=".close"], [data-ocid$=".close_button"]',
+  );
+
+  if (closeButton) {
+    closeButton.click();
+    return true;
+  }
+
+  // Radix dialogs also respond to Escape. This is a safe fallback when a
+  // custom modal has no explicit close control.
+  modal.dispatchEvent(
+    new KeyboardEvent("keydown", { key: "Escape", bubbles: true }),
+  );
+  return true;
 }
 
 export function BackButtonGuard({
@@ -20,11 +44,20 @@ export function BackButtonGuard({
       window.history.pushState(null, "", window.location.href);
     };
 
+    const handleHardwareBack = async () => {
+      // Modal state always wins over page navigation. This makes Android's
+      // system Back button close the currently open dialog first.
+      if (closeOpenModal()) return;
+      window.history.back();
+    };
+
     window.history.pushState(null, "", window.location.href);
     window.addEventListener("popstate", handlePopState);
+    const backListener = App.addListener("backButton", handleHardwareBack);
 
     return () => {
       window.removeEventListener("popstate", handlePopState);
+      backListener.then((listener) => listener.remove()).catch(() => {});
     };
   }, [enabled]);
 
