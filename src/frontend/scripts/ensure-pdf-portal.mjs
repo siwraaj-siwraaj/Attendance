@@ -48,6 +48,8 @@ const portal = `    {showPaymentPdfPreview &&
             boxSizing: "border-box",
           }}
         >
+          {/* The Android activity is edge-to-edge. Reserve the system status-bar
+              area so report content never sits underneath the clock/icons. */}
           <div
             data-pdf-status-spacer
             aria-hidden="true"
@@ -56,7 +58,7 @@ const portal = `    {showPaymentPdfPreview &&
               width: "100%",
               height: "max(24px, env(safe-area-inset-top))",
               minHeight: "max(24px, env(safe-area-inset-top))",
-              background: "#ffffff",
+              background: "#26384f",
             }}
           />
 
