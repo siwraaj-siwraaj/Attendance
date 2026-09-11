@@ -1,0 +1,81 @@
+/* Rossie — definitive dialog positioning fix.
+   Page dialogs are deliberately centered in the actual viewport. The header and
+   bottom dock are hidden while a modal is open, so using a guessed header/nav
+   range only introduces vertical drift on Android WebView. */
+
+[data-ocid="attendance.quick_mark.dialog"],
+[data-ocid="payments.overview.dialog"],
+[data-ocid="combined_flow.dialog"] {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100dvh !important;
+  padding: 12px !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow: hidden !important;
+  overscroll-behavior: none !important;
+  touch-action: none !important;
+  z-index: 1000 !important;
+}
+
+[data-ocid="attendance.quick_mark.dialog"] > div,
+[data-ocid="payments.overview.dialog"] > div,
+[data-ocid="combined_flow.dialog"] > div {
+  position: relative !important;
+  inset: auto !important;
+  top: auto !important;
+  left: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  transform: none !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
+  width: min(720px, 100%) !important;
+  max-width: 720px !important;
+  height: calc(100dvh - 24px) !important;
+  max-height: calc(100dvh - 24px) !important;
+  min-height: 0 !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain !important;
+  -webkit-overflow-scrolling: touch !important;
+  touch-action: pan-y !important;
+  z-index: 1001 !important;
+}
+
+/* Slightly narrower mobile width while preserving the large vertical panel. */
+@media (max-width: 600px) {
+  [data-ocid="attendance.quick_mark.dialog"] > div,
+  [data-ocid="payments.overview.dialog"] > div,
+  [data-ocid="combined_flow.dialog"] > div {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+}
+
+/* Quick Mark and Payment Overview use their entire available height so their
+   controls and totals are visible without unnecessary internal scrolling. */
+[data-ocid="attendance.quick_mark.dialog"] > div,
+[data-ocid="payments.overview.dialog"] > div {
+  height: calc(100dvh - 24px) !important;
+  max-height: calc(100dvh - 24px) !important;
+}
+
+/* Never allow a drag on the backdrop to scroll the page underneath. */
+body:has([data-ocid="attendance.quick_mark.dialog"]),
+body:has([data-ocid="payments.overview.dialog"]),
+body:has([data-ocid="combined_flow.dialog"]) {
+  overflow: hidden !important;
+  overscroll-behavior: none !important;
+  touch-action: none !important;
+}
+
+body:has([data-ocid="attendance.quick_mark.dialog"]) main,
+body:has([data-ocid="payments.overview.dialog"]) main,
+body:has([data-ocid="combined_flow.dialog"]) main {
+  overflow: hidden !important;
+}
