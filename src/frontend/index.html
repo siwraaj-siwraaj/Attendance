@@ -20,11 +20,24 @@
   <body style="margin:0; min-height:100%; background:#040913; color-scheme:dark;">
     <div id="root"></div>
     <script>
-      // PDF preview is a document viewer, not an app-tab swipe surface.
-      // Stop the Layout touch handlers from receiving only this preview's
-      // touch sequence while leaving native vertical scrolling and clicks intact.
+      // PDF preview is a separate document-viewer surface. Keep it out of the
+      // global tab-swipe gesture and mark the body immediately when it mounts.
       (function () {
         var pdfTouchActive = false;
+        function getPdf() {
+          return document.querySelector('[class~="z-[9999]"]');
+        }
+        function syncPdfState() {
+          document.body.classList.toggle('rossie-pdf-open', !!getPdf());
+        }
+        syncPdfState();
+        new MutationObserver(syncPdfState).observe(document.documentElement, {
+          subtree: true,
+          childList: true,
+          attributes: true,
+          attributeFilter: ['class'],
+        });
+
         function isPdfTarget(target) {
           return target instanceof Element && !!target.closest('[class~="z-[9999]"]');
         }
