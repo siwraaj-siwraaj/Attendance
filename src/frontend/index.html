@@ -20,15 +20,18 @@
   <body style="margin:0; min-height:100%; background:#040913; color-scheme:dark;">
     <div id="root"></div>
     <script>
-      // PDF preview is a separate document-viewer surface. Keep it out of the
-      // global tab-swipe gesture and mark the body immediately when it mounts.
+      // PDF preview is a separate document-viewer surface. Mark the actual
+      // overlay with the same data attribute understood by Layout.tsx so the
+      // app-tab swipe recognizer is blocked without intercepting the browser's
+      // native scrolling/click handling inside the PDF viewer.
       (function () {
-        var pdfTouchActive = false;
         function getPdf() {
           return document.querySelector('[class~="z-[9999]"]');
         }
         function syncPdfState() {
-          document.body.classList.toggle('rossie-pdf-open', !!getPdf());
+          var pdf = getPdf();
+          document.body.classList.toggle('rossie-pdf-open', !!pdf);
+          if (pdf) pdf.setAttribute('data-pdf-preview', 'true');
         }
         syncPdfState();
         new MutationObserver(syncPdfState).observe(document.documentElement, {
@@ -37,31 +40,6 @@
           attributes: true,
           attributeFilter: ['class'],
         });
-
-        function isPdfTarget(target) {
-          return target instanceof Element && !!target.closest('[class~="z-[9999]"]');
-        }
-        document.addEventListener('touchstart', function (event) {
-          if (isPdfTarget(event.target)) {
-            pdfTouchActive = true;
-            event.stopPropagation();
-          }
-        }, true);
-        document.addEventListener('touchmove', function (event) {
-          if (pdfTouchActive) event.stopPropagation();
-        }, true);
-        document.addEventListener('touchend', function (event) {
-          if (pdfTouchActive) {
-            event.stopPropagation();
-            pdfTouchActive = false;
-          }
-        }, true);
-        document.addEventListener('touchcancel', function (event) {
-          if (pdfTouchActive) {
-            event.stopPropagation();
-            pdfTouchActive = false;
-          }
-        }, true);
       })();
     </script>
     <script type="module" src="./src/main.tsx"></script>
