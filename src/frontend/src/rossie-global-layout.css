@@ -1,164 +1,118 @@
 /* Rossie — global mobile layout contract
-   Global responsibilities:
-   1. Layout owns the viewport and header.
-   2. Each page owns its own scroll container.
-   3. The floating bottom dock never owns page spacing.
-   4. Floating actions and dialogs have independent safe-area clearance.
-*/
+   Pages scroll independently. Modal layers are a separate top-level visual state:
+   when a dialog is open, the application underneath is completely hidden. */
 
 :root {
-  --rossie-nav-clearance: calc(96px + env(safe-area-inset-bottom, 0px));
-  --rossie-dialog-clearance: calc(24px + env(safe-area-inset-top, 0px) + env(safe-area-inset-bottom, 0px));
+  --rossie-nav-clearance: calc(112px + env(safe-area-inset-bottom, 0px));
+  --rossie-dialog-top: max(16px, env(safe-area-inset-top, 0px));
+  --rossie-dialog-bottom: max(16px, env(safe-area-inset-bottom, 0px));
 }
 
 html,
 body,
-#root {
-  width: 100%;
-  min-width: 0;
-  height: 100%;
-  min-height: 100%;
-  margin: 0;
-  background: #040913;
+#root { width: 100%; min-width: 0; height: 100%; min-height: 100%; margin: 0; background: #040913; }
+body { overflow: hidden; overscroll-behavior: none; }
+.min-h-screen:has(> header) { height: 100dvh; min-height: 100dvh; max-height: 100dvh; overflow: hidden; }
+body:has([data-ocid="bottom_tab_bar"]) main { flex: 1 1 auto; min-width: 0; min-height: 0; width: 100%; max-width: 100%; overflow: hidden; padding: 0 !important; }
+body:has([data-ocid="bottom_tab_bar"]) main > div { min-width: 0; min-height: 0; max-width: 100%; }
+body:has([data-ocid="bottom_tab_bar"]) main [class*="overflow-y-auto"] { min-width: 0; min-height: 0; overscroll-behavior-y: contain; scroll-padding-top: 8px; scroll-padding-bottom: var(--rossie-nav-clearance); -webkit-overflow-scrolling: touch; touch-action: pan-y; }
+body:has([data-ocid="bottom_tab_bar"]) main > div > [class*="h-full"] { height: 100% !important; min-height: 0 !important; max-height: 100% !important; }
+body:has([data-ocid="contracts.search_input"]) main [class*="overflow-y-auto"] { height: auto !important; max-height: none !important; }
+[data-ocid="bottom_tab_bar"] { z-index: 40 !important; }
+body:has([data-ocid="bottom_tab_bar"]) [data-ocid$=".add_button"] { bottom: var(--rossie-nav-clearance) !important; }
+body:has([data-ocid="bottom_tab_bar"]) header { margin-top: 0 !important; padding-top: env(safe-area-inset-top, 0px) !important; box-sizing: border-box; flex-shrink: 0; z-index: 40; }
+button, input, select, textarea { box-sizing: border-box; }
+main, main > div { max-width: 100%; overflow-x: hidden; }
+.min-h-screen { min-height: 100dvh; }
+
+/* ========================= MODAL SYSTEM =========================
+   Every dialog owns the whole viewport. The page/header/navigation are never
+   visible behind an open dialog. Tall content scrolls inside the dialog. */
+
+[data-slot="dialog-overlay"] {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100dvh !important;
+  z-index: 1000 !important;
+  background: rgba(2, 6, 14, 0.985) !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
-body {
-  overflow: hidden;
-  overscroll-behavior: none;
-}
-
-.min-h-screen:has(> header) {
-  height: 100dvh;
-  min-height: 100dvh;
-  max-height: 100dvh;
-  overflow: hidden;
-}
-
-body:has([data-ocid="bottom_tab_bar"]) main {
-  flex: 1 1 auto;
-  min-width: 0;
-  min-height: 0;
-  width: 100%;
-  max-width: 100%;
-  overflow: hidden;
-  padding: 0 !important;
-}
-
-body:has([data-ocid="bottom_tab_bar"]) main > div {
-  min-width: 0;
-  min-height: 0;
-  max-width: 100%;
-}
-
-body:has([data-ocid="bottom_tab_bar"]) main [class*="overflow-y-auto"] {
-  min-width: 0;
-  min-height: 0;
-  overscroll-behavior-y: contain;
-  scroll-padding-top: 8px;
-  scroll-padding-bottom: var(--rossie-nav-clearance);
-  -webkit-overflow-scrolling: touch;
-  touch-action: pan-y;
-}
-
-body:has([data-ocid="bottom_tab_bar"]) main > div > [class*="h-full"] {
-  height: 100% !important;
-  min-height: 0 !important;
-  max-height: 100% !important;
-}
-
-body:has([data-ocid="contracts.search_input"]) main [class*="overflow-y-auto"] {
-  height: auto !important;
-  max-height: none !important;
-}
-
-[data-ocid="bottom_tab_bar"] {
-  z-index: 40 !important;
-}
-
-body:has([data-ocid="bottom_tab_bar"]) [data-ocid$=".add_button"] {
-  bottom: var(--rossie-nav-clearance) !important;
-}
-
-body:has([data-ocid="bottom_tab_bar"]) header {
-  margin-top: 0 !important;
-  padding-top: env(safe-area-inset-top, 0px) !important;
-  box-sizing: border-box;
-  flex-shrink: 0;
-  z-index: 40;
-}
-
-/* Standard Radix dialogs and the app's custom modal dialogs share the same
-   viewport contract.  A custom modal must never be vertically centered at a
-   height larger than the phone viewport; that was the reason tall dialogs
-   appeared clipped with their header/content missing. */
-.glass-dialog,
 [data-slot="dialog-content"] {
+  position: fixed !important;
+  top: var(--rossie-dialog-top) !important;
+  left: 16px !important;
+  right: 16px !important;
+  width: auto !important;
+  max-width: min(720px, calc(100vw - 32px)) !important;
+  max-height: calc(100dvh - var(--rossie-dialog-top) - var(--rossie-dialog-bottom)) !important;
+  margin: 0 auto !important;
+  transform: none !important;
+  z-index: 1001 !important;
   box-sizing: border-box;
-  max-height: calc(100dvh - var(--rossie-dialog-clearance));
-  overflow-x: hidden;
-  overflow-y: auto;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
   touch-action: pan-y;
-}
-
-[data-slot="dialog-overlay"] {
-  z-index: 80 !important;
-}
-
-[data-slot="dialog-content"] {
-  z-index: 81 !important;
 }
 
 .glass-dialog {
-  position: relative;
-  z-index: 81;
-}
-
-/* Custom dialogs are implemented as fixed inset overlays in several pages.
-   Give every such overlay a scrollable viewport and enough safe-area room.
-   The direct child is the actual modal surface. */
-body:has([data-ocid="bottom_tab_bar"]) .fixed.inset-0[class*="z-"] {
   box-sizing: border-box;
-  max-height: 100dvh;
-  overflow-y: auto !important;
+  max-height: calc(100dvh - var(--rossie-dialog-top) - var(--rossie-dialog-bottom));
   overflow-x: hidden;
-  overscroll-behavior: contain;
-  -webkit-overflow-scrolling: touch;
-  padding-top: max(16px, env(safe-area-inset-top, 0px)) !important;
-  padding-bottom: max(16px, env(safe-area-inset-bottom, 0px)) !important;
-  z-index: 70 !important;
-}
-
-body:has([data-ocid="bottom_tab_bar"]) .fixed.inset-0[class*="z-"] > .glass-dialog,
-body:has([data-ocid="bottom_tab_bar"]) .fixed.inset-0[class*="z-"] > div {
-  box-sizing: border-box;
-  max-height: calc(100dvh - var(--rossie-dialog-clearance));
-  min-height: 0;
   overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  z-index: 1001 !important;
 }
 
-/* A tall modal should scroll from its top instead of being centered outside
-   the viewport. Short dialogs remain visually centered. */
-body:has([data-ocid="bottom_tab_bar"]) .fixed.inset-0[class*="z-"] {
-  align-items: center;
+/* Legacy page dialogs are now full-viewport modal layers. This covers the
+   existing Contracts, Attendance, Payments and Advances custom dialogs. */
+body:has([data-ocid="bottom_tab_bar"]) .fixed.inset-0[class*="bg-black/"] {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100dvh !important;
+  max-width: none !important;
+  max-height: none !important;
+  margin: 0 !important;
+  padding: var(--rossie-dialog-top) 16px var(--rossie-dialog-bottom) !important;
+  box-sizing: border-box !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  overflow: hidden !important;
+  z-index: 1000 !important;
+  background: rgba(2, 6, 14, 0.985) !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
-button,
-input,
-select,
-textarea {
-  box-sizing: border-box;
+body:has([data-ocid="bottom_tab_bar"]) .fixed.inset-0[class*="bg-black/"] > div {
+  width: 100% !important;
+  max-width: 720px !important;
+  max-height: calc(100dvh - var(--rossie-dialog-top) - var(--rossie-dialog-bottom)) !important;
+  min-height: 0 !important;
+  box-sizing: border-box !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  flex: 0 1 auto !important;
+  z-index: 1001 !important;
 }
 
-main,
-main > div {
-  max-width: 100%;
-  overflow-x: hidden;
+body:has(.fixed.inset-0[class*="bg-black/"]) [data-ocid="bottom_tab_bar"],
+body:has([data-slot="dialog-overlay"]) [data-ocid="bottom_tab_bar"] {
+  visibility: hidden !important;
+  pointer-events: none !important;
 }
 
-.min-h-screen {
-  min-height: 100dvh;
-}
+body:has(.fixed.inset-0[class*="bg-black/"]) main { overflow: hidden !important; }
+body:has(.fixed.inset-0[class*="bg-black/"]) header { visibility: hidden !important; pointer-events: none !important; }
