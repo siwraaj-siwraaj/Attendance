@@ -74,7 +74,12 @@ source = source
   .replace(/\sref=\{mainRef\}/g, "")
   .replace(/\sref=\{swipeContentRef\}/g, "")
   .replace(/, allowedTabs } = useAuth\(\);/, " } = useAuth();")
-  .replace(/ style=\{\{ width: "100%", willChange: "transform" \}\}/g, "");
+  .replace(/ style=\{\{ width: "100%", willChange: "transform" \}\}/g, "")
+  // Keep the profile drawer above every app stacking context and give it a
+  // predictable mobile width even when arbitrary Tailwind utilities are not emitted.
+  .replace(/z-\[70px\]/g, "z-[9999]")
+  .replace(/w-\[min\(78vw,320px\)\]/g, "w-[320px] max-w-[78vw]")
+  .replace(/z-\[60px\]/g, "z-[9998]");
 
 fs.writeFileSync(layoutPath, source);
 
@@ -96,4 +101,4 @@ attendanceActor = attendanceActor
   );
 fs.writeFileSync(attendanceActorPath, attendanceActor);
 
-console.log("Horizontal tab swipe disabled; attendance partial values normalized.");
+console.log("Horizontal tab swipe disabled; attendance partial values normalized; profile sidebar layering hardened.");
