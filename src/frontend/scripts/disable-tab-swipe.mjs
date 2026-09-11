@@ -61,7 +61,6 @@ for (const attribute of ["onTouchStart", "onTouchMove", "onTouchEnd"]) {
 }
 
 source = source
-  .replace(/\n  const onTabChange = setActiveTab;/, "")
   .replace(/\n  const touchStartX = useRef<number \| null>\(null\);/, "")
   .replace(/\n  const touchStartY = useRef<number \| null>\(null\);/, "")
   .replace(/\n  const swipeBlocked = useRef\(false\);/, "")
