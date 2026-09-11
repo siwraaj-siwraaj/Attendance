@@ -19,33 +19,6 @@
   </head>
   <body style="margin:0; min-height:100%; background:#040913; color-scheme:dark;">
     <div id="root"></div>
-    <script>
-      // PDF preview is a separate document-viewer surface. Keep it completely
-      // outside Layout's swipe-content element so transforms/animations on the
-      // tab content can never affect the viewer's fullscreen or scroll surface.
-      (function () {
-        function getPdf() {
-          return document.querySelector('[class~="z-[9999]"]');
-        }
-        function syncPdfState() {
-          var pdf = getPdf();
-          document.body.classList.toggle('rossie-pdf-open', !!pdf);
-          if (pdf) {
-            pdf.setAttribute('data-pdf-preview', 'true');
-            if (pdf.parentElement !== document.body) {
-              document.body.appendChild(pdf);
-            }
-          }
-        }
-        syncPdfState();
-        new MutationObserver(syncPdfState).observe(document.documentElement, {
-          subtree: true,
-          childList: true,
-          attributes: true,
-          attributeFilter: ['class'],
-        });
-      })();
-    </script>
     <script type="module" src="./src/main.tsx"></script>
   </body>
 </html>
