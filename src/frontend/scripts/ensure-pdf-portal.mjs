@@ -28,12 +28,12 @@ const portal = `    {showPaymentPdfPreview &&
       createPortal(
         <div
           data-pdf-preview
-          className="fixed inset-0 z-[9999] bg-white flex flex-col"
+          className="fixed inset-0 z-[9999] bg-white flex flex-col overflow-hidden"
           style={{ width: "100vw", height: "100dvh", touchAction: "auto" }}
         >
           <div
-            className="flex-1 min-h-0 min-w-0 overflow-auto bg-white"
-            style={{ WebkitOverflowScrolling: "touch", touchAction: "pan-x pan-y" }}
+            className="min-h-0 min-w-0 overflow-auto bg-white"
+            style={{ flex: "1 1 0%", height: 0, WebkitOverflowScrolling: "touch", touchAction: "pan-x pan-y" }}
           >
             <div
               className="report"
@@ -43,13 +43,14 @@ const portal = `    {showPaymentPdfPreview &&
           </div>
 
           <div
-            className="flex shrink-0 gap-3 p-4 border-t bg-white"
-            style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom))", touchAction: "manipulation" }}
+            className="shrink-0 flex flex-row items-center gap-3 border-t bg-white"
+            style={{ flex: "0 0 auto", height: "auto", padding: "10px 12px max(10px, env(safe-area-inset-bottom))", touchAction: "manipulation" }}
           >
             <button
               type="button"
               onClick={() => setShowPaymentPdfPreview(false)}
-              className="flex-1 rounded-lg bg-gray-500 px-4 py-3 font-semibold text-white"
+              className="flex-1 min-w-0 h-11 rounded-lg bg-gray-500 px-4 font-semibold text-white"
+              style={{ flex: "1 1 0%", height: 44, minHeight: 44, maxHeight: 44 }}
             >
               Close
             </button>
@@ -65,7 +66,8 @@ const portal = `    {showPaymentPdfPreview &&
                 );
                 setShowPaymentPdfPreview(false);
               }}
-              className="flex-1 rounded-lg bg-orange-500 px-4 py-3 font-semibold text-white"
+              className="flex-1 min-w-0 h-11 rounded-lg bg-orange-500 px-4 font-semibold text-white"
+              style={{ flex: "1 1 0%", height: 44, minHeight: 44, maxHeight: 44 }}
             >
               Save PDF
             </button>
