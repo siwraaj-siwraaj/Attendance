@@ -26,9 +26,8 @@ button, input, select, textarea { box-sizing: border-box; }
 main, main > div { max-width: 100%; overflow-x: hidden; }
 .min-h-screen { min-height: 100dvh; }
 
-/* Dialog stage: the usable range starts at the bottom edge of the app header
-   and ends above the bottom navigation clearance. Every dialog is centered in
-   this exact range, not in the raw viewport. */
+/* Dialog stage: dialogs are centered only inside the usable area between the
+   header and bottom navigation. The backdrop itself never scrolls. */
 [data-slot="dialog-overlay"] {
   position: fixed !important;
   inset: 0 !important;
@@ -38,6 +37,9 @@ main, main > div { max-width: 100%; overflow-x: hidden; }
   background: rgba(2, 6, 14, 0.985) !important;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
+  overflow: hidden !important;
+  touch-action: none !important;
+  overscroll-behavior: none !important;
 }
 
 [data-slot="dialog-content"] {
@@ -54,9 +56,9 @@ main, main > div { max-width: 100%; overflow-x: hidden; }
   box-sizing: border-box;
   overflow-x: hidden !important;
   overflow-y: auto !important;
-  overscroll-behavior: contain;
+  overscroll-behavior: contain !important;
   -webkit-overflow-scrolling: touch;
-  touch-action: pan-y;
+  touch-action: pan-y !important;
 }
 
 .glass-dialog {
@@ -64,14 +66,14 @@ main, main > div { max-width: 100%; overflow-x: hidden; }
   max-height: var(--rossie-dialog-max-height) !important;
   overflow-x: hidden;
   overflow-y: auto;
-  overscroll-behavior: contain;
+  overscroll-behavior: contain !important;
   -webkit-overflow-scrolling: touch;
-  touch-action: pan-y;
+  touch-action: pan-y !important;
   z-index: 1001 !important;
 }
 
-/* Legacy custom dialogs use an absolute shell so flexbox cannot introduce
-   any unexpected vertical drift. */
+/* Legacy custom dialogs: lock the full-screen backdrop and allow vertical
+   touch scrolling only inside the dialog panel. */
 body:has([data-ocid="bottom_tab_bar"]) .fixed.inset-0[class*="bg-black/"] {
   position: fixed !important;
   inset: 0 !important;
@@ -84,6 +86,8 @@ body:has([data-ocid="bottom_tab_bar"]) .fixed.inset-0[class*="bg-black/"] {
   box-sizing: border-box !important;
   display: block !important;
   overflow: hidden !important;
+  overscroll-behavior: none !important;
+  touch-action: none !important;
   z-index: 1000 !important;
   background: rgba(2, 6, 14, 0.985) !important;
   backdrop-filter: blur(10px);
@@ -105,10 +109,30 @@ body:has([data-ocid="bottom_tab_bar"]) .fixed.inset-0[class*="bg-black/"] > div 
   transform: translate(-50%, -50%) !important;
   overflow-x: hidden !important;
   overflow-y: auto !important;
-  overscroll-behavior: contain;
+  overscroll-behavior: contain !important;
   -webkit-overflow-scrolling: touch;
-  touch-action: pan-y;
+  touch-action: pan-y !important;
   z-index: 1001 !important;
+}
+
+/* Give Quick Mark and Payment Overview nearly the full usable vertical stage.
+   Their own panel remains the only scroll container if content ever exceeds
+   the available height. */
+[data-ocid="attendance.quick_mark.dialog"] > div,
+[data-ocid="payments.overview.dialog"] > div {
+  height: max(1px, calc(var(--rossie-dialog-range-height) - 24px)) !important;
+  max-height: calc(var(--rossie-dialog-range-height) - 24px) !important;
+  min-height: min(520px, calc(var(--rossie-dialog-range-height) - 24px)) !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain !important;
+  touch-action: pan-y !important;
+}
+
+[data-ocid="combined_flow.dialog"] > div {
+  max-height: calc(var(--rossie-dialog-range-height) - 24px) !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain !important;
+  touch-action: pan-y !important;
 }
 
 [data-ocid="combined_flow.dialog"] > div,
@@ -132,14 +156,16 @@ body:has(.fixed.inset-0.z-\[9999\]) .fixed.inset-0.z-\[9999\] {
   align-items: center !important;
   justify-content: center !important;
   overflow: hidden !important;
-  background: rgba(2, 6, 14, 0.985) !important;
+  touch-action: none !important;
+  overscroll-behavior: none !important;
+  background: rgba(2,6,14,.985) !important;
   z-index: 1100 !important;
 }
 
 body:has(.fixed.inset-0.z-\[9999\]) .fixed.inset-0.z-\[9999\] > div {
-  width: min(794px, calc(100vw - 24px)) !important;
+  width: min(794px,calc(100vw - 24px)) !important;
   max-width: 794px !important;
-  height: min(calc(100dvh - 24px), calc((100vw - 24px) * 1.4142857 + 66px)) !important;
+  height: min(calc(100dvh - 24px),calc((100vw - 24px) * 1.4142857 + 66px)) !important;
   max-height: calc(100dvh - 24px) !important;
   margin: 0 !important;
   padding: 0 !important;
@@ -150,17 +176,19 @@ body:has(.fixed.inset-0.z-\[9999\]) .fixed.inset-0.z-\[9999\] > div {
   align-items: center !important;
   justify-content: center !important;
   gap: 10px !important;
+  touch-action: none !important;
 }
 
 body:has(.fixed.inset-0.z-\[9999\]) .fixed.inset-0.z-\[9999\] > div > div:first-child {
-  width: min(794px, calc(100vw - 24px)) !important;
+  width: min(794px,calc(100vw - 24px)) !important;
   max-width: 794px !important;
-  height: min(calc(100dvh - 92px), calc((100vw - 24px) * 1.4142857)) !important;
+  height: min(calc(100dvh - 92px),calc((100vw - 24px) * 1.4142857)) !important;
   aspect-ratio: 210 / 297 !important;
   flex: 0 0 auto !important;
   min-height: 0 !important;
   padding: 0 !important;
   overflow: auto !important;
+  touch-action: pan-y !important;
   background: #cbd0d8 !important;
   border-radius: 4px !important;
   box-shadow: 0 20px 60px rgba(0,0,0,.45) !important;
@@ -185,7 +213,7 @@ body:has(.fixed.inset-0.z-\[9999\]) .fixed.inset-0.z-\[9999\] .report {
 }
 
 body:has(.fixed.inset-0.z-\[9999\]) .fixed.inset-0.z-\[9999\] > div > div:last-child {
-  width: min(794px, calc(100vw - 24px)) !important;
+  width: min(794px,calc(100vw - 24px)) !important;
   max-width: 794px !important;
   flex: 0 0 auto !important;
   display: flex !important;
