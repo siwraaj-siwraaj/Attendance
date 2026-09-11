@@ -69,8 +69,10 @@ source = source
   .replace(/\n  const swipeTabs = allowedTabs;/, "")
   .replace(/\n  const swipeContentRef = useRef<HTMLDivElement \| null>\(null\);/, "")
   .replace(/\n  const mainRef = useRef<HTMLElement \| null>\(null\);/, "")
-  .replace(/\n        ref=\{mainRef\}/, "")
-  .replace(/\n          ref=\{swipeContentRef\}/, "")
+  // The source JSX keeps these refs inline on their opening tags, so remove the
+  // exact attributes without touching unrelated refs such as csvInputRef.
+  .replace(/\sref=\{mainRef\}/g, "")
+  .replace(/\sref=\{swipeContentRef\}/g, "")
   .replace(/, allowedTabs } = useAuth\(\);/, " } = useAuth();")
   .replace(/ style=\{\{ width: "100%", willChange: "transform" \}\}/g, "");
 
