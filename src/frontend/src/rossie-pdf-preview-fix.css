@@ -5,8 +5,6 @@ body:has([data-pdf-preview]) {
   overscroll-behavior: none !important;
 }
 
-/* The viewer is rendered directly under document.body. Keep it independent
-   from page/dialog layout, transforms, opacity, and inherited flex rules. */
 body [data-pdf-preview][data-pdf-viewer="fullscreen"] {
   position: fixed !important;
   inset: 0 !important;
@@ -34,7 +32,7 @@ body [data-pdf-preview][data-pdf-viewer="fullscreen"] {
   touch-action: auto !important;
 }
 
-/* Only this element scrolls. It gets the full space above the action bar. */
+/* The document itself is vertically scrollable. */
 body [data-pdf-preview][data-pdf-viewer="fullscreen"] > [data-pdf-scroll] {
   flex: 1 1 0% !important;
   min-height: 0 !important;
@@ -46,19 +44,21 @@ body [data-pdf-preview][data-pdf-viewer="fullscreen"] > [data-pdf-scroll] {
   padding: 0 !important;
   border: 0 !important;
   display: block !important;
-  overflow-x: auto !important;
+  overflow-x: hidden !important;
   overflow-y: auto !important;
   -webkit-overflow-scrolling: touch !important;
   overscroll-behavior: contain !important;
   background: #ffffff !important;
-  touch-action: pan-x pan-y !important;
+  touch-action: pan-y !important;
   box-sizing: border-box !important;
 }
 
+/* Keep the report responsive on phones instead of forcing an 820px viewport.
+   Wide tables are handled by the dedicated table scroller below. */
 body [data-pdf-preview][data-pdf-viewer="fullscreen"] > [data-pdf-scroll] > .report {
   display: block !important;
-  width: 820px !important;
-  min-width: 820px !important;
+  width: min(820px, 100%) !important;
+  min-width: 0 !important;
   max-width: 820px !important;
   margin: 0 auto !important;
   padding: 0 !important;
@@ -66,6 +66,65 @@ body [data-pdf-preview][data-pdf-viewer="fullscreen"] > [data-pdf-scroll] > .rep
   opacity: 1 !important;
   transform: none !important;
   box-sizing: border-box !important;
+}
+
+/* The report body becomes the horizontal table viewport. */
+body [data-pdf-preview][data-pdf-viewer="fullscreen"] .report-body {
+  min-width: 0 !important;
+  overflow-x: auto !important;
+  overflow-y: visible !important;
+  -webkit-overflow-scrolling: touch !important;
+  touch-action: pan-x pan-y !important;
+  scrollbar-width: auto !important;
+}
+
+body [data-pdf-preview][data-pdf-viewer="fullscreen"] .report-table {
+  width: max-content !important;
+  min-width: 100% !important;
+  max-width: none !important;
+  table-layout: auto !important;
+}
+
+body [data-pdf-preview][data-pdf-viewer="fullscreen"] .report-table th,
+body [data-pdf-preview][data-pdf-viewer="fullscreen"] .report-table td {
+  white-space: nowrap !important;
+}
+
+/* Make the mobile report readable while preserving the desktop PDF width. */
+@media (max-width: 600px) {
+  body [data-pdf-preview][data-pdf-viewer="fullscreen"] .report-header {
+    padding: 18px 20px !important;
+  }
+
+  body [data-pdf-preview][data-pdf-viewer="fullscreen"] .report-title {
+    font-size: 22px !important;
+  }
+
+  body [data-pdf-preview][data-pdf-viewer="fullscreen"] .report-meta {
+    grid-template-columns: minmax(0, 1fr) minmax(110px, auto) !important;
+    padding: 16px 20px !important;
+  }
+
+  body [data-pdf-preview][data-pdf-viewer="fullscreen"] .report-body {
+    padding: 16px 20px 24px !important;
+  }
+
+  body [data-pdf-preview][data-pdf-viewer="fullscreen"] .report-section {
+    font-size: 17px !important;
+  }
+
+  body [data-pdf-preview][data-pdf-viewer="fullscreen"] .report-table {
+    font-size: 12px !important;
+  }
+
+  body [data-pdf-preview][data-pdf-viewer="fullscreen"] .report-table th,
+  body [data-pdf-preview][data-pdf-viewer="fullscreen"] .report-table td {
+    padding: 7px 10px !important;
+  }
+
+  body [data-pdf-preview][data-pdf-viewer="fullscreen"] .report-footer {
+    padding: 12px 20px !important;
+  }
 }
 
 /* Fixed bottom action bar; buttons stay side-by-side. */
@@ -102,7 +161,6 @@ body [data-pdf-preview][data-pdf-viewer="fullscreen"] > [data-pdf-actions] > but
   box-sizing: border-box !important;
 }
 
-/* Hide the underlying app chrome while the viewer is open. */
 body:has([data-pdf-preview]) header,
 body:has([data-pdf-preview]) [data-ocid="bottom_tab_bar"] {
   visibility: hidden !important;
