@@ -66,9 +66,9 @@ body:has([class~="z-[9999]"]) [class~="z-[9999]"] > div {
 
 /* The PDF is the only flexible area and always starts at the top. */
 body.rossie-pdf-open [data-pdf-preview] > div > div:first-child,
-body.rossie-pdf-open [class~="z-[9999}"] > div > div:first-child,
+body.rossie-pdf-open [class~="z-[9999]"] > div > div:first-child,
 body:has([data-pdf-preview]) [data-pdf-preview] > div > div:first-child,
-body:has([class~="z-[9999}"]) [class~="z-[9999}"] > div > div:first-child {
+body:has([class~="z-[9999]"]) [class~="z-[9999]"] > div > div:first-child {
   flex: 1 1 0% !important;
   min-height: 0 !important;
   min-width: 0 !important;
@@ -102,7 +102,7 @@ body:has([class~="z-[9999]"]) [class~="z-[9999]"] .report {
 body.rossie-pdf-open [data-pdf-preview] > div > div:last-child,
 body.rossie-pdf-open [class~="z-[9999]"] > div > div:last-child,
 body:has([data-pdf-preview]) [data-pdf-preview] > div > div:last-child,
-body:has([class~="z-[9999}"]) [class~="z-[9999}"] > div > div:last-child {
+body:has([class~="z-[9999]"]) [class~="z-[9999]"] > div > div:last-child {
   flex: 0 0 auto !important;
   width: 100% !important;
   height: 64px !important;
@@ -127,9 +127,9 @@ body:has([class~="z-[9999}"]) [class~="z-[9999}"] > div > div:last-child {
 }
 
 body.rossie-pdf-open [data-pdf-preview] > div > div:last-child button,
-body.rossie-pdf-open [class~="z-[9999}"] > div > div:last-child button,
+body.rossie-pdf-open [class~="z-[9999]"] > div > div:last-child button,
 body:has([data-pdf-preview]) [data-pdf-preview] > div > div:last-child button,
-body:has([class~="z-[9999}"]) [class~="z-[9999}"] > div > div:last-child button {
+body:has([class~="z-[9999]"]) [class~="z-[9999]"] > div > div:last-child button {
   flex: 1 1 0% !important;
   width: 0 !important;
   min-width: 0 !important;
