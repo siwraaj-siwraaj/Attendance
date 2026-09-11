@@ -3,12 +3,25 @@
    bottom dock are hidden while a modal is open, so using a guessed header/nav
    range only introduces vertical drift on Android WebView. */
 
+/* CRITICAL: Layout wraps every page in the swipe animation container. A CSS
+   transform on that ancestor creates a new containing block for position:fixed,
+   which makes dialogs appear shifted/down the page. Freeze that container while
+   any full-screen modal is open so fixed positioning is truly viewport-relative. */
+body:has([data-ocid="attendance.quick_mark.dialog"]) [style*="will-change: transform"],
+body:has([data-ocid="payments.overview.dialog"]) [style*="will-change: transform"],
+body:has([data-ocid="combined_flow.dialog"]) [style*="will-change: transform"] {
+  transform: none !important;
+  transition: none !important;
+  will-change: auto !important;
+}
+
 [data-ocid="attendance.quick_mark.dialog"],
 [data-ocid="payments.overview.dialog"],
 [data-ocid="combined_flow.dialog"] {
   position: fixed !important;
   inset: 0 !important;
   width: 100vw !important;
+  height: 100vh !important;
   height: 100dvh !important;
   padding: 12px !important;
   margin: 0 !important;
@@ -36,6 +49,7 @@
   box-sizing: border-box !important;
   width: min(720px, 100%) !important;
   max-width: 720px !important;
+  height: calc(100vh - 24px) !important;
   height: calc(100dvh - 24px) !important;
   max-height: calc(100dvh - 24px) !important;
   min-height: 0 !important;
@@ -47,7 +61,6 @@
   z-index: 1001 !important;
 }
 
-/* Slightly narrower mobile width while preserving the large vertical panel. */
 @media (max-width: 600px) {
   [data-ocid="attendance.quick_mark.dialog"] > div,
   [data-ocid="payments.overview.dialog"] > div,
@@ -57,15 +70,12 @@
   }
 }
 
-/* Quick Mark and Payment Overview use their entire available height so their
-   controls and totals are visible without unnecessary internal scrolling. */
 [data-ocid="attendance.quick_mark.dialog"] > div,
 [data-ocid="payments.overview.dialog"] > div {
   height: calc(100dvh - 24px) !important;
   max-height: calc(100dvh - 24px) !important;
 }
 
-/* Never allow a drag on the backdrop to scroll the page underneath. */
 body:has([data-ocid="attendance.quick_mark.dialog"]),
 body:has([data-ocid="payments.overview.dialog"]),
 body:has([data-ocid="combined_flow.dialog"]) {
