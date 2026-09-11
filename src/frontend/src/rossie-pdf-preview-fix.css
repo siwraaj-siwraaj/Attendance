@@ -1,0 +1,106 @@
+/* Rossie — PDF preview: true desktop-style document viewer on Android/WebView. */
+
+/* The PDF preview must own the entire viewport, including the transparent
+   Android status-bar area. Use an attribute selector so Tailwind's arbitrary
+   z-index class does not depend on CSS escaping. */
+body:has([class~="z-[9999]"]) {
+  overflow: hidden !important;
+  overscroll-behavior: none !important;
+}
+
+body:has([class~="z-[9999]"]) header,
+body:has([class~="z-[9999]"]) [data-ocid="bottom_tab_bar"] {
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+body:has([class~="z-[9999]"]) [class~="z-[9999]"] {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100dvh !important;
+  max-width: none !important;
+  max-height: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: #ffffff !important;
+  display: block !important;
+  overflow: hidden !important;
+  transform: none !important;
+  z-index: 9999 !important;
+  touch-action: pan-y !important;
+  overscroll-behavior: contain !important;
+}
+
+/* Full-height white viewer shell. */
+body:has([class~="z-[9999]"]) [class~="z-[9999]"] > div {
+  position: relative !important;
+  inset: auto !important;
+  width: 100vw !important;
+  height: 100dvh !important;
+  max-width: none !important;
+  max-height: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  background: #ffffff !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  transform: none !important;
+  touch-action: pan-y !important;
+}
+
+/* Document area is the only scrolling surface. */
+body:has([class~="z-[9999]"]) [class~="z-[9999]"] > div > div:first-child {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  width: 100% !important;
+  height: auto !important;
+  max-height: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  overflow: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  overscroll-behavior: contain !important;
+  touch-action: pan-y !important;
+  background: #ffffff !important;
+}
+
+/* Desktop/A4 report width even when the APK is running on a narrow phone.
+   The document can be horizontally scrolled instead of being converted into
+   a cramped mobile layout. */
+body:has([class~="z-[9999]"]) [class~="z-[9999}"] .report,
+body:has([class~="z-[9999]"]) [class~="z-[9999]"] .report {
+  width: 820px !important;
+  max-width: 820px !important;
+  min-width: 820px !important;
+  margin: 0 auto !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  min-height: 100% !important;
+}
+
+/* Keep the action bar pinned below the scrolling document. */
+body:has([class~="z-[9999]"]) [class~="z-[9999]"] > div > div:last-child {
+  flex: 0 0 auto !important;
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 10px 12px max(10px, env(safe-area-inset-bottom)) !important;
+  border: 0 !important;
+  border-top: 1px solid #e5e7eb !important;
+  background: #ffffff !important;
+  display: flex !important;
+  gap: 10px !important;
+  touch-action: manipulation !important;
+}
+
+body:has([class~="z-[9999]"]) [class~="z-[9999]"] > div > div:last-child button {
+  min-height: 44px !important;
+  border-radius: 10px !important;
+}
