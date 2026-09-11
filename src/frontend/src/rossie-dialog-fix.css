@@ -25,7 +25,7 @@ body:has(.fixed.inset-0) [style*="will-change: transform"] {
   z-index: 1000 !important;
 }
 
-/* Center the modal panel itself; never use top/left/translate positioning. */
+/* Default modal panel. */
 .fixed.inset-0[class*="bg-black/"] > div {
   position: relative !important;
   inset: auto !important;
@@ -38,7 +38,6 @@ body:has(.fixed.inset-0) [style*="will-change: transform"] {
   box-sizing: border-box !important;
   width: min(720px, calc(100vw - 24px)) !important;
   max-width: 720px !important;
-  height: calc(100vh - 24px) !important;
   height: calc(100dvh - 24px) !important;
   max-height: calc(100dvh - 24px) !important;
   min-height: 0 !important;
@@ -57,14 +56,13 @@ body:has(.fixed.inset-0) [style*="will-change: transform"] {
   }
 }
 
-/* Explicitly cover the reported dialog types. */
+/* Expand the two frequently used workflows so their normal contents fit
+   vertically with minimal/no scrolling on phone screens. */
 [data-ocid="attendance.quick_mark.dialog"] > div,
 [data-ocid="payments.overview.dialog"] > div,
-[data-ocid="combined_flow.dialog"] > div,
-[data-ocid="labours.add.dialog"] > div,
-[data-ocid="advances.add.dialog"] > div {
-  height: calc(100dvh - 24px) !important;
-  max-height: calc(100dvh - 24px) !important;
+[data-ocid="combined_flow.dialog"] > div {
+  height: calc(100dvh - 8px) !important;
+  max-height: calc(100dvh - 8px) !important;
 }
 
 /* Lock the page behind any modal. */
@@ -76,7 +74,7 @@ body:has(.fixed.inset-0) main {
   overflow: hidden !important;
 }
 
-/* PDF preview: full viewport overlay, with its document surface centered. */
+/* PDF preview is NOT a dialog: use the entire WebView as the document view. */
 .fixed.inset-0.z-\[9999\] {
   position: fixed !important;
   inset: 0 !important;
@@ -84,17 +82,17 @@ body:has(.fixed.inset-0) main {
   height: 100vh !important;
   height: 100dvh !important;
   margin: 0 !important;
-  padding: 12px !important;
+  padding: 0 !important;
   box-sizing: border-box !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
+  display: block !important;
   overflow: hidden !important;
+  background: #ffffff !important;
   touch-action: none !important;
   overscroll-behavior: none !important;
   z-index: 1100 !important;
 }
 
+/* Full-screen PDF surface — no card, no rounded corners, no side margins. */
 .fixed.inset-0.z-\[9999\] > div {
   position: relative !important;
   inset: auto !important;
@@ -104,13 +102,35 @@ body:has(.fixed.inset-0) main {
   bottom: auto !important;
   transform: none !important;
   margin: 0 !important;
-  width: min(100%, 900px) !important;
-  max-width: 900px !important;
-  height: calc(100dvh - 24px) !important;
-  max-height: calc(100dvh - 24px) !important;
+  width: 100vw !important;
+  max-width: none !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  max-height: none !important;
+  border-radius: 0 !important;
   overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+  background: #ffffff !important;
   touch-action: pan-y !important;
   z-index: 1101 !important;
+}
+
+/* Let the PDF/report itself use every available pixel between the controls. */
+.fixed.inset-0.z-\[9999\] > div > div:first-child {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  width: 100% !important;
+  overflow: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  padding: 8px !important;
+}
+
+/* Keep PDF actions reachable without shrinking the document into a card. */
+.fixed.inset-0.z-\[9999\] > div > div:last-child {
+  flex: 0 0 auto !important;
+  padding: 10px !important;
+  padding-bottom: max(10px, env(safe-area-inset-bottom)) !important;
 }
 
 /* Add Labour / Add Advance may use a different backdrop class, so force
