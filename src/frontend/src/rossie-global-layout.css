@@ -27,6 +27,17 @@ body {
   overscroll-behavior: none;
 }
 
+/* The authenticated Layout must have a DEFINITE viewport height. A previous
+   min-height-only rule left the flex chain without a definite height, so the
+   page-owned h-full/overflow-y-auto regions could resolve to a non-scrollable
+   height on Android WebView. */
+.min-h-screen:has(> header) {
+  height: 100dvh;
+  min-height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+}
+
 /* Layout is the single viewport owner. Individual pages scroll inside their
    own flex child instead of making the document scroll behind the header. */
 body:has([data-ocid="bottom_tab_bar"]) main {
@@ -54,6 +65,15 @@ body:has([data-ocid="bottom_tab_bar"]) main [class*="overflow-y-auto"] {
   scroll-padding-top: 8px;
   scroll-padding-bottom: var(--rossie-nav-clearance);
   -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+}
+
+/* Direct page roots such as h-full overflow-hidden need a definite height so
+   their nested overflow-y-auto child can actually become a scroll viewport. */
+body:has([data-ocid="bottom_tab_bar"]) main > div > [class*="h-full"] {
+  height: 100% !important;
+  min-height: 0 !important;
+  max-height: 100% !important;
 }
 
 /* Contracts had a legacy fixed viewport height. Flex layout now determines
@@ -74,10 +94,8 @@ body:has([data-ocid="bottom_tab_bar"]) [data-ocid$=".add_button"] {
 }
 
 /* Edge-to-edge header.
-   IMPORTANT: do not use a negative top margin here. The header already owns
-   the status-bar inset through its padding, so a negative margin makes main
-   start too early and causes every tab's first content to slide underneath
-   the header. */
+   The header owns the status-bar inset. It must remain in normal flow so main
+   always starts below the visible header instead of underneath it. */
 body:has([data-ocid="bottom_tab_bar"]) header {
   margin-top: 0 !important;
   padding-top: env(safe-area-inset-top, 0px) !important;
@@ -95,6 +113,7 @@ body:has([data-ocid="bottom_tab_bar"]) header {
   overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
 }
 
 [data-slot="dialog-overlay"] {
@@ -105,7 +124,6 @@ body:has([data-ocid="bottom_tab_bar"]) header {
   z-index: 81 !important;
 }
 
-/* Custom overlays/dialogs must also remain above the bottom dock. */
 .glass-dialog {
   position: relative;
   z-index: 81;
@@ -126,7 +144,7 @@ main > div {
   overflow-x: hidden;
 }
 
-/* Full-height utility should follow the modern dynamic viewport. */
+/* Keep the legacy utility useful outside authenticated Layout pages. */
 .min-h-screen {
   min-height: 100dvh;
 }
