@@ -45,8 +45,21 @@ const portal = `    {showPaymentPdfPreview &&
             transform: "none",
             isolation: "isolate",
             touchAction: "auto",
+            boxSizing: "border-box",
           }}
         >
+          <div
+            data-pdf-status-spacer
+            aria-hidden="true"
+            style={{
+              flex: "0 0 auto",
+              width: "100%",
+              height: "max(24px, env(safe-area-inset-top))",
+              minHeight: "max(24px, env(safe-area-inset-top))",
+              background: "#ffffff",
+            }}
+          />
+
           <div
             data-pdf-scroll
             style={{
@@ -153,4 +166,4 @@ const portal = `    {showPaymentPdfPreview &&
 
 source = source.slice(0, start) + portal + source.slice(end + close.length);
 fs.writeFileSync(paymentsPath, source);
-console.log("PDF preview is compiled as an isolated fullscreen React portal.");
+console.log("PDF preview is compiled as an isolated fullscreen React portal with a dedicated status-bar safe area.");
