@@ -16,8 +16,8 @@ if (!source.includes('from "react-dom"')) {
 }
 
 const start = source.lastIndexOf("    {showPaymentPdfPreview && (");
-const endMarker = "\n)}    ";
-const end = source.indexOf(endMarker, start);
+const close = "\n  </div>\n)}";
+const end = source.indexOf(close, start);
 
 if (start === -1 || end === -1) {
   throw new Error("Could not locate the PaymentsPage PDF preview block; refusing to modify the file.");
@@ -74,6 +74,6 @@ const portal = `    {showPaymentPdfPreview &&
         document.body,
       )}`;
 
-source = source.slice(0, start) + portal + source.slice(end + endMarker.length);
+source = source.slice(0, start) + portal + source.slice(end + close.length);
 fs.writeFileSync(paymentsPath, source);
 console.log("PDF preview is compiled as a React portal mounted directly under document.body.");
