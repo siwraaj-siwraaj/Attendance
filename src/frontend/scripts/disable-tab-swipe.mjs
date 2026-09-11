@@ -56,7 +56,7 @@ function removeJsxAttribute(input, attributeName) {
   return output;
 }
 
-for (const attribute of ["onTouchStart", "onTouchMove", "onTouchEnd", "ref"]) {
+for (const attribute of ["onTouchStart", "onTouchMove", "onTouchEnd"]) {
   source = removeJsxAttribute(source, attribute);
 }
 
@@ -69,6 +69,8 @@ source = source
   .replace(/\n  const swipeTabs = allowedTabs;/, "")
   .replace(/\n  const swipeContentRef = useRef<HTMLDivElement \| null>\(null\);/, "")
   .replace(/\n  const mainRef = useRef<HTMLElement \| null>\(null\);/, "")
+  .replace(/\n        ref=\{mainRef\}/, "")
+  .replace(/\n          ref=\{swipeContentRef\}/, "")
   .replace(/, allowedTabs } = useAuth\(\);/, " } = useAuth();")
   .replace(/ style=\{\{ width: "100%", willChange: "transform" \}\}/g, "");
 
