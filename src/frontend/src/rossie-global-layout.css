@@ -27,10 +27,6 @@ body {
   overscroll-behavior: none;
 }
 
-/* The authenticated Layout must have a DEFINITE viewport height. A previous
-   min-height-only rule left the flex chain without a definite height, so the
-   page-owned h-full/overflow-y-auto regions could resolve to a non-scrollable
-   height on Android WebView. */
 .min-h-screen:has(> header) {
   height: 100dvh;
   min-height: 100dvh;
@@ -38,8 +34,6 @@ body {
   overflow: hidden;
 }
 
-/* Layout is the single viewport owner. Individual pages scroll inside their
-   own flex child instead of making the document scroll behind the header. */
 body:has([data-ocid="bottom_tab_bar"]) main {
   flex: 1 1 auto;
   min-width: 0;
@@ -56,8 +50,6 @@ body:has([data-ocid="bottom_tab_bar"]) main > div {
   max-width: 100%;
 }
 
-/* Page-owned scroll regions. Existing pages use pb-24/pb-28; preserve that
-   architecture rather than adding another main-level padding layer. */
 body:has([data-ocid="bottom_tab_bar"]) main [class*="overflow-y-auto"] {
   min-width: 0;
   min-height: 0;
@@ -68,34 +60,25 @@ body:has([data-ocid="bottom_tab_bar"]) main [class*="overflow-y-auto"] {
   touch-action: pan-y;
 }
 
-/* Direct page roots such as h-full overflow-hidden need a definite height so
-   their nested overflow-y-auto child can actually become a scroll viewport. */
 body:has([data-ocid="bottom_tab_bar"]) main > div > [class*="h-full"] {
   height: 100% !important;
   min-height: 0 !important;
   max-height: 100% !important;
 }
 
-/* Contracts had a legacy fixed viewport height. Flex layout now determines
-   the available height, so the list can never fight the header or dock. */
 body:has([data-ocid="contracts.search_input"]) main [class*="overflow-y-auto"] {
   height: auto !important;
   max-height: none !important;
 }
 
-/* The floating dock sits above page content. It must never cover dialogs. */
 [data-ocid="bottom_tab_bar"] {
   z-index: 40 !important;
 }
 
-/* Every floating Add action shares the same clearance above the dock. */
 body:has([data-ocid="bottom_tab_bar"]) [data-ocid$=".add_button"] {
   bottom: var(--rossie-nav-clearance) !important;
 }
 
-/* Edge-to-edge header.
-   The header owns the status-bar inset. It must remain in normal flow so main
-   always starts below the visible header instead of underneath it. */
 body:has([data-ocid="bottom_tab_bar"]) header {
   margin-top: 0 !important;
   padding-top: env(safe-area-inset-top, 0px) !important;
@@ -104,7 +87,10 @@ body:has([data-ocid="bottom_tab_bar"]) header {
   z-index: 40;
 }
 
-/* Dialogs always sit above the dock and have their own viewport clearance. */
+/* Standard Radix dialogs and the app's custom modal dialogs share the same
+   viewport contract.  A custom modal must never be vertically centered at a
+   height larger than the phone viewport; that was the reason tall dialogs
+   appeared clipped with their header/content missing. */
 .glass-dialog,
 [data-slot="dialog-content"] {
   box-sizing: border-box;
@@ -129,6 +115,37 @@ body:has([data-ocid="bottom_tab_bar"]) header {
   z-index: 81;
 }
 
+/* Custom dialogs are implemented as fixed inset overlays in several pages.
+   Give every such overlay a scrollable viewport and enough safe-area room.
+   The direct child is the actual modal surface. */
+body:has([data-ocid="bottom_tab_bar"]) .fixed.inset-0[class*="z-"] {
+  box-sizing: border-box;
+  max-height: 100dvh;
+  overflow-y: auto !important;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding-top: max(16px, env(safe-area-inset-top, 0px)) !important;
+  padding-bottom: max(16px, env(safe-area-inset-bottom, 0px)) !important;
+  z-index: 70 !important;
+}
+
+body:has([data-ocid="bottom_tab_bar"]) .fixed.inset-0[class*="z-"] > .glass-dialog,
+body:has([data-ocid="bottom_tab_bar"]) .fixed.inset-0[class*="z-"] > div {
+  box-sizing: border-box;
+  max-height: calc(100dvh - var(--rossie-dialog-clearance));
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+/* A tall modal should scroll from its top instead of being centered outside
+   the viewport. Short dialogs remain visually centered. */
+body:has([data-ocid="bottom_tab_bar"]) .fixed.inset-0[class*="z-"] {
+  align-items: center;
+}
+
 button,
 input,
 select,
@@ -136,15 +153,12 @@ textarea {
   box-sizing: border-box;
 }
 
-/* Prevent wide tables/cards from widening the phone viewport. Tables retain
-   their own horizontal scrolling containers where the page provides them. */
 main,
 main > div {
   max-width: 100%;
   overflow-x: hidden;
 }
 
-/* Keep the legacy utility useful outside authenticated Layout pages. */
 .min-h-screen {
   min-height: 100dvh;
 }
