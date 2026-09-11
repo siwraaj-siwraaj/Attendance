@@ -1,8 +1,7 @@
-/* Rossie — PDF preview: isolated full-screen document viewer. */
+/* Rossie — PDF preview: true fullscreen desktop-width document viewer. */
 
-/* Lock the page behind the viewer, but DO NOT use touch-action:none on body
-   or the viewer shell. touch-action is intersected with ancestors by the
-   browser, so an ancestor set to none also disables the scroll surface. */
+/* Lock only the page behind the viewer. Never disable touch handling on the
+   viewer ancestors: Android WebView intersects touch-action through them. */
 body.rossie-pdf-open {
   overflow: hidden !important;
   overscroll-behavior: none !important;
@@ -14,14 +13,10 @@ body.rossie-pdf-open [data-ocid="bottom_tab_bar"] {
   pointer-events: none !important;
 }
 
-/* Fallback while the body observer is catching up. */
-body:has([class~="z-[9999]"]) {
-  overflow: hidden !important;
-  overscroll-behavior: none !important;
-}
-
-/* Full-screen viewer backdrop. */
+/* Target the explicit marker first, with the old class as a fallback. */
+body.rossie-pdf-open [data-pdf-preview],
 body.rossie-pdf-open [class~="z-[9999]"],
+body:has([data-pdf-preview]) [data-pdf-preview],
 body:has([class~="z-[9999]"]) [class~="z-[9999]"] {
   position: fixed !important;
   inset: 0 !important;
@@ -34,23 +29,22 @@ body:has([class~="z-[9999]"]) [class~="z-[9999]"] {
   padding: 0 !important;
   border: 0 !important;
   border-radius: 0 !important;
-  background: rgba(0, 0, 0, 0.82) !important;
+  background: #ffffff !important;
   display: flex !important;
   flex-direction: column !important;
   align-items: stretch !important;
   justify-content: stretch !important;
   overflow: hidden !important;
   transform: none !important;
-  z-index: 9999 !important;
-  overscroll-behavior: none !important;
+  z-index: 2147483647 !important;
   touch-action: auto !important;
 }
 
-/* Viewer shell. */
+/* Fullscreen viewer shell — no dialog sizing, centering, or rounded card. */
+body.rossie-pdf-open [data-pdf-preview] > div,
 body.rossie-pdf-open [class~="z-[9999]"] > div,
+body:has([data-pdf-preview]) [data-pdf-preview] > div,
 body:has([class~="z-[9999]"]) [class~="z-[9999]"] > div {
-  position: relative !important;
-  inset: auto !important;
   width: 100% !important;
   height: 100% !important;
   max-width: none !important;
@@ -65,35 +59,38 @@ body:has([class~="z-[9999]"]) [class~="z-[9999]"] > div {
   flex: 1 1 auto !important;
   flex-direction: column !important;
   overflow: hidden !important;
-  transform: none !important;
-  overscroll-behavior: none !important;
   touch-action: auto !important;
 }
 
-/* The document itself is the ONLY scrolling surface. */
+/* This is the ONLY scrolling surface. Keep the report at desktop/A4 width so
+   phones can pan horizontally across the complete desktop document. */
+body.rossie-pdf-open [data-pdf-preview] > div > div:first-child,
 body.rossie-pdf-open [class~="z-[9999]"] > div > div:first-child,
+body:has([data-pdf-preview]) [data-pdf-preview] > div > div:first-child,
 body:has([class~="z-[9999]"]) [class~="z-[9999]"] > div > div:first-child {
   flex: 1 1 auto !important;
   min-height: 0 !important;
+  min-width: 0 !important;
   width: 100% !important;
   height: 0 !important;
   max-height: none !important;
-  padding: 0 !important;
   margin: 0 !important;
-  overflow-x: auto !important;
-  overflow-y: auto !important;
+  padding: 0 !important;
+  overflow-x: scroll !important;
+  overflow-y: scroll !important;
   -webkit-overflow-scrolling: touch !important;
   overscroll-behavior: contain !important;
   touch-action: pan-x pan-y !important;
   background: #ffffff !important;
 }
 
-/* Responsive report: fit a phone when possible, retain A4 width on larger
-   screens. This avoids forcing an 820px canvas on a narrow WebView. */
+/* Desktop report canvas. Do NOT shrink it to the phone width. */
+body.rossie-pdf-open [data-pdf-preview] .report,
 body.rossie-pdf-open [class~="z-[9999]"] .report,
+body:has([data-pdf-preview]) [data-pdf-preview] .report,
 body:has([class~="z-[9999]"]) [class~="z-[9999]"] .report {
-  width: min(820px, 100%) !important;
-  min-width: 0 !important;
+  width: 820px !important;
+  min-width: 820px !important;
   max-width: 820px !important;
   margin: 0 auto !important;
   border-radius: 0 !important;
@@ -101,8 +98,10 @@ body:has([class~="z-[9999]"]) [class~="z-[9999]"] .report {
   min-height: 100% !important;
 }
 
-/* Action bar stays outside the document scroll area. */
+/* Keep action buttons pinned below the document and outside its scroll area. */
+body.rossie-pdf-open [data-pdf-preview] > div > div:last-child,
 body.rossie-pdf-open [class~="z-[9999]"] > div > div:last-child,
+body:has([data-pdf-preview]) [data-pdf-preview] > div > div:last-child,
 body:has([class~="z-[9999]"]) [class~="z-[9999]"] > div > div:last-child {
   flex: 0 0 auto !important;
   width: 100% !important;
@@ -118,8 +117,8 @@ body:has([class~="z-[9999]"]) [class~="z-[9999]"] > div > div:last-child {
   touch-action: manipulation !important;
 }
 
-body.rossie-pdf-open [class~="z-[9999]"] > div > div:last-child button,
-body:has([class~="z-[9999]"]) [class~="z-[9999]"] > div > div:last-child button {
+body.rossie-pdf-open [data-pdf-preview] > div > div:last-child button,
+body.rossie-pdf-open [class~="z-[9999]"] > div > div:last-child button {
   min-height: 44px !important;
   border-radius: 10px !important;
 }
