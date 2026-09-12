@@ -81,6 +81,22 @@ source = source
   .replace(/w-\[min\(78vw,320px\)\]/g, "w-[320px] max-w-[78vw]")
   .replace(/z-\[60px\]/g, "z-[9998]");
 
+// Render the drawer through document.body so it cannot be trapped behind a
+// transformed/stacked application container on Android WebView.
+source = source
+  .replace(
+    "      {menuOpen && <>\n",
+    "      {menuOpen && typeof document !== \"undefined\" && createPortal(<>\n",
+  )
+  .replace(
+    "        </aside>\n      </>}\n\n      <main",
+    "        </aside>\n      </>, document.body)}\n\n      <main",
+  )
+  .replace(
+    'import { type ReactNode, useRef, useState } from "react";',
+    'import { type ReactNode, useRef, useState } from "react";\nimport { createPortal } from "react-dom";',
+  );
+
 fs.writeFileSync(layoutPath, source);
 
 // Supabase stores partial attendance in partial_value. The UI model uses the
@@ -101,4 +117,4 @@ attendanceActor = attendanceActor
   );
 fs.writeFileSync(attendanceActorPath, attendanceActor);
 
-console.log("Horizontal tab swipe disabled; attendance partial values normalized; profile sidebar layering hardened.");
+console.log("Horizontal tab swipe disabled; attendance partial values normalized; profile sidebar rendered through body portal.");
