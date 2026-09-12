@@ -13,11 +13,8 @@ import LaboursPage from "./pages/LaboursPage";
 import SettledPage from "./pages/SettledPage";
 import AdminPanel from "./pages/AdminPanel";
 
-// A stalled mobile/WebView network request must not leave React Query in a
-// permanent first-load state. React Query retries rejected requests, but it
-// cannot recover from a fetch promise that never settles. Keep the existing
-// AbortSignal behavior while adding a hard upper bound for every fetch.
-const FETCH_TIMEOUT_MS = 15_000;
+// Keep stalled mobile/WebView requests from blocking the app indefinitely.
+const FETCH_TIMEOUT_MS = 8_000;
 if (typeof window !== "undefined" && !(window as any).__rossieFetchTimeoutInstalled) {
   const nativeFetch = window.fetch.bind(window);
   window.fetch = ((input: RequestInfo | URL, init?: RequestInit) => {
@@ -37,12 +34,12 @@ if (typeof window !== "undefined" && !(window as any).__rossieFetchTimeoutInstal
 const defaultQueryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      retry: 3,
-      retryDelay: 1000,
+      retry: 1,
+      retryDelay: 500,
       staleTime: 10 * 60 * 1000,
       gcTime: 15 * 60 * 1000,
       refetchOnWindowFocus: false,
-      refetchOnMount: true,
+      refetchOnMount: false,
       refetchOnReconnect: true,
     },
   },
