@@ -72,7 +72,6 @@ source = source
   .replace(/w-\[min\(78vw,320px\)\]/g, "!w-[320px] !max-w-[78vw]");
 
 // The profile drawer must escape the React app's stacking/overflow contexts.
-// Mount the exact existing drawer block at document.body using a tolerant regex.
 const portalPattern = /\{menuOpen\s*&&\s*<>[\s\S]*?<\/aside>\s*<\/>\}\s*\n\s*<main/;
 const portalMatch = source.match(portalPattern);
 if (portalMatch) {
@@ -80,7 +79,9 @@ if (portalMatch) {
   const mainIndex = block.lastIndexOf("<main");
   const beforeMain = block.slice(0, mainIndex);
   const fragmentStart = beforeMain.indexOf("<>");
-  const fragmentBody = beforeMain.slice(fragmentStart + 2);
+  const fragmentBody = beforeMain
+    .slice(fragmentStart + 2)
+    .replace(/\s*<\/>\}\s*$/, "");
   source = source.replace(
     portalPattern,
     `{menuOpen && typeof document !== "undefined" && createPortal(<>${fragmentBody}</>, document.body)}\n\n      <main`,
@@ -96,8 +97,6 @@ if (!source.includes('import { createPortal } from "react-dom";')) {
   );
 }
 
-// Hard-code the drawer's viewport layer inline as a final defense against Android
-// WebView stacking, transform, opacity, and clipping behavior.
 source = source.replace(
   'style={{ background: "linear-gradient(180deg, #08111f 0%, #0a1422 45%, #080e18 100%)", borderColor: "rgba(249,115,22,0.28)", boxShadow: "-18px 0 45px rgba(0,0,0,0.42)" }}',
   'style={{ position: "fixed", inset: "0 0 0 auto", width: "min(320px, 78vw)", height: "100dvh", zIndex: 2147483647, display: "flex", visibility: "visible", opacity: 1, transform: "none", pointerEvents: "auto", background: "linear-gradient(180deg, #08111f 0%, #0a1422 45%, #080e18 100%)", borderColor: "rgba(249,115,22,0.28)", boxShadow: "-18px 0 45px rgba(0,0,0,0.42)" }}',
