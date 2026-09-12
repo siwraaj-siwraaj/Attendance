@@ -26,7 +26,6 @@ function removeJsxAttribute(input, attributeName) {
     for (; i < output.length; i += 1) {
       const ch = output[i];
       const prev = output[i - 1];
-
       if (quote) {
         if (ch === quote && prev !== "\\") quote = null;
         continue;
@@ -73,29 +72,38 @@ source = source
   .replace(/\sref=\{swipeContentRef\}/g, "")
   .replace(/, allowedTabs } = useAuth\(\);/, " } = useAuth();")
   .replace(/ style=\{\{ width: "100%", willChange: "transform" \}\}/g, "")
-  // Force the drawer/backdrop to be visible and above every Android WebView stacking context.
   .replace(/z-\[70px\]/g, "!z-[2147483647]")
   .replace(/z-\[60px\]/g, "!z-[2147483646]")
-  .replace(/w-\[min\(78vw,320px\)\]/g, "!w-[320px] !max-w-[78vw]")
-  .replace(
-    'className="fixed right-0 top-0 !z-[2147483647] flex h-[100dvh] !w-[320px] !max-w-[78vw] flex-col',
-    'className="!fixed !right-0 !top-0 !z-[2147483647] !block !visible !opacity-100 flex h-[100dvh] !w-[320px] !max-w-[78vw] flex-col',
-  );
+  .replace(/w-\[min\(78vw,320px\)\]/g, "!w-[320px] !max-w-[78vw]");
 
-// Render the drawer through document.body so it cannot be clipped by the app tree.
-source = source
-  .replace(
-    "      {menuOpen && <>\n",
-    "      {menuOpen && typeof document !== \"undefined\" && createPortal(<>\n",
-  )
-  .replace(
-    "        </aside>\n      </>}\n\n      <main",
-    "        </aside>\n      </>, document.body)}\n\n      <main",
-  )
-  .replace(
+// The Android WebView can create clipping/stacking contexts around the React root.
+// Always mount the profile drawer directly under <body>; this is intentionally done
+// with a regex over the complete JSX block so harmless whitespace changes cannot
+// silently disable the portal transformation.
+const sidebarBlock = /\{menuOpen\s*&&\s*<>[\s\S]*?<\/aside>\s*\}\s*\n\s*<main/;
+if (sidebarBlock.test(source)) {
+  source = source.replace(sidebarBlock, (match) => {
+    const mainIndex = match.lastIndexOf("<main");
+    const sidebar = match.slice(0, mainIndex);
+    return `{menuOpen && typeof document !== "undefined" && createPortal(<>${sidebar.slice(sidebar.indexOf("<>") + 2)}</>, document.body)}\n\n      <main`;
+  });
+} else if (!source.includes("createPortal(<>") && source.includes("{menuOpen &&")) {
+  throw new Error("Unable to locate the complete profile sidebar block for portal conversion");
+}
+
+if (!source.includes('import { createPortal } from "react-dom";')) {
+  source = source.replace(
     'import { type ReactNode, useRef, useState } from "react";',
     'import { type ReactNode, useRef, useState } from "react";\nimport { createPortal } from "react-dom";',
   );
+}
+
+// Add a belt-and-suspenders inline layer so the Android drawer cannot inherit
+// visibility, opacity, transform, clipping, or pointer-event rules from the app shell.
+source = source.replace(
+  'style={{ background: "linear-gradient(180deg, #08111f 0%, #0a1422 45%, #080e18 100%)", borderColor: "rgba(249,115,22,0.28)", boxShadow: "-18px 0 45px rgba(0,0,0,0.42)" }}',
+  'style={{ position: "fixed", inset: "0 0 0 auto", width: "min(320px, 78vw)", height: "100dvh", zIndex: 2147483647, display: "flex", visibility: "visible", opacity: 1, transform: "none", pointerEvents: "auto", background: "linear-gradient(180deg, #08111f 0%, #0a1422 45%, #080e18 100%)", borderColor: "rgba(249,115,22,0.28)", boxShadow: "-18px 0 45px rgba(0,0,0,0.42)" }}',
+);
 
 fs.writeFileSync(layoutPath, source);
 
@@ -117,4 +125,4 @@ attendanceActor = attendanceActor
   );
 fs.writeFileSync(attendanceActorPath, attendanceActor);
 
-console.log("Horizontal tab swipe disabled; attendance partial values normalized; Android sidebar forced visible through body portal.");
+console.log("Horizontal tab swipe disabled; attendance partial values normalized; Android profile sidebar mounted at document.body with a hard fixed layer.");
