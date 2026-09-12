@@ -69,20 +69,20 @@ source = source
   .replace(/\n  const swipeTabs = allowedTabs;/, "")
   .replace(/\n  const swipeContentRef = useRef<HTMLDivElement \| null>\(null\);/, "")
   .replace(/\n  const mainRef = useRef<HTMLElement \| null>\(null\);/, "")
-  // The source JSX keeps these refs inline on their opening tags, so remove the
-  // exact attributes without touching unrelated refs such as csvInputRef.
   .replace(/\sref=\{mainRef\}/g, "")
   .replace(/\sref=\{swipeContentRef\}/g, "")
   .replace(/, allowedTabs } = useAuth\(\);/, " } = useAuth();")
   .replace(/ style=\{\{ width: "100%", willChange: "transform" \}\}/g, "")
-  // Keep the profile drawer above every app stacking context and give it a
-  // predictable mobile width even when arbitrary Tailwind utilities are not emitted.
-  .replace(/z-\[70px\]/g, "z-[9999]")
-  .replace(/w-\[min\(78vw,320px\)\]/g, "w-[320px] max-w-[78vw]")
-  .replace(/z-\[60px\]/g, "z-[9998]");
+  // Force the drawer/backdrop to be visible and above every Android WebView stacking context.
+  .replace(/z-\[70px\]/g, "!z-[2147483647]")
+  .replace(/z-\[60px\]/g, "!z-[2147483646]")
+  .replace(/w-\[min\(78vw,320px\)\]/g, "!w-[320px] !max-w-[78vw]")
+  .replace(
+    'className="fixed right-0 top-0 !z-[2147483647] flex h-[100dvh] !w-[320px] !max-w-[78vw] flex-col',
+    'className="!fixed !right-0 !top-0 !z-[2147483647] !block !visible !opacity-100 flex h-[100dvh] !w-[320px] !max-w-[78vw] flex-col',
+  );
 
-// Render the drawer through document.body so it cannot be trapped behind a
-// transformed/stacked application container on Android WebView.
+// Render the drawer through document.body so it cannot be clipped by the app tree.
 source = source
   .replace(
     "      {menuOpen && <>\n",
@@ -117,4 +117,4 @@ attendanceActor = attendanceActor
   );
 fs.writeFileSync(attendanceActorPath, attendanceActor);
 
-console.log("Horizontal tab swipe disabled; attendance partial values normalized; profile sidebar rendered through body portal.");
+console.log("Horizontal tab swipe disabled; attendance partial values normalized; Android sidebar forced visible through body portal.");
