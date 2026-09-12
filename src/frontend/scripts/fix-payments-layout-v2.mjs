@@ -25,17 +25,17 @@ const PAYMENTS_LAYOUT_COMPACT_V2_CSS = String.raw\`
 .payments-page-shell .payments-contract-wrapper [data-ocid="payments.contract_select_trigger"]::after{content:""!important;display:inline-block!important;width:11px!important;height:11px!important;border:solid currentColor!important;border-width:0 2.5px 2.5px 0!important;transform:rotate(45deg)!important;margin-top:-6px!important;transition:transform .18s ease!important}
 .payments-page-shell .payments-contract-wrapper [data-ocid="payments.contract_select_trigger"][aria-expanded="true"]::after{transform:rotate(225deg)!important;margin-top:6px!important}
 
-/* New floating contract picker. */
-.payments-page-shell .payments-contract-dropdown{position:absolute!important;left:0!important;right:auto!important;top:calc(100% + 7px)!important;width:min(310px,calc(100vw - 28px))!important;max-width:calc(100vw - 28px)!important;max-height:min(54vh,460px)!important;margin:0!important;padding:0!important;z-index:1000!important;transform:none!important;border:1px solid rgba(96,165,250,.28)!important;border-radius:20px!important;background:linear-gradient(145deg,rgba(10,20,38,.99),rgba(20,13,24,.99))!important;box-shadow:0 22px 55px rgba(0,0,0,.55),0 0 0 1px rgba(249,115,22,.06) inset!important;backdrop-filter:blur(18px)!important;-webkit-backdrop-filter:blur(18px)!important}
+/* New floating contract picker: centered to the viewport so it can never run off-screen. */
+.payments-page-shell .payments-contract-dropdown{position:absolute!important;left:50%!important;right:auto!important;top:calc(100% + 7px)!important;width:min(300px,calc(100vw - 20px))!important;max-width:calc(100vw - 20px)!important;max-height:min(54vh,460px)!important;margin:0!important;padding:0!important;z-index:1000!important;transform:translateX(-50%)!important;box-sizing:border-box!important;border:1px solid rgba(96,165,250,.28)!important;border-radius:20px!important;background:linear-gradient(145deg,rgba(10,20,38,.99),rgba(20,13,24,.99))!important;box-shadow:0 22px 55px rgba(0,0,0,.55),0 0 0 1px rgba(249,115,22,.06) inset!important;backdrop-filter:blur(18px)!important;-webkit-backdrop-filter:blur(18px)!important}
 .payments-page-shell .payments-contract-dropdown>div:first-child{padding:14px 14px 12px!important;background:linear-gradient(135deg,rgba(249,115,22,.13),rgba(37,99,235,.08))!important;border-bottom:1px solid rgba(255,255,255,.08)!important}
-.payments-page-shell .payments-contract-dropdown input{height:44px!important;border-radius:13px!important;border:1px solid rgba(148,163,184,.20)!important;background:rgba(2,8,23,.72)!important;color:white!important;font-size:14px!important;padding-left:42px!important;outline:none!important;box-shadow:none!important}
+.payments-page-shell .payments-contract-dropdown input{height:44px!important;border-radius:13px!important;border:1px solid rgba(148,163,184,.20)!important;background:rgba(2,8,23,.72)!important;color:white!important;font-size:14px!important;padding-left:42px!important;outline:none!important;box-shadow:none!important;box-sizing:border-box!important;width:100%!important}
 .payments-page-shell .payments-contract-dropdown input:focus{border-color:rgba(249,115,22,.60)!important;box-shadow:0 0 0 3px rgba(249,115,22,.10)!important}
 .payments-page-shell .payments-contract-dropdown input::placeholder{color:rgba(148,163,184,.72)!important}
 .payments-page-shell .payments-contract-dropdown>div:nth-child(2){padding:9px 12px!important;background:rgba(255,255,255,.025)!important;border-bottom:1px solid rgba(255,255,255,.07)!important}
 .payments-page-shell .payments-contract-dropdown>div:nth-child(2) button{border-radius:11px!important;padding:9px 10px!important;color:#fdba74!important;font-weight:700!important;background:rgba(249,115,22,.08)!important}
 .payments-page-shell .payments-contract-dropdown>div:nth-child(2) button:hover{background:rgba(249,115,22,.16)!important}
-.payments-page-shell .payments-contract-dropdown>div:nth-child(3){padding:5px 7px 8px!important;overflow-y:auto!important;overscroll-behavior:contain!important;scrollbar-width:thin!important}
-.payments-page-shell .payments-contract-dropdown>div:nth-child(3)>*{min-height:48px!important;border-radius:12px!important;margin:2px 0!important;padding:8px 10px!important;border:1px solid transparent!important;transition:background .16s ease,border-color .16s ease,transform .16s ease!important}
+.payments-page-shell .payments-contract-dropdown>div:nth-child(3){padding:5px 7px 8px!important;overflow-y:auto!important;overflow-x:hidden!important;overscroll-behavior:contain!important;scrollbar-width:thin!important}
+.payments-page-shell .payments-contract-dropdown>div:nth-child(3)>*{min-height:48px!important;border-radius:12px!important;margin:2px 0!important;padding:8px 10px!important;border:1px solid transparent!important;transition:background .16s ease,border-color .16s ease,transform .16s ease!important;box-sizing:border-box!important}
 .payments-page-shell .payments-contract-dropdown>div:nth-child(3)>*:hover{background:rgba(255,255,255,.06)!important;border-color:rgba(96,165,250,.16)!important}
 .payments-page-shell .payments-contract-dropdown label{color:rgba(255,255,255,.94)!important}
 .payments-page-shell .payments-contract-dropdown button{color:rgba(255,255,255,.94)!important}
@@ -71,4 +71,4 @@ if (!source.includes(styleMarker)) throw new Error("Payments UI style marker mis
 source = source.replace(styleMarker, `${styleMarker}\n      <style>{PAYMENTS_LAYOUT_COMPACT_V2_CSS}</style>`);
 
 fs.writeFileSync(paymentsPath, source);
-console.log("Payments contract picker redesigned as a compact floating glass panel anchored to the title arrow.");
+console.log("Payments contract picker redesigned and centered within the viewport.");
