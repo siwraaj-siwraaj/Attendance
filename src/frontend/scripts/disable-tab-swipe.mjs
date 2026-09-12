@@ -12,17 +12,14 @@ let source = fs.readFileSync(layoutPath, "utf8");
 function removeJsxAttribute(input, attributeName) {
   let output = input;
   let searchFrom = 0;
-
   while (true) {
     const marker = `${attributeName}={`;
     const start = output.indexOf(marker, searchFrom);
     if (start === -1) break;
-
     let i = start + marker.length;
     let depth = 1;
     let quote = null;
     let template = false;
-
     for (; i < output.length; i += 1) {
       const ch = output[i];
       const prev = output[i - 1];
@@ -48,11 +45,9 @@ function removeJsxAttribute(input, attributeName) {
         }
       }
     }
-
     output = `${output.slice(0, start)}${output.slice(i)}`;
     searchFrom = start;
   }
-
   return output;
 }
 
@@ -76,19 +71,22 @@ source = source
   .replace(/z-\[60px\]/g, "!z-[2147483646]")
   .replace(/w-\[min\(78vw,320px\)\]/g, "!w-[320px] !max-w-[78vw]");
 
-// The Android WebView can create clipping/stacking contexts around the React root.
-// Always mount the profile drawer directly under <body>; this is intentionally done
-// with a regex over the complete JSX block so harmless whitespace changes cannot
-// silently disable the portal transformation.
-const sidebarBlock = /\{menuOpen\s*&&\s*<>[\s\S]*?<\/aside>\s*\}\s*\n\s*<main/;
-if (sidebarBlock.test(source)) {
-  source = source.replace(sidebarBlock, (match) => {
-    const mainIndex = match.lastIndexOf("<main");
-    const sidebar = match.slice(0, mainIndex);
-    return `{menuOpen && typeof document !== "undefined" && createPortal(<>${sidebar.slice(sidebar.indexOf("<>") + 2)}</>, document.body)}\n\n      <main`;
-  });
+// The profile drawer must escape the React app's stacking/overflow contexts.
+// Mount the exact existing drawer block at document.body using a tolerant regex.
+const portalPattern = /\{menuOpen\s*&&\s*<>[\s\S]*?<\/aside>\s*<\/>\}\s*\n\s*<main/;
+const portalMatch = source.match(portalPattern);
+if (portalMatch) {
+  const block = portalMatch[0];
+  const mainIndex = block.lastIndexOf("<main");
+  const beforeMain = block.slice(0, mainIndex);
+  const fragmentStart = beforeMain.indexOf("<>");
+  const fragmentBody = beforeMain.slice(fragmentStart + 2);
+  source = source.replace(
+    portalPattern,
+    `{menuOpen && typeof document !== "undefined" && createPortal(<>${fragmentBody}</>, document.body)}\n\n      <main`,
+  );
 } else if (!source.includes("createPortal(<>") && source.includes("{menuOpen &&")) {
-  throw new Error("Unable to locate the complete profile sidebar block for portal conversion");
+  throw new Error("Unable to locate profile sidebar JSX for portal conversion");
 }
 
 if (!source.includes('import { createPortal } from "react-dom";')) {
@@ -98,8 +96,8 @@ if (!source.includes('import { createPortal } from "react-dom";')) {
   );
 }
 
-// Add a belt-and-suspenders inline layer so the Android drawer cannot inherit
-// visibility, opacity, transform, clipping, or pointer-event rules from the app shell.
+// Hard-code the drawer's viewport layer inline as a final defense against Android
+// WebView stacking, transform, opacity, and clipping behavior.
 source = source.replace(
   'style={{ background: "linear-gradient(180deg, #08111f 0%, #0a1422 45%, #080e18 100%)", borderColor: "rgba(249,115,22,0.28)", boxShadow: "-18px 0 45px rgba(0,0,0,0.42)" }}',
   'style={{ position: "fixed", inset: "0 0 0 auto", width: "min(320px, 78vw)", height: "100dvh", zIndex: 2147483647, display: "flex", visibility: "visible", opacity: 1, transform: "none", pointerEvents: "auto", background: "linear-gradient(180deg, #08111f 0%, #0a1422 45%, #080e18 100%)", borderColor: "rgba(249,115,22,0.28)", boxShadow: "-18px 0 45px rgba(0,0,0,0.42)" }}',
@@ -107,8 +105,6 @@ source = source.replace(
 
 fs.writeFileSync(layoutPath, source);
 
-// Supabase stores partial attendance in partial_value. The UI model uses the
-// `partial` field, so normalize the mapper before Vite bundles the app.
 let attendanceActor = fs.readFileSync(attendanceActorPath, "utf8");
 attendanceActor = attendanceActor
   .replace(
@@ -125,4 +121,4 @@ attendanceActor = attendanceActor
   );
 fs.writeFileSync(attendanceActorPath, attendanceActor);
 
-console.log("Horizontal tab swipe disabled; attendance partial values normalized; Android profile sidebar mounted at document.body with a hard fixed layer.");
+console.log("Horizontal tab swipe disabled; attendance values normalized; profile sidebar rendered in a body-level portal.");
