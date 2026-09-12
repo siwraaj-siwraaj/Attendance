@@ -74,7 +74,6 @@ source = source
   .replace(/z-\[60px\]/g, "!z-[2147483646]")
   .replace(/w-\[min\(78vw,320px\)\]/g, "!w-[320px] !max-w-[78vw]");
 
-// The profile drawer must escape the React app's stacking/overflow contexts.
 const portalPattern = /\{menuOpen\s*&&\s*<>[\s\S]*?<\/aside>\s*<\/>\}\s*\n\s*<main/;
 const portalMatch = source.match(portalPattern);
 if (portalMatch) {
@@ -123,8 +122,6 @@ attendanceActor = attendanceActor
   );
 fs.writeFileSync(attendanceActorPath, attendanceActor);
 
-// Attendance page: keep the app-wide header untouched, but remove the solid
-// background from Attendance's own frozen header/banner.
 let attendancePage = fs.readFileSync(attendancePagePath, "utf8");
 attendancePage = attendancePage.replace(
   'style={{ background: "#0a0f1e" }}',
@@ -132,8 +129,6 @@ attendancePage = attendancePage.replace(
 );
 fs.writeFileSync(attendancePagePath, attendancePage);
 
-// Admin panel: reserve enough space for the persistent bottom navigation so
-// the last controls/cards are never hidden behind it.
 let adminPanel = fs.readFileSync(adminPanelPath, "utf8");
 adminPanel = adminPanel.replace(
   'className="flex-1 min-h-0 overflow-y-auto pb-safe" data-ocid="admin_panel"',
@@ -141,9 +136,6 @@ adminPanel = adminPanel.replace(
 );
 fs.writeFileSync(adminPanelPath, adminPanel);
 
-// Payments page: keep every existing calculation, contract selector, PDF,
-// Attendance, Overview and table behavior, but give the screen a cleaner
-// business-app hierarchy. No summary cards are added.
 let paymentsPage = fs.readFileSync(paymentsPath, "utf8");
 if (!paymentsPage.includes("const PAYMENT_UI_CSS =")) {
   const paymentCss = String.raw`
@@ -218,12 +210,6 @@ if (!paymentsPage.includes('<style>{PAYMENT_UI_CSS}</style>')) {
     'return (\n    <div className="flex flex-col h-full overflow-hidden payments-page-shell">',
     'return (\n    <>\n      <style>{PAYMENT_UI_CSS}</style>\n      <div className="flex flex-col h-full overflow-hidden payments-page-shell">',
   );
-  paymentsPage = paymentsPage.replace(
-    '      {/* Labour Payment Overview Dialog */}',
-    '      </div>\n\n      {/* Labour Payment Overview Dialog */}',
-  );
-  // The dialog belongs outside the main page shell; close the fragment at the
-  // component return boundary. The exact final close is normalized below.
   paymentsPage = paymentsPage.replace(/\n  \);\n}\n$/, '\n    </>\n  );\n}\n');
 }
 fs.writeFileSync(paymentsPath, paymentsPage);
