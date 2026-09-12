@@ -17,12 +17,12 @@ interface LayoutProps {
 }
 
 const ALL_TAB_DEFS: { key: Tab; label: string; icon: React.ReactNode }[] = [
-  { key: "contracts", label: "Contracts", icon: <FileText size={23} strokeWidth={1.8} /> },
-  { key: "attendance", label: "Attendance", icon: <ClipboardList size={23} strokeWidth={1.8} /> },
-  { key: "advances", label: "Advances", icon: <Wallet size={23} strokeWidth={1.8} /> },
-  { key: "payments", label: "Payments", icon: <CreditCard size={23} strokeWidth={1.8} /> },
-  { key: "labours", label: "Labours", icon: <Users size={23} strokeWidth={1.8} /> },
-  { key: "settled", label: "Settled", icon: <CheckSquare size={23} strokeWidth={1.8} /> },
+  { key: "contracts", label: "Contracts", icon: <FileText size={22} strokeWidth={1.9} /> },
+  { key: "attendance", label: "Attendance", icon: <ClipboardList size={22} strokeWidth={1.9} /> },
+  { key: "advances", label: "Advances", icon: <Wallet size={22} strokeWidth={1.9} /> },
+  { key: "payments", label: "Payments", icon: <CreditCard size={22} strokeWidth={1.9} /> },
+  { key: "labours", label: "Labours", icon: <Users size={22} strokeWidth={1.9} /> },
+  { key: "settled", label: "Settled", icon: <CheckSquare size={22} strokeWidth={1.9} /> },
 ];
 
 export default function BottomTabBar({ activeTab, onTabChange }: LayoutProps) {
@@ -40,30 +40,33 @@ export default function BottomTabBar({ activeTab, onTabChange }: LayoutProps) {
       style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
       aria-label="Primary navigation"
     >
-      <div className="mx-3 mb-3 pointer-events-auto sm:mx-auto sm:max-w-[680px]">
+      <div className="mx-3 mb-3 pointer-events-auto sm:mx-auto sm:max-w-[700px]">
         <div
-          className="relative overflow-hidden rounded-[28px] border"
+          className="relative overflow-hidden rounded-[25px] border"
           style={{
-            height: 78,
+            height: 76,
             background:
-              "linear-gradient(145deg, rgba(22,34,56,0.985) 0%, rgba(8,15,29,0.995) 72%, rgba(6,11,21,0.995) 100%)",
-            borderColor: "rgba(117,145,184,0.28)",
+              "linear-gradient(135deg, rgba(13,24,42,0.985) 0%, rgba(8,15,28,0.99) 62%, rgba(18,17,20,0.985) 100%)",
+            borderColor: "rgba(126,151,188,0.25)",
             boxShadow:
-              "0 18px 48px rgba(0,0,0,0.58), 0 0 0 1px rgba(255,255,255,0.025) inset, 0 1px 0 rgba(255,255,255,0.08) inset",
-            backdropFilter: "blur(28px)",
-            WebkitBackdropFilter: "blur(28px)",
+              "0 16px 42px rgba(0,0,0,0.62), inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -1px 0 rgba(249,115,22,0.10)",
+            backdropFilter: "blur(24px)",
+            WebkitBackdropFilter: "blur(24px)",
           }}
         >
           <div
-            className="pointer-events-none absolute inset-x-12 top-0 h-px"
+            className="pointer-events-none absolute inset-x-8 top-0 h-px"
             style={{
-              background:
-                "linear-gradient(90deg, transparent, rgba(249,115,22,0.82), transparent)",
-              boxShadow: "0 0 10px rgba(249,115,22,0.34)",
+              background: "linear-gradient(90deg, transparent, rgba(249,115,22,0.78), transparent)",
+              boxShadow: "0 0 12px rgba(249,115,22,0.30)",
             }}
           />
+          <div
+            className="pointer-events-none absolute -right-20 -top-16 h-36 w-36 rounded-full"
+            style={{ background: "radial-gradient(circle, rgba(249,115,22,0.16) 0%, transparent 70%)" }}
+          />
 
-          <div className="relative flex h-full items-stretch px-1.5 py-1.5">
+          <div className="relative flex h-full items-stretch gap-0.5 px-1.5 py-1.5">
             {tabs.map((tab) => {
               const isActive = activeTab === tab.key;
 
@@ -72,11 +75,20 @@ export default function BottomTabBar({ activeTab, onTabChange }: LayoutProps) {
                   key={tab.key}
                   type="button"
                   onClick={() => onTabChange(tab.key)}
-                  className="group relative z-10 flex min-w-0 flex-1 flex-col items-center justify-center rounded-[23px] px-0.5 active:scale-[0.96]"
+                  className="group relative z-10 flex min-w-0 flex-1 flex-col items-center justify-center rounded-[20px] px-0.5"
                   style={{
                     touchAction: "manipulation",
                     WebkitTapHighlightColor: "transparent",
-                    transition: "transform 140ms ease",
+                    transition: "transform 160ms ease",
+                  }}
+                  onPointerDown={(event) => {
+                    if (event.pointerType === "touch") event.currentTarget.style.transform = "scale(0.95)";
+                  }}
+                  onPointerUp={(event) => {
+                    event.currentTarget.style.transform = "scale(1)";
+                  }}
+                  onPointerCancel={(event) => {
+                    event.currentTarget.style.transform = "scale(1)";
                   }}
                   data-ocid={`tab.${tab.key}`}
                   aria-label={tab.label}
@@ -84,13 +96,13 @@ export default function BottomTabBar({ activeTab, onTabChange }: LayoutProps) {
                 >
                   {isActive && (
                     <span
-                      className="pointer-events-none absolute inset-0 rounded-[23px]"
+                      className="pointer-events-none absolute inset-0 rounded-[20px]"
                       style={{
                         background:
-                          "linear-gradient(180deg, rgba(249,115,22,0.24) 0%, rgba(249,115,22,0.10) 58%, rgba(249,115,22,0.04) 100%)",
-                        border: "1px solid rgba(249,115,22,0.34)",
+                          "linear-gradient(180deg, rgba(249,115,22,0.25) 0%, rgba(249,115,22,0.11) 58%, rgba(249,115,22,0.045) 100%)",
+                        border: "1px solid rgba(249,115,22,0.36)",
                         boxShadow:
-                          "0 8px 22px rgba(249,115,22,0.16), inset 0 1px 0 rgba(255,255,255,0.10)",
+                          "0 7px 20px rgba(249,115,22,0.13), inset 0 1px 0 rgba(255,255,255,0.10)",
                       }}
                     />
                   )}
@@ -98,10 +110,10 @@ export default function BottomTabBar({ activeTab, onTabChange }: LayoutProps) {
                   <span
                     className="relative z-10 flex h-8 w-10 items-center justify-center"
                     style={{
-                      color: isActive ? "#fb923c" : "#8a94a8",
-                      transform: isActive ? "translateY(-1px) scale(1.06)" : "translateY(1px)",
-                      transition: "color 220ms ease, transform 260ms cubic-bezier(0.22,1,0.36,1)",
-                      filter: isActive ? "drop-shadow(0 0 8px rgba(249,115,22,0.34))" : "none",
+                      color: isActive ? "#fb923c" : "#8792a7",
+                      transform: isActive ? "translateY(-1px) scale(1.05)" : "translateY(1px)",
+                      transition: "color 220ms ease, transform 260ms cubic-bezier(0.22,1,0.36,1), filter 220ms ease",
+                      filter: isActive ? "drop-shadow(0 0 8px rgba(249,115,22,0.38))" : "none",
                     }}
                   >
                     {tab.icon}
