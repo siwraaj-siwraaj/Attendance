@@ -53,7 +53,7 @@
     "@icp-sdk/core": "latest",
     "@radix-ui/react-accordion": "^1.1.2",
     "@radix-ui/react-aspect-ratio": "^1.1.0",
-    "@radix-ui/react-avatar": "^1.1.0",
+    "@radix-ui/react-avatar": "^1.1.1",
     "@radix-ui/react-checkbox": "^1.1.1",
     "@radix-ui/react-collapsible": "^1.1.0",
     "@radix-ui/react-context-menu": "^2.2.15",
@@ -100,7 +100,7 @@
     "react-use": "~17.6.0",
     "recharts": "^2.15.1",
     "sonner": "^1.7.4",
-    "tailwind-merge": "^2.5.0",
+    "tailwind-merge": "^2.5.2",
     "three": "^0.176.0",
     "xlsx": "^0.18.5",
     "zustand": "~5.0.5"
