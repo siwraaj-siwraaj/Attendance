@@ -20,6 +20,8 @@ public class MainActivity extends BridgeActivity {
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
+        registerPlugin(AttendancePdfPlugin.class);
+
         // Keep the exact same dark surface visible during the hand-off from
         // Android's launch splash to the Capacitor WebView. This prevents the
         // default white Activity/WebView surface from flashing on cold launch.
