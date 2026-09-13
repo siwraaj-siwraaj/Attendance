@@ -9,15 +9,22 @@ const paymentsPath = path.join(frontendRoot, "src/pages/PaymentsPage.tsx");
 let source = fs.readFileSync(paymentsPath, "utf8");
 
 const before = source;
-source = source.replace(
-  /const nativeAttendancePdf = title\.includes\("Attendance Sheet"\);[\s\S]*?if \(nativeAttendancePdf\) \{[\s\S]*?\n\}/,
-  `const isAttendancePdf = title === "Attendance Sheet";
+
+const nativeBlock = `const result = await PdfGenerator.fromData({
+  data: html,
+  documentSize: "A4",
+  orientation: "portrait",
+  type: "base64",
+  fileName: filename,
+});`;
+
+const safeNativeBlock = `const isAttendancePdf = title === "Attendance Sheet";
       if (isAttendancePdf) {
-        // Attendance reports can be much larger than payment reports. Do not
-        // materialize the generated PDF as base64 in the WebView/JS bridge:
-        // that duplicates the PDF in memory and can terminate Android's
-        // WebView process. The native plugin writes the PDF directly to the
-        // public Downloads collection and returns a content:// URI.
+        // Attendance reports can be much larger than payment reports. Avoid
+        // creating a large base64 PDF in the WebView/JS bridge, which can
+        // duplicate the PDF in memory and terminate Android's WebView process.
+        // The native plugin writes the PDF directly to Downloads and returns a
+        // content:// URI for FileOpener.
         const result = await PdfGenerator.fromData({
           data: html,
           documentSize: "A4",
@@ -39,18 +46,15 @@ source = source.replace(
         return;
       }
 
-      const result = await PdfGenerator.fromData({
-  data: html,
-  documentSize: "A4",
-  orientation: "portrait",
-  type: "base64",
-  fileName: filename,
-});`,
-);
+      ${nativeBlock}`;
 
-if (source === before && source.includes("nativeAttendancePdf")) {
-  throw new Error("Could not replace the Attendance-specific PDF flow; refusing to build.");
+if (source.includes(nativeBlock)) {
+  source = source.replace(nativeBlock, safeNativeBlock);
+}
+
+if (source === before) {
+  throw new Error("Could not locate the native base64 PDF block; refusing to build.");
 }
 
 fs.writeFileSync(paymentsPath, source);
-console.log("Attendance PDF uses native file output to avoid the Android base64 memory crash; Payment PDF keeps its existing flow.");
+console.log("Attendance PDF now uses native Downloads output to avoid the Android base64 memory crash; Payment PDF keeps its existing flow.");
