@@ -46,10 +46,6 @@ jobs:
         working-directory: src/frontend
         run: pnpm exec cap sync android
 
-      - name: Patch native PDF save
-        working-directory: src/frontend
-        run: node scripts/patch-pdf-generator-native.mjs
-
       - name: Build APK
         working-directory: src/frontend/android
         env:
