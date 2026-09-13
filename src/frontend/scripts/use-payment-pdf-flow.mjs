@@ -23,29 +23,66 @@ const nativeBlock = `const result = await PdfGenerator.fromData({
 
 const safeNativeBlock = `const isAttendancePdf = title === "Attendance Sheet";
       if (isAttendancePdf) {
-        // Attendance reports can be much larger than payment reports. Avoid
-        // creating a large base64 PDF in the WebView/JS bridge, which can
-        // duplicate the PDF in memory and terminate Android's WebView process.
-        // The native plugin writes the PDF directly to Downloads and returns a
-        // content:// URI for FileOpener.
-        const result = await PdfGenerator.fromData({
+        // Attendance reports can be much larger than payment reports. Prefer
+        // the patched native Downloads path so the PDF is never copied through
+        // the WebView as base64 during the normal Android flow.
+        try {
+          const nativeResult = await PdfGenerator.fromData({
+            data: html,
+            documentSize: "A4",
+            orientation: "portrait",
+            type: "share",
+            fileName: filename,
+          });
+
+          const nativeUri = (nativeResult as any)?.uri as string | undefined;
+          if (nativeUri) {
+            await FileOpener.open({
+              filePath: nativeUri,
+              contentType: "application/pdf",
+              openWithDefault: true,
+            });
+            return;
+          }
+
+          console.warn("Native Attendance PDF did not return a file URI; using the save fallback.");
+        } catch (nativeError) {
+          console.warn("Native Attendance PDF save failed; using the save fallback:", nativeError);
+        }
+
+        // Fallback for devices where the patched native MediaStore path is not
+        // available. FileSharer writes directly to Android Downloads and avoids
+        // requiring a user-selected document provider.
+        const fallbackResult = await PdfGenerator.fromData({
           data: html,
           documentSize: "A4",
           orientation: "portrait",
-          type: "share",
+          type: "base64",
           fileName: filename,
         });
 
-        const nativeUri = (result as any)?.uri as string | undefined;
-        if (!nativeUri) {
-          throw new Error("Attendance PDF was generated but no native file URI was returned");
+        if (fallbackResult.type !== "base64" || !fallbackResult.base64) {
+          throw new Error("Attendance PDF fallback did not return PDF data");
         }
 
-        await FileOpener.open({
-          filePath: nativeUri,
+        const saved = await FileSharer.save({
+          filename,
           contentType: "application/pdf",
-          openWithDefault: true,
+          base64Data: fallbackResult.base64,
+          android: {
+            saveDirectory: "downloads",
+            relativePath: "Download",
+          },
         });
+
+        const savedUri = (saved as any)?.uri as string | undefined;
+        if (savedUri) {
+          await FileOpener.open({
+            filePath: savedUri,
+            contentType: "application/pdf",
+            openWithDefault: true,
+          });
+        }
         return;
       }
 
@@ -57,4 +94,4 @@ if (!source.includes(nativeBlock)) {
 
 source = source.replace(nativeBlock, safeNativeBlock);
 fs.writeFileSync(paymentsPath, source);
-console.log("Attendance PDF now uses native Downloads output to avoid the Android base64 memory crash; Payment PDF keeps its existing flow.");
+console.log("Attendance PDF now uses native Downloads output first, with a FileSharer fallback when native output is unavailable.");
