@@ -168,5 +168,22 @@ const portal = `    {showPaymentPdfPreview &&
 
 source = source.slice(0, start) + portal + source.slice(end + close.length);
 
+// Attendance reports can contain many work columns. Keep the native PDF
+// renderer on the exact same PdfGenerator -> FileSharer -> FileOpener path,
+// but prevent a wide table from expanding the Android WebView to an enormous
+// layout width. This avoids renderer/memory crashes on older Android devices.
+source = source.replace(
+  '  .report-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }',
+  '  .report-table { width: 100%; max-width: 100%; table-layout: fixed; border-collapse: collapse; font-size: 12.5px; }',
+);
+source = source.replace(
+  '  .report-table th { background: #304765; color: #f7f8fa; font-weight: 700; text-align: left; padding: 8px 10px; border: 1px solid #304765; white-space: nowrap; }',
+  '  .report-table th { background: #304765; color: #f7f8fa; font-weight: 700; text-align: left; padding: 8px 10px; border: 1px solid #304765; white-space: normal; overflow-wrap: anywhere; word-break: break-word; }',
+);
+source = source.replace(
+  '  .report-table td { padding: 7px 10px; border: 1px solid #d2d7dd; vertical-align: middle; }',
+  '  .report-table td { padding: 7px 10px; border: 1px solid #d2d7dd; vertical-align: middle; overflow-wrap: anywhere; word-break: break-word; }',
+);
+
 fs.writeFileSync(paymentsPath, source);
 console.log("PDF preview is compiled as an isolated fullscreen React portal with the same native PDF generation/save flow for Attendance and Payment PDFs.");
