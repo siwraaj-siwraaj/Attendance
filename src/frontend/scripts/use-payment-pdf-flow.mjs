@@ -9,7 +9,7 @@ const paymentsPath = path.join(frontendRoot, "src/pages/PaymentsPage.tsx");
 let source = fs.readFileSync(paymentsPath, "utf8");
 
 if (source.includes('const isAttendancePdf = title === "Attendance Sheet";')) {
-  console.log("Attendance PDF save flow already present; leaving PaymentsPage.tsx unchanged.");
+  console.log("Attendance PDF native-safe flow already present; leaving PaymentsPage.tsx unchanged.");
   process.exit(0);
 }
 
@@ -23,34 +23,22 @@ const nativeBlock = `const result = await PdfGenerator.fromData({
 
 const safeNativeBlock = `const isAttendancePdf = title === "Attendance Sheet";
       if (isAttendancePdf) {
-        // Attendance PDF saving must finish at the Android Downloads save step.
-        // Do not open the generated file here: a missing/default PDF viewer can
-        // reject the open operation and incorrectly turn a successful save into
-        // the generic "Unable to create the PDF" error.
-        const result = await PdfGenerator.fromData({
+        // Attendance reports can be large. Keep the PDF entirely on the native
+        // side: the patched PdfGenerator writes its temporary PDF directly to
+        // Android Downloads. This avoids creating a large base64 string in the
+        // WebView, which can terminate the Android process under memory pressure.
+        const nativeResult = await PdfGenerator.fromData({
           data: html,
           documentSize: "A4",
           orientation: "portrait",
-          type: "base64",
+          type: "share",
           fileName: filename,
         });
 
-        if (result.type !== "base64" || !result.base64) {
-          throw new Error("Attendance PDF generator did not return PDF data");
+        if ((nativeResult as any)?.type !== "share" || !(nativeResult as any)?.completed) {
+          throw new Error("Android did not complete saving the Attendance PDF");
         }
 
-        // @capgo/capacitor-file-sharer officially supports Android Downloads
-        // and returns only after the file has been saved. This is the complete
-        // save operation; no FileOpener handoff is required for Save PDF.
-        await FileSharer.save({
-          filename,
-          contentType: "application/pdf",
-          base64Data: result.base64,
-          android: {
-            saveDirectory: "downloads",
-            relativePath: "Download",
-          },
-        });
         return;
       }
 
@@ -62,4 +50,4 @@ if (!source.includes(nativeBlock)) {
 
 source = source.replace(nativeBlock, safeNativeBlock);
 fs.writeFileSync(paymentsPath, source);
-console.log("Attendance PDF save now generates base64 and saves directly to Android Downloads without opening the file.");
+console.log("Attendance PDF now uses native Downloads output only; the base64/FileSharer fallback is disabled to prevent Android memory crashes.");
