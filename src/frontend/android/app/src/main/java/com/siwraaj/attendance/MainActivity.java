@@ -20,14 +20,6 @@ public class MainActivity extends BridgeActivity {
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
-        registerPlugin(AttendancePdfPlugin.class);
-
-        // This must run before any WebView is created so native PDF rendering
-        // can draw the complete HTML document rather than only the viewport.
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            WebView.enableSlowWholeDocumentDraw();
-        }
-
         // Keep the exact same dark surface visible during the hand-off from
         // Android's launch splash to the Capacitor WebView. This prevents the
         // default white Activity/WebView surface from flashing on cold launch.
