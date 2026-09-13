@@ -167,5 +167,40 @@ const portal = `    {showPaymentPdfPreview &&
       )}`;
 
 source = source.slice(0, start) + portal + source.slice(end + close.length);
+
+// Attendance reports can be substantially larger than payment reports.
+// Passing the generated PDF as base64 through the Capacitor bridge can exhaust
+// Android WebView/native memory and terminate the app. Keep the existing direct
+// Downloads flow for Payment PDF, but use the PDF generator's native share flow
+// for Attendance PDF so the large PDF remains native instead of crossing JS as
+// a giant base64 string.
+const nativeAttendancePdf = `const nativeAttendancePdf = title.includes("Attendance Sheet");`;
+const generatedPdfMarker = `      const result = await PdfGenerator.fromData({
+  data: html,
+  documentSize: "A4",
+  orientation: "portrait",
+  type: "base64",
+  fileName: filename,
+});`;
+const generatedPdfReplacement = `      ${nativeAttendancePdf}
+      const result = await PdfGenerator.fromData({
+  data: html,
+  documentSize: "A4",
+  orientation: "portrait",
+  type: nativeAttendancePdf ? "share" : "base64",
+  fileName: filename,
+});
+
+if (nativeAttendancePdf) {
+  if (result.type !== "share" || result.completed === false) {
+    throw new Error("Attendance PDF share/save flow was cancelled or failed");
+  }
+  return;
+}`;
+
+if (source.includes(generatedPdfMarker) && !source.includes("const nativeAttendancePdf")) {
+  source = source.replace(generatedPdfMarker, generatedPdfReplacement);
+}
+
 fs.writeFileSync(paymentsPath, source);
-console.log("PDF preview is compiled as an isolated fullscreen React portal with a dedicated status-bar safe area.");
+console.log("PDF preview is compiled as an isolated fullscreen React portal with a dedicated status-bar safe area and native Attendance PDF save flow.");
