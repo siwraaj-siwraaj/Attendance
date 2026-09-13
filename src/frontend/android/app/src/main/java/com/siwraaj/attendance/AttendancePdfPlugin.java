@@ -34,6 +34,8 @@ public class AttendancePdfPlugin extends Plugin {
     private static final int PDF_WIDTH = 595;
     private static final int PDF_HEIGHT = 842;
     private static final int HTML_WIDTH = 794;
+    private static final int MAX_RENDER_RETRIES = 12;
+    private static final long RENDER_RETRY_DELAY_MS = 150L;
 
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
@@ -71,10 +73,10 @@ public class AttendancePdfPlugin extends Plugin {
         );
         final boolean[] finished = {false};
 
-        webView.setVisibility(View.INVISIBLE);
         webView.setBackgroundColor(Color.WHITE);
         webView.getSettings().setJavaScriptEnabled(false);
         webView.getSettings().setDomStorageEnabled(false);
+        webView.setInitialScale(100);
 
         final Runnable cleanup = () -> {
             try {
@@ -95,46 +97,15 @@ public class AttendancePdfPlugin extends Plugin {
             public void onPageFinished(WebView view, String url) {
                 if (started) return;
                 started = true;
-
-                mainHandler.post(() -> {
-                    try {
-                        int widthSpec = View.MeasureSpec.makeMeasureSpec(
-                            HTML_WIDTH,
-                            View.MeasureSpec.EXACTLY
-                        );
-                        int heightSpec = View.MeasureSpec.makeMeasureSpec(
-                            0,
-                            View.MeasureSpec.UNSPECIFIED
-                        );
-                        view.measure(widthSpec, heightSpec);
-
-                        int width = view.getMeasuredWidth();
-                        int height = view.getMeasuredHeight();
-                        if (width <= 0 || height <= 0) {
-                            throw new IllegalStateException(
-                                "Attendance report has no printable content."
-                            );
-                        }
-
-                        view.layout(0, 0, width, height);
-                        writePdf(
-                            view,
-                            width,
-                            height,
-                            tempFile,
-                            call,
-                            filename,
-                            cleanup,
-                            finished
-                        );
-                    } catch (Exception e) {
-                        fail(
-                            call,
-                            "Unable to render the Attendance PDF: " + message(e),
-                            cleanup
-                        );
-                    }
-                });
+                scheduleRenderAttempt(
+                    view,
+                    0,
+                    tempFile,
+                    call,
+                    filename,
+                    cleanup,
+                    finished
+                );
             }
         });
 
@@ -153,6 +124,76 @@ public class AttendancePdfPlugin extends Plugin {
                 cleanup
             );
         }
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.Q)
+    private void scheduleRenderAttempt(
+        WebView view,
+        int attempt,
+        File tempFile,
+        PluginCall call,
+        String filename,
+        Runnable cleanup,
+        boolean[] finished
+    ) {
+        mainHandler.postDelayed(() -> {
+            if (finished[0]) return;
+
+            try {
+                int widthSpec = View.MeasureSpec.makeMeasureSpec(
+                    HTML_WIDTH,
+                    View.MeasureSpec.EXACTLY
+                );
+                int heightSpec = View.MeasureSpec.makeMeasureSpec(
+                    0,
+                    View.MeasureSpec.UNSPECIFIED
+                );
+                view.measure(widthSpec, heightSpec);
+
+                int width = view.getMeasuredWidth();
+                int measuredHeight = view.getMeasuredHeight();
+                int contentHeight = Math.round(
+                    view.getContentHeight() * Math.max(1f, view.getScale())
+                );
+                int height = Math.max(measuredHeight, contentHeight);
+
+                if (width <= 0 || height <= 0) {
+                    if (attempt < MAX_RENDER_RETRIES) {
+                        scheduleRenderAttempt(
+                            view,
+                            attempt + 1,
+                            tempFile,
+                            call,
+                            filename,
+                            cleanup,
+                            finished
+                        );
+                        return;
+                    }
+                    throw new IllegalStateException(
+                        "Attendance report did not finish rendering."
+                    );
+                }
+
+                view.layout(0, 0, width, height);
+                writePdf(
+                    view,
+                    width,
+                    height,
+                    tempFile,
+                    call,
+                    filename,
+                    cleanup,
+                    finished
+                );
+            } catch (Exception e) {
+                fail(
+                    call,
+                    "Unable to render the Attendance PDF: " + message(e),
+                    cleanup
+                );
+            }
+        }, RENDER_RETRY_DELAY_MS);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.Q)
