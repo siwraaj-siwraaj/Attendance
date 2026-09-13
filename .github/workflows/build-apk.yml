@@ -36,6 +36,10 @@ jobs:
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile --config.ignore-scripts=false
 
+      - name: Patch native PDF save
+        working-directory: src/frontend
+        run: node scripts/patch-pdf-generator-native.mjs
+
       - name: Build frontend
         working-directory: src/frontend
         env:
