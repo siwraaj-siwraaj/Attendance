@@ -8,7 +8,10 @@ const paymentsPath = path.join(frontendRoot, "src/pages/PaymentsPage.tsx");
 
 let source = fs.readFileSync(paymentsPath, "utf8");
 
-const before = source;
+if (source.includes('const isAttendancePdf = title === "Attendance Sheet";')) {
+  console.log("Attendance PDF native-safe flow already present; leaving PaymentsPage.tsx unchanged.");
+  process.exit(0);
+}
 
 const nativeBlock = `const result = await PdfGenerator.fromData({
   data: html,
@@ -48,13 +51,10 @@ const safeNativeBlock = `const isAttendancePdf = title === "Attendance Sheet";
 
       ${nativeBlock}`;
 
-if (source.includes(nativeBlock)) {
-  source = source.replace(nativeBlock, safeNativeBlock);
-}
-
-if (source === before) {
+if (!source.includes(nativeBlock)) {
   throw new Error("Could not locate the native base64 PDF block; refusing to build.");
 }
 
+source = source.replace(nativeBlock, safeNativeBlock);
 fs.writeFileSync(paymentsPath, source);
 console.log("Attendance PDF now uses native Downloads output to avoid the Android base64 memory crash; Payment PDF keeps its existing flow.");
