@@ -36,6 +36,10 @@ jobs:
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile --config.ignore-scripts=false
 
+      - name: Apply PDF opener safety patch
+        working-directory: src/frontend
+        run: node scripts/patch-pdf-opener-safety.mjs
+
       - name: Build frontend
         working-directory: src/frontend
         env:
