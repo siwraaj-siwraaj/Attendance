@@ -157,7 +157,6 @@ export default function LoginPage() {
         className="relative z-10 w-full max-w-sm"
         style={{ animation: "loginFadeUp 0.5s ease-out both" }}
       >
-        {/* Simple Rossie branding */}
         <div className="mb-6 flex flex-col items-center text-center">
           <div
             className="mb-3 flex h-16 w-16 items-center justify-center rounded-2xl"
@@ -203,9 +202,6 @@ export default function LoginPage() {
             <form onSubmit={handleLogin} data-ocid="login.form">
               <div className="mb-6">
                 <h2 className="text-2xl font-bold text-white">Sign in</h2>
-                <p className="mt-1 text-sm text-white/45">
-                  Enter your details to continue.
-                </p>
               </div>
 
               {loginNotice && (
@@ -263,9 +259,6 @@ export default function LoginPage() {
               )}
 
               <div className="mb-4">
-                <label className="login-label" htmlFor="login-username">
-                  Mobile number or username
-                </label>
                 <div className="relative">
                   <UserRound
                     size={19}
@@ -286,16 +279,14 @@ export default function LoginPage() {
                       WebkitTextFillColor: "#fff",
                       paddingLeft: "3.25rem",
                     }}
-                    placeholder="Enter here"
+                    placeholder="Mobile number or username"
+                    aria-label="Mobile number or username"
                     data-ocid="login.username_input"
                   />
                 </div>
               </div>
 
               <div className="mb-4">
-                <label className="login-label" htmlFor="login-password">
-                  Password
-                </label>
                 <div className="relative">
                   <LockKeyhole
                     size={19}
@@ -317,7 +308,8 @@ export default function LoginPage() {
                       paddingLeft: "3.25rem",
                       paddingRight: "3.25rem",
                     }}
-                    placeholder="Enter your password"
+                    placeholder="Password"
+                    aria-label="Password"
                     data-ocid="login.password_input"
                   />
                   <button
