@@ -13,11 +13,11 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.graphics.pdf.PdfDocument;
 
-import com.get.capacitor.JSObject;
-import com.get.capacitor.Plugin;
-import com.get.capacitor.PluginCall;
-import com.get.capacitor.annotation.CapacitorPlugin;
-import com.get.capacitor.PluginMethod;
+import com.getcapacitor.JSObject;
+import com.getcapacitor.Plugin;
+import com.getcapacitor.PluginCall;
+import com.getcapacitor.annotation.CapacitorPlugin;
+import com.getcapacitor.PluginMethod;
 
 import java.io.File;
 import java.io.FileInputStream;
