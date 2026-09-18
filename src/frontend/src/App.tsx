@@ -63,8 +63,8 @@ function AppContent() {
   if (status !== "approved") return <PendingApproval />;
   return <Layout><div className="flex flex-col h-full"><ErrorBoundary tabName={activeTab} key={activeTab}>
     {activeTab === "admin" && <AdminPanel key="admin" />}
-    {mode === "view" && activeTab === "attendance" && <AttendancePage key="attendance" selectedContractId={selectedContractId} openColumnPickerFor={openColumnPickerFor} onColumnPickerOpened={() => setOpenColumnPickerFor(null)} />}
-    {mode === "view" && activeTab === "contracts" && <ContractsPage key="contracts-view" />}
+    {mode === "view" && activeTab === "attendance" && <AttendancePage key="attendance" selectedContractId={selectedContractId ?? attendanceContractId} openColumnPickerFor={openColumnPickerFor} onContractChange={setAttendanceContractId} onColumnPickerOpened={() => setOpenColumnPickerFor(null)} />}
+    {mode === "view" && activeTab === "contracts" && <ContractsPage key="contracts-view" onViewAttendance={handleViewAttendance} />}
     {mode === "edit" && activeTab === "contracts" && <ContractsPage key="contracts-edit" onViewAttendance={handleViewAttendance} />}
     {mode === "edit" && activeTab === "attendance" && <AttendancePage key="attendance-edit" selectedContractId={selectedContractId ?? attendanceContractId} onContractChange={setAttendanceContractId} openColumnPickerFor={openColumnPickerFor} onColumnPickerOpened={() => setOpenColumnPickerFor(null)} />}
     {(mode === "edit" || mode === "view") && activeTab === "advances" && <AdvancesPage key="advances" />}
