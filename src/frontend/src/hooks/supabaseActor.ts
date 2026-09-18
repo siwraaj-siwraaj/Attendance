@@ -372,6 +372,9 @@ export function createSupabaseActor() {
     async approveUser(username: string, role: Role | Role[]) { await functionCall("rossie-admin", { action: "approve", username, role }); },
     async setUserRole(username: string, role: Role | Role[]) { await functionCall("rossie-admin", { action: "role", username, role }); },
     async revokeAccess(username: string) { await functionCall("rossie-admin", { action: "revoke", username }); },
+    async cleanupOrphanUserAccounts() {
+      return await functionCall("rossie-admin", { action: "cleanup_orphan_users" });
+    },
     async updateUserCredentials(username: string, newUsername: string | null, newPassword: string | null) {
       const data = await functionCall("rossie-admin", { action: "credentials", username, newUsername, newPassword });
       return Boolean(data?.updated);
