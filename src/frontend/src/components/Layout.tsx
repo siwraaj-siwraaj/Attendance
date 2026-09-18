@@ -15,7 +15,7 @@ interface LayoutProps {
 }
 
 export default function Layout({ children }: LayoutProps) {
-  const { mode, activeTab, setActiveTab, logout, role, username, allowedTabs } = useAuth();
+  const { mode, activeTab, setActiveTab, logout, role, username, name, allowedTabs } = useAuth();
   const exportDataMutation = useExportData();
   const importDataMutation = useImportData();
   const exportData = exportDataMutation.mutateAsync;
@@ -163,12 +163,12 @@ export default function Layout({ children }: LayoutProps) {
     setMenuOpen(false);
   };
 
-  const profileName = username?.trim() || "User";
+  const profileName = name?.trim() || username?.trim() || "User";
   const profileInitial = profileName.charAt(0).toUpperCase();
 
   return (
     <div className="min-h-screen flex flex-col bg-[#0a0f1e]">
-      <BackButtonGuard enabled={mode !== null} onReturnToSelection={() => { logout(); setActiveTab("contracts"); }} />
+      <BackButtonGuard enabled={mode !== null} returnToContractsOnly={activeTab === "admin"} onReturnToSelection={() => { logout(); setActiveTab("contracts"); }} />
 
       <header
         className="sticky top-0 z-40 overflow-hidden border-b"
@@ -242,7 +242,7 @@ export default function Layout({ children }: LayoutProps) {
               <Settings size={15} className="text-orange-400" />
               <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-orange-300/80">Settings</p>
             </div>
-            <SettingsPanel onClose={() => setMenuOpen(false)} />
+            {mode === "edit" && <SettingsPanel onClose={() => setMenuOpen(false)} />}
           </div>
 
           <div className="border-t p-2.5 pb-[max(10px,env(safe-area-inset-bottom))]" style={{ borderColor: "rgba(116,143,181,0.18)" }}>
