@@ -12,10 +12,12 @@ import androidx.core.view.WindowInsetsControllerCompat;
 
 import com.getcapacitor.BridgeActivity;
 
+
 public class MainActivity extends BridgeActivity {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         SplashScreen.installSplashScreen(this);
+        registerPlugin(AttendancePdfPlugin.class);
         super.onCreate(savedInstanceState);
 
         Window window = getWindow();
