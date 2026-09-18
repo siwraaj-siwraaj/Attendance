@@ -1,8 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Search, UserPlus, Users, UserCheck, UserX, Pencil, X, BriefcaseBusiness, CalendarDays, BadgeCheck, Phone } from "lucide-react";
+import { Search, UserPlus, Users, UserCheck, UserX, Pencil, X, BriefcaseBusiness, CalendarDays, BadgeCheck, Phone, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "../hooks/useAuth";
-import { useAddLabour, useLabours, useUpdateLabour } from "../hooks/useBackend";
+import { useAddLabour, useLabours, useUpdateLabour, useDeleteLabour } from "../hooks/useBackend";
 import SkeletonLoader from "../components/SkeletonLoader";
 
 function LaboursPage() {
@@ -10,6 +10,8 @@ function LaboursPage() {
   const { data: labours = [], isLoading } = useLabours();
   const addLabour = useAddLabour();
   const updateLabour = useUpdateLabour();
+  const deleteLabour = useDeleteLabour();
+  const [deleteTarget, setDeleteTarget] = useState<any | null>(null);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<"all" | "active" | "inactive">("active");
   const [showForm, setShowForm] = useState(false);
@@ -99,6 +101,7 @@ function LaboursPage() {
 
       {isAdmin && <button type="button" onClick={openAdd} className="fixed bottom-24 right-5 z-30 flex h-14 w-14 items-center justify-center rounded-[20px] bg-gradient-to-br from-orange-400 to-orange-600 text-white shadow-xl shadow-orange-900/30 active:scale-95" aria-label="Add Labour" data-ocid="labours.add_button"><UserPlus className="h-6 w-6"/></button>}
 
+      {deleteTarget && <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/75 p-5"><div className="w-full max-w-sm rounded-3xl border border-red-400/20 bg-[#111a2c] p-5"><h3 className="text-lg font-bold">Delete labour?</h3><p className="mt-3 text-xs text-white/55">This permanently deletes the labour, attendance and advance records. A non-admin account using this mobile number will also be deleted.</p><div className="mt-5 flex gap-2"><button type="button" onClick={()=>setDeleteTarget(null)} className="flex-1 rounded-2xl bg-white/5 py-3 text-sm">Cancel</button><button type="button" disabled={deleteLabour.isPending} onClick={()=>deleteLabour.mutate(deleteTarget.id,{onSuccess:()=>{toast.success("Labour deleted");setDeleteTarget(null);setShowForm(false);setEditing(null)},onError:e=>toast.error(e instanceof Error?e.message:"Could not delete labour")})} className="flex-1 rounded-2xl bg-red-500/80 py-3 text-sm font-bold">{deleteLabour.isPending?"Deleting…":"Delete permanently"}</button></div></div></div>}
       {showForm && <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-0 backdrop-blur-sm sm:items-center sm:p-4" onClick={e => {if(e.target===e.currentTarget)setShowForm(false)}}>
         <div className="w-full max-w-md rounded-t-[28px] border border-white/10 bg-[#111a2c] p-5 shadow-2xl sm:rounded-[28px]">
           <div className="mb-5 flex items-center justify-between"><div><p className="text-[10px] font-bold uppercase tracking-[0.18em] text-orange-400">Workforce</p><h2 className="mt-1 text-xl font-bold">{editing?'Edit Labour':'Add Labour'}</h2></div><button type="button" onClick={()=>setShowForm(false)} className="rounded-xl bg-white/5 p-2 text-white/50"><X className="h-5 w-5"/></button></div>
@@ -109,7 +112,7 @@ function LaboursPage() {
             <label className="block"><span className="mb-1.5 block text-xs text-white/45">Join date</span><input type="date" value={joinDate} onChange={e=>setJoinDate(e.target.value)} className="w-full rounded-2xl border border-white/10 bg-[#0a1020] px-4 py-3 text-sm outline-none focus:border-orange-500/60"/></label>
             {editing && <button type="button" onClick={()=>setActive(v=>!v)} className="flex w-full items-center justify-between rounded-2xl border border-white/10 bg-white/[0.035] p-4"><span className="flex items-center gap-3">{active?<UserCheck className="h-5 w-5 text-emerald-400"/>:<UserX className="h-5 w-5 text-white/35"/>}<span className="text-sm font-semibold">{active?'Active labour':'Inactive labour'}</span></span><span className={`h-6 w-11 rounded-full p-1 transition ${active?'bg-emerald-500':'bg-white/15'}`}><span className={`block h-4 w-4 rounded-full bg-white transition ${active?'translate-x-5':''}`}/></span></button>}
             {error && <p className="text-xs text-red-400">{error}</p>}
-            <button type="button" onClick={save} className="w-full rounded-2xl bg-gradient-to-r from-orange-500 to-orange-600 py-3.5 text-sm font-bold shadow-lg shadow-orange-900/20">{editing?'Save changes':'Add labour'}</button>
+            <div className="flex gap-2">{editing && <button type="button" onClick={()=>setDeleteTarget(editing)} className="flex-1 rounded-2xl border border-red-400/25 bg-red-500/10 py-3.5 text-sm font-bold text-red-300"><Trash2 className="mr-2 inline h-4 w-4"/>Delete</button>}<button type="button" onClick={save} className="flex-1 rounded-2xl bg-gradient-to-r from-orange-500 to-orange-600 py-3.5 text-sm font-bold">{editing?'Save changes':'Add labour'}</button></div>
           </div>
         </div>
       </div>}
