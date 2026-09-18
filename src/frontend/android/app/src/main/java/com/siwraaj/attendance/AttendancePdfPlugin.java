@@ -163,6 +163,8 @@ public class AttendancePdfPlugin extends Plugin {
             PrintDocumentAdapter adapter =
                     webView.createPrintDocumentAdapter(fileName);
 
+            adapter.onStart();
+
             PrintAttributes attributes = new PrintAttributes.Builder()
                     .setMediaSize(PrintAttributes.MediaSize.ISO_A4)
                     .setResolution(new PrintAttributes.Resolution(
@@ -242,12 +244,14 @@ public class AttendancePdfPlugin extends Plugin {
                         @Override
                         public void onWriteFinished(PageRange[] pages) {
                             closeQuietly(destination);
+                            adapter.onFinish();
                             saveTempPdfToDownloads(tempFile, fileName, call);
                         }
 
                         @Override
                         public void onWriteFailed(CharSequence error) {
                             closeQuietly(destination);
+                            adapter.onFinish();
                             tempFile.delete();
                             rejectAndCleanup(
                                     call,
@@ -259,6 +263,7 @@ public class AttendancePdfPlugin extends Plugin {
                         @Override
                         public void onWriteCancelled() {
                             closeQuietly(destination);
+                            adapter.onFinish();
                             tempFile.delete();
                             rejectAndCleanup(call, "PDF rendering was cancelled");
                         }
