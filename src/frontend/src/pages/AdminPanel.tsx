@@ -11,7 +11,7 @@ import {
   ChevronRight,
   LockKeyhole,
 } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Role, UserStatus } from "../backend";
 import type { UserInfo } from "../backend";
 import { Button } from "../components/ui/button";
@@ -24,6 +24,7 @@ import {
   DialogTitle,
 } from "../components/ui/dialog";
 import { useAuth } from "../hooks/useAuth";
+import { requestNotificationPermission, showAppNotification } from "../hooks/nativeNotifications";
 import {
   useApproveUser,
   useCreateUser,
@@ -80,6 +81,28 @@ export default function AdminPanel() {
   const approveMutation = useApproveUser();
   const setRoleMutation = useSetUserRole();
   const revokeMutation = useRevokeAccess();
+  const notifiedPendingRef = useRef<Set<string> | null>(null);
+
+  useEffect(() => {
+    void requestNotificationPermission();
+  }, []);
+
+  useEffect(() => {
+    const current = new Set(pending.map((u) => u.username));
+    if (notifiedPendingRef.current === null) {
+      notifiedPendingRef.current = current;
+      return;
+    }
+    for (const user of pending) {
+      if (!notifiedPendingRef.current.has(user.username)) {
+        void showAppNotification(
+          "Rossie login request",
+          `${user.name || "A user"} (${user.username}) requested access. Open Admin Panel to Approve or Revoke.`,
+        );
+      }
+    }
+    notifiedPendingRef.current = current;
+  }, [pending]);
 
   if (!isAdmin) {
     return (
@@ -128,7 +151,10 @@ export default function AdminPanel() {
     });
   };
 
-  const handleApprove = (user: UserInfo) => approveMutation.mutate({ username: user.username, role: pendingRoles[user.username] ?? [Role.viewOnly] });
+  const handleApprove = (user: UserInfo) => approveMutation.mutate(
+    { username: user.username, role: pendingRoles[user.username] ?? [Role.viewOnly] },
+    { onSuccess: () => void showAppNotification("Rossie access approved", `${user.name || "User"} (${user.username}) is now approved.`) },
+  );
 
   return (
     <div className="flex-1 min-h-0 overflow-y-auto pb-safe" data-ocid="admin_panel">
