@@ -164,6 +164,7 @@ const isNative =
       });
 
       console.info("PDF saved to Downloads:", saved.uri);
+      await AttendancePdf.openPdf({ uri: saved.uri });
       return;
     }
       const pdf = await html2pdf()
@@ -461,8 +462,7 @@ export default function PaymentsPage({
         ${footerHTML}
       </div>`;
 
-    setPaymentPreviewHTML(bodyHTML);
-setShowPaymentPdfPreview(true);
+    void openPrintWindow("Payment Sheet", bodyHTML);
   };
 
   const downloadAttendancePDF = () => {
@@ -598,8 +598,7 @@ setShowPaymentPdfPreview(true);
         ${footerHTML}
       </div>`;
 
-    setPaymentPreviewHTML(bodyHTML);
-setShowPaymentPdfPreview(true);
+    void openPrintWindow("Attendance Sheet", bodyHTML);
   };
 
   const overviewData = paymentData || [];
