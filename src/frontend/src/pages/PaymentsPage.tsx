@@ -85,21 +85,22 @@ interface PaymentsPageProps {
    ============================================================ */
 const REPORT_CSS = `
   * { box-sizing: border-box; }
-  body { margin: 0; background: #fbfcfd; color: #27313d; font-family: 'Figtree', 'Space Grotesk', -apple-system, sans-serif; font-size: 13px; line-height: 1.5; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  .report { background: #fbfcfd; color: #27313d; font-family: 'Figtree', 'Space Grotesk', -apple-system, sans-serif; font-size: 13px; line-height: 1.5; max-width: 820px; margin: 0 auto; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(15,23,42,0.08); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  .report-header { background: #26384f; color: #f7f8fa; padding: 20px 24px; border-radius: 0.5rem 0.5rem 0 0; display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
-  .report-title { font-family: 'Space Grotesk', sans-serif; font-size: 22px; font-weight: 700; letter-spacing: -0.01em; margin: 0; line-height: 1.2; }
-  .report-subtitle { font-size: 12px; opacity: 0.85; margin-top: 4px; font-weight: 500; }
-  .report-brand { font-family: 'Space Grotesk', sans-serif; font-size: 14px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; text-align: right; opacity: 0.9; }
-  .report-meta { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; padding: 16px 24px; border-bottom: 1px solid #e2e5e9; background: #f1f3f5; }
-  .report-meta-label { font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #68727e; margin-bottom: 2px; }
-  .report-meta-value { font-size: 14px; font-weight: 700; color: #27313d; }
-  .report-body { padding: 16px 24px 24px; }
-  .report-section { font-family: 'Space Grotesk', sans-serif; font-size: 15px; font-weight: 700; color: #27313d; margin: 20px 0 10px; padding-bottom: 6px; border-bottom: 2px solid #26384f; }
+  @page { size: A4 portrait; margin: 8mm; }
+  html, body { width: 100%; min-width: 0; margin: 0; padding: 0; background: #ffffff; color: #27313d; font-family: 'Figtree', 'Space Grotesk', -apple-system, sans-serif; font-size: 10.5pt; line-height: 1.35; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .report { width: 100%; max-width: none; margin: 0; background: #ffffff; color: #27313d; font-family: 'Figtree', 'Space Grotesk', -apple-system, sans-serif; font-size: 10.5pt; line-height: 1.35; border-radius: 0; box-shadow: none; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .report-header { background: #26384f; color: #f7f8fa; padding: 8mm 7mm 6mm; border-radius: 0; display: flex; justify-content: space-between; align-items: flex-start; gap: 5mm; }
+  .report-title { font-family: 'Space Grotesk', sans-serif; font-size: 18pt; font-weight: 700; letter-spacing: -0.01em; margin: 0; line-height: 1.15; }
+  .report-subtitle { font-size: 9pt; opacity: 0.85; margin-top: 1.5mm; font-weight: 500; }
+  .report-brand { font-family: 'Space Grotesk', sans-serif; font-size: 10pt; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; text-align: right; opacity: 0.9; }
+  .report-meta { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4mm; padding: 5mm 7mm; border-bottom: 1px solid #e2e5e9; background: #f1f3f5; }
+  .report-meta-label { font-size: 7.5pt; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #68727e; margin-bottom: 1mm; }
+  .report-meta-value { font-size: 9.5pt; font-weight: 700; color: #27313d; overflow-wrap: anywhere; }
+  .report-body { padding: 5mm 7mm 7mm; }
+  .report-section { font-family: 'Space Grotesk', sans-serif; font-size: 11pt; font-weight: 700; color: #27313d; margin: 4mm 0 2.5mm; padding-bottom: 1.5mm; border-bottom: 1px solid #26384f; }
   .report-section:first-child { margin-top: 0; }
-  .report-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
-  .report-table th { background: #304765; color: #f7f8fa; font-weight: 700; text-align: left; padding: 8px 10px; border: 1px solid #304765; white-space: nowrap; }
-  .report-table td { padding: 7px 10px; border: 1px solid #d2d7dd; vertical-align: middle; }
+  .report-table { width: 100%; table-layout: auto; border-collapse: collapse; font-size: 8.5pt; }
+  .report-table th { background: #304765; color: #f7f8fa; font-weight: 700; text-align: left; padding: 2.2mm 2.5mm; border: 1px solid #304765; white-space: nowrap; }
+  .report-table td { padding: 1.8mm 2.5mm; border: 1px solid #d2d7dd; vertical-align: middle; }
   .report-table tbody tr:nth-child(even) { background: #f1f3f5; }
   .report-table .num, .report-table td.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
   .report-table .center { text-align: center; }
@@ -140,6 +141,9 @@ const isNative =
       <meta charset="UTF-8" />
       <style>
         ${REPORT_CSS}
+        @media print {
+          .report { width: 100%; max-width: none; margin: 0; }
+        }
       </style>
     </head>
     <body>
