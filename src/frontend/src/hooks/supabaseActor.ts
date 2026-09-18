@@ -176,6 +176,18 @@ export function createSupabaseActor() {
       }
     },
     async logout() { await supabase.auth.signOut(); },
+    async changeOwnPassword(newPassword: string) {
+      try {
+        const password = String(newPassword ?? "");
+        if (password.length < 6) return err("Password must be at least 6 characters");
+        const { error } = await supabase.auth.updateUser({ password });
+        if (error) return err(error.message);
+        return ok(true);
+      } catch (e: any) {
+        return err(e?.message ?? "Could not change password");
+      }
+    },
+
     async getCallerStatus() {
       const { data } = await supabase.auth.getUser();
       if (!data.user) return "pending";
