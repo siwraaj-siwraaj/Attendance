@@ -2,6 +2,7 @@ import React, { useCallback, useMemo, useState } from "react";
 import { Archive, CheckCircle2, ChevronDown, ChevronUp, CircleDollarSign, Clock3, Search, Trash2, Users, X } from "lucide-react";
 import { useAdvances, useAllAttendance, useContracts, useDeleteContract, useLabours, useMarkContractSettled } from "../hooks/useBackend";
 import { useAdminGuard } from "../hooks/useAdminGuard";
+import { useAuth } from "../hooks/useAuth";
 import LoadingSpinner from "../components/LoadingSpinner";
 
 const money = (n: number) => `₹${Number(n || 0).toLocaleString("en-IN", { maximumFractionDigits: 0 })}`;
@@ -19,6 +20,8 @@ function SettledPage() {
   const settle = useMarkContractSettled();
   const remove = useDeleteContract();
   const { guardAction } = useAdminGuard();
+  const { mode } = useAuth();
+  const isViewMode = mode === "view";
   const [tab, setTab] = useState<"pending" | "settled">("settled");
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -57,7 +60,7 @@ function SettledPage() {
         <div className="relative mt-2"><Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-white/25"/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search contracts" className="w-full rounded-2xl border border-white/10 bg-[#11192b] py-3 pl-11 pr-4 text-sm outline-none focus:border-orange-500/50"/></div>
       </div>
 
-      {tab === "pending" && pending.length > 0 && <div className="mt-4 rounded-2xl border border-orange-500/15 bg-orange-500/[0.05] p-3"><div className="flex items-center justify-between gap-3"><div><p className="text-xs font-bold text-orange-300">Ready to settle</p><p className="mt-0.5 text-[11px] text-white/35">{selected.size} selected · {money(selectedTotal)}</p></div><button type="button" onClick={settleSelected} disabled={!selected.size || processing!==null} className="rounded-xl bg-orange-500 px-4 py-2.5 text-xs font-bold disabled:opacity-30">Settle selected</button></div></div>}
+      {!isViewMode && tab === "pending" && pending.length > 0 && <div className="mt-4 rounded-2xl border border-orange-500/15 bg-orange-500/[0.05] p-3"><div className="flex items-center justify-between gap-3"><div><p className="text-xs font-bold text-orange-300">Ready to settle</p><p className="mt-0.5 text-[11px] text-white/35">{selected.size} selected · {money(selectedTotal)}</p></div><button type="button" onClick={settleSelected} disabled={!selected.size || processing!==null} className="rounded-xl bg-orange-500 px-4 py-2.5 text-xs font-bold disabled:opacity-30">Settle selected</button></div></div>}
 
       <div className="mt-4 space-y-3">
         {visible.length === 0 ? <div className="rounded-3xl border border-dashed border-white/10 bg-white/[0.025] p-10 text-center"><Archive className="mx-auto h-9 w-9 text-white/15"/><p className="mt-3 text-sm font-semibold text-white/50">{tab==='settled'?'No settled contracts':'No pending contracts'}</p><p className="mt-1 text-xs text-white/25">{query?'Try a different search':'Your settlement records will appear here'}</p></div> : visible.map((c: any, i: number) => {
@@ -65,14 +68,14 @@ function SettledPage() {
           const records = attendance.filter((r:any)=>r.contractId===c.id); const present = records.filter((r:any)=>r.value?.__kind__==='present'||r.value?.__kind__==='partial').length; const advanceTotal = advances.filter((a:any)=>a.contractId===c.id).reduce((s:number,a:any)=>s+Number(a.amount||0),0); const workerCount = new Set(records.map((r:any)=>String(r.labourId))).size;
           return <article key={id} className={`overflow-hidden rounded-[22px] border bg-[#10182a] transition ${checked?'border-orange-500/50':'border-white/[0.07]'}`} data-ocid={`settled.item.${i+1}`}>
             <div className="flex items-center gap-3 p-4">
-              {tab==='pending' && <button type="button" onClick={()=>toggle(id)} className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border ${checked?'border-orange-500 bg-orange-500':'border-white/20 bg-white/[0.03]'}`}>{checked && <CheckCircle2 className="h-4 w-4"/>}</button>}
+              {tab==='pending' && !isViewMode && <button type="button" onClick={()=>toggle(id)} className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border ${checked?'border-orange-500 bg-orange-500':'border-white/20 bg-white/[0.03]'}`}>{checked && <CheckCircle2 className="h-4 w-4"/>}</button>}
               <button type="button" onClick={()=>setExpanded(open?null:c.id)} className="min-w-0 flex-1 text-left"><div className="flex items-center gap-2"><p className="truncate text-base font-bold">{c.name}</p><span className={`shrink-0 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase ${c.settled?'bg-emerald-500/10 text-emerald-300':'bg-amber-500/10 text-amber-300'}`}>{c.settled?'Settled':'Pending'}</span></div><div className="mt-1 flex items-center gap-3 text-[10px] text-white/30"><span>{date(c.createdAt)}</span><span>•</span><span>{workerCount} workers</span></div></button>
               <div className="text-right"><p className="text-base font-bold text-orange-400">{money(c.contractAmount)}</p><div className="mt-1 flex justify-end text-white/25">{open?<ChevronUp className="h-4 w-4"/>:<ChevronDown className="h-4 w-4"/>}</div></div>
             </div>
             {open && <div className="border-t border-white/[0.07] px-4 pb-4 pt-3">
               <div className="grid grid-cols-2 gap-2"><div className="rounded-2xl bg-white/[0.035] p-3"><p className="text-[10px] text-white/30">Contract</p><p className="mt-1 text-sm font-bold">{money(c.contractAmount)}</p></div><div className="rounded-2xl bg-white/[0.035] p-3"><p className="text-[10px] text-white/30">Multiplier</p><p className="mt-1 text-sm font-bold">{c.multiplier}×</p></div><div className="rounded-2xl bg-white/[0.035] p-3"><p className="text-[10px] text-white/30">Attendance</p><p className="mt-1 text-sm font-bold">{present} records</p></div><div className="rounded-2xl bg-white/[0.035] p-3"><p className="text-[10px] text-white/30">Advances</p><p className="mt-1 text-sm font-bold text-red-300">{money(advanceTotal)}</p></div></div>
               <div className="mt-3 rounded-2xl bg-white/[0.035] p-3"><div className="flex items-center gap-2 text-xs font-semibold text-white/55"><Clock3 className="h-4 w-4 text-orange-400"/>Timeline</div><div className="mt-2 flex justify-between text-[11px]"><span className="text-white/30">Created</span><span>{date(c.createdAt)}</span></div><div className="mt-1 flex justify-between text-[11px]"><span className="text-white/30">Settled</span><span className={c.settled?'text-emerald-300':'text-amber-300'}>{c.settled?date(c.settledAt||c.updatedAt||c.createdAt):'Not settled'}</span></div></div>
-              <div className="mt-3 flex gap-2">{tab==='pending'?<button type="button" onClick={()=>toggleSettled(c)} disabled={processing!==null} className="flex-1 rounded-xl bg-emerald-500 py-2.5 text-xs font-bold text-white disabled:opacity-40">Mark settled</button>:<button type="button" onClick={()=>toggleSettled(c)} disabled={processing!==null} className="flex-1 rounded-xl bg-amber-500/10 py-2.5 text-xs font-bold text-amber-300">Reopen</button>}<button type="button" onClick={()=>setConfirmDelete(c.id)} className="rounded-xl border border-red-500/15 bg-red-500/5 px-3 text-red-300"><Trash2 className="h-4 w-4"/></button></div>
+              <div className="mt-3 flex gap-2">{!isViewMode && (tab==='pending'?<button type="button" onClick={()=>toggleSettled(c)} disabled={processing!==null} className="flex-1 rounded-xl bg-emerald-500 py-2.5 text-xs font-bold text-white disabled:opacity-40">Mark settled</button>:<button type="button" onClick={()=>toggleSettled(c)} disabled={processing!==null} className="flex-1 rounded-xl bg-amber-500/10 py-2.5 text-xs font-bold text-amber-300">Reopen</button>)}{!isViewMode && <button type="button" onClick={()=>setConfirmDelete(c.id)} className="rounded-xl border border-red-500/15 bg-red-500/5 px-3 text-red-300"><Trash2 className="h-4 w-4"/></button></div>
             </div>}
           </article>;
         })}
