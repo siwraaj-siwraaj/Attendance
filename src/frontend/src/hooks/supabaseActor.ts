@@ -249,6 +249,7 @@ export function createSupabaseActor() {
         return ok(mapLabour(rows[0]));
       } catch (e: any) { return err(e.message); }
     },
+    async deleteLabour(id: bigint) { try { return await functionCall("rossie-admin", { action: "delete_labour", labourId: id.toString() }); } catch (e: any) { return { error: e?.message ?? "Could not delete labour" }; } },
     async updateLabour(id: bigint, name: string, employeeId: string, joinDate: string, active: boolean, phoneNumber: string) {
       try {
         const phone = String(phoneNumber ?? "").replace(/\D/g, "");
@@ -384,6 +385,7 @@ export function createSupabaseActor() {
     async approveUser(username: string, role: Role | Role[]) { await functionCall("rossie-admin", { action: "approve", username, role }); },
     async setUserRole(username: string, role: Role | Role[]) { await functionCall("rossie-admin", { action: "role", username, role }); },
     async revokeAccess(username: string) { await functionCall("rossie-admin", { action: "revoke", username }); },
+    async deleteUserAccount(username: string) { return await functionCall("rossie-admin", { action: "delete_user", username }); },
     async cleanupOrphanUserAccounts() {
       return await functionCall("rossie-admin", { action: "cleanup_orphan_users" });
     },
