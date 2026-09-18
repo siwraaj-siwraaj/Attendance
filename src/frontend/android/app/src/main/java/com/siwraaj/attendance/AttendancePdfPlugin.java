@@ -13,6 +13,8 @@ import android.print.PageRange;
 import android.print.PrintAttributes;
 import android.print.PrintDocumentAdapter;
 import android.print.PrintDocumentInfo;
+import android.print.AttendanceLayoutResultCallback;
+import android.print.AttendanceWriteResultCallback;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewParent;
@@ -185,29 +187,31 @@ public class AttendancePdfPlugin extends Plugin {
                     null,
                     attributes,
                     new CancellationSignal(),
-                    new PrintDocumentAdapter.LayoutResultCallback() {
-                        @Override
-                        public void onLayoutFinished(
-                                PrintDocumentInfo info,
-                                boolean changed
-                        ) {
-                            writePrintAdapter(adapter, tempFile, call, fileName);
-                        }
+                    new AttendanceLayoutResultCallback(
+                            new AttendanceLayoutResultCallback.Listener() {
+                                @Override
+                                public void onFinished(
+                                        PrintDocumentInfo info,
+                                        boolean changed
+                                ) {
+                                    writePrintAdapter(adapter, tempFile, call, fileName);
+                                }
 
-                        @Override
-                        public void onLayoutFailed(CharSequence error) {
-                            rejectAndCleanup(
-                                    call,
-                                    "Unable to lay out A4 PDF: " +
-                                            (error == null ? "unknown error" : error)
-                            );
-                        }
+                                @Override
+                                public void onFailed(CharSequence error) {
+                                    rejectAndCleanup(
+                                            call,
+                                            "Unable to lay out A4 PDF: " +
+                                                    (error == null ? "unknown error" : error)
+                                    );
+                                }
 
-                        @Override
-                        public void onLayoutCancelled() {
-                            rejectAndCleanup(call, "PDF layout was cancelled");
-                        }
-                    },
+                                @Override
+                                public void onCancelled() {
+                                    rejectAndCleanup(call, "PDF layout was cancelled");
+                                }
+                            }
+                    ),
                     new Bundle()
             );
         } catch (Exception error) {
@@ -240,34 +244,36 @@ public class AttendancePdfPlugin extends Plugin {
                     new PageRange[]{PageRange.ALL_PAGES},
                     destination,
                     new CancellationSignal(),
-                    new PrintDocumentAdapter.WriteResultCallback() {
-                        @Override
-                        public void onWriteFinished(PageRange[] pages) {
-                            closeQuietly(destination);
-                            adapter.onFinish();
-                            saveTempPdfToDownloads(tempFile, fileName, call);
-                        }
+                    new AttendanceWriteResultCallback(
+                            new AttendanceWriteResultCallback.Listener() {
+                                @Override
+                                public void onFinished(PageRange[] pages) {
+                                    closeQuietly(destination);
+                                    adapter.onFinish();
+                                    saveTempPdfToDownloads(tempFile, fileName, call);
+                                }
 
-                        @Override
-                        public void onWriteFailed(CharSequence error) {
-                            closeQuietly(destination);
-                            adapter.onFinish();
-                            tempFile.delete();
-                            rejectAndCleanup(
-                                    call,
-                                    "Unable to render A4 PDF: " +
-                                            (error == null ? "unknown error" : error)
-                            );
-                        }
+                                @Override
+                                public void onFailed(CharSequence error) {
+                                    closeQuietly(destination);
+                                    adapter.onFinish();
+                                    tempFile.delete();
+                                    rejectAndCleanup(
+                                            call,
+                                            "Unable to render A4 PDF: " +
+                                                    (error == null ? "unknown error" : error)
+                                    );
+                                }
 
-                        @Override
-                        public void onWriteCancelled() {
-                            closeQuietly(destination);
-                            adapter.onFinish();
-                            tempFile.delete();
-                            rejectAndCleanup(call, "PDF rendering was cancelled");
-                        }
-                    }
+                                @Override
+                                public void onCancelled() {
+                                    closeQuietly(destination);
+                                    adapter.onFinish();
+                                    tempFile.delete();
+                                    rejectAndCleanup(call, "PDF rendering was cancelled");
+                                }
+                            }
+                    )
             );
         } catch (Exception error) {
             tempFile.delete();
