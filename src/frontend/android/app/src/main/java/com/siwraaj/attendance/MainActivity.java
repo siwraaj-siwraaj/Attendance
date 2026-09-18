@@ -19,6 +19,7 @@ public class MainActivity extends BridgeActivity {
         SplashScreen.installSplashScreen(this);
         registerPlugin(AttendancePdfPlugin.class);
         registerPlugin(AttendanceNotificationsPlugin.class);
+        registerPlugin(AttendancePushPlugin.class);
         super.onCreate(savedInstanceState);
 
         Window window = getWindow();
