@@ -2,13 +2,17 @@ package com.siwraaj.attendance;
 
 import android.content.ContentResolver;
 import android.content.ContentValues;
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.pdf.PdfDocument;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Bundle;
+import android.os.CancellationSignal;
 import android.os.Environment;
+import android.os.ParcelFileDescriptor;
 import android.provider.MediaStore;
+import android.print.PageRange;
+import android.print.PrintAttributes;
+import android.print.PrintDocumentAdapter;
+import android.print.PrintDocumentInfo;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewParent;
@@ -25,14 +29,13 @@ import com.getcapacitor.annotation.CapacitorPlugin;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
 @CapacitorPlugin(name = "AttendancePdf")
 public class AttendancePdfPlugin extends Plugin {
-    private static final int PAGE_WIDTH = 794;
-    private static final int PAGE_HEIGHT = 1123;
+    private static final int WEBVIEW_WIDTH = 794;
+    private static final int WEBVIEW_HEIGHT = 1123;
 
     private WebView printWebView;
     private FrameLayout printContainer;
@@ -64,27 +67,20 @@ public class AttendancePdfPlugin extends Plugin {
 
                 printContainer = new FrameLayout(getActivity());
                 FrameLayout.LayoutParams containerParams =
-                        new FrameLayout.LayoutParams(PAGE_WIDTH, PAGE_HEIGHT);
-                containerParams.leftMargin = 0;
-                containerParams.topMargin = 0;
-
+                        new FrameLayout.LayoutParams(WEBVIEW_WIDTH, WEBVIEW_HEIGHT);
                 FrameLayout.LayoutParams webParams =
-                        new FrameLayout.LayoutParams(PAGE_WIDTH, PAGE_HEIGHT);
+                        new FrameLayout.LayoutParams(WEBVIEW_WIDTH, WEBVIEW_HEIGHT);
+
                 printContainer.addView(webView, webParams);
                 getActivity().addContentView(printContainer, containerParams);
 
                 webView.setAlpha(1f);
-                webView.setBackgroundColor(Color.WHITE);
+                webView.setBackgroundColor(android.graphics.Color.WHITE);
                 webView.getSettings().setJavaScriptEnabled(true);
                 webView.getSettings().setDomStorageEnabled(false);
-                // The native WebView uses the device density by default. Without
-                // an explicit print viewport, the 794px report is treated like a
-                // phone-width page and text becomes oversized/wraps incorrectly.
-                // Keep CSS pixels 1:1 with our A4 canvas.
-                webView.getSettings().setUseWideViewPort(false);
-                webView.getSettings().setLoadWithOverviewMode(false);
-                webView.getSettings().setTextZoom(100);
                 webView.getSettings().setLoadsImagesAutomatically(true);
+                webView.getSettings().setTextZoom(100);
+                webView.setInitialScale(100);
                 webView.setVerticalScrollBarEnabled(false);
                 webView.setHorizontalScrollBarEnabled(false);
                 webView.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
@@ -97,14 +93,12 @@ public class AttendancePdfPlugin extends Plugin {
                         if (started) return;
                         started = true;
 
-                        // Wait for one layout/paint cycle so the DOM has a real
-                        // measured height before drawing it into PdfDocument.
-                        view.evaluateJavascript(
-                                "(function(){return Math.max(document.body.scrollHeight,document.documentElement.scrollHeight,document.body.offsetHeight,document.documentElement.offsetHeight);})()",
-                                value -> view.postDelayed(
-                                        () -> renderWebViewToPdf(view, call, fileName, parseHeight(value)),
-                                        250
-                                )
+                        // Give the WebView one layout/paint cycle before handing it
+                        // to Android's print engine. The print engine performs the
+                        // actual A4 pagination and scaling.
+                        view.postDelayed(
+                                () -> createA4PrintPdf(view, call, fileName),
+                                300
                         );
                     }
 
@@ -115,10 +109,7 @@ public class AttendancePdfPlugin extends Plugin {
                             String description,
                             String failingUrl
                     ) {
-                        rejectAndCleanup(
-                                call,
-                                "PDF page failed to load: " + description
-                        );
+                        rejectAndCleanup(call, "PDF page failed to load: " + description);
                     }
 
                     @Override
@@ -134,12 +125,12 @@ public class AttendancePdfPlugin extends Plugin {
                     }
                 });
 
+                // Do not inject a phone-width viewport here. The HTML contains
+                // print CSS with an explicit A4 page and the Android print engine
+                // will paginate it to A4.
                 webView.loadDataWithBaseURL(
                         "https://rossie.local/",
-                        html.replace(
-                                "<head>",
-                                "<head><meta name=\"viewport\" content=\"width=794, initial-scale=1, maximum-scale=1, user-scalable=no\" />"
-                        ),
+                        html,
                         "text/html",
                         "UTF-8",
                         null
@@ -153,105 +144,131 @@ public class AttendancePdfPlugin extends Plugin {
         });
     }
 
-    private int parseHeight(String value) {
-        try {
-            String clean = value == null ? "" : value.replace("\"", "").trim();
-            double parsed = Double.parseDouble(clean);
-            if (parsed > 0 && parsed < 1000000) return (int) Math.ceil(parsed);
-        } catch (Exception ignored) {}
-        return PAGE_HEIGHT;
-    }
-
-    private void renderWebViewToPdf(
+    private void createA4PrintPdf(
             WebView webView,
             PluginCall call,
-            String fileName,
-            int reportedHeight
+            String fileName
     ) {
         if (finished || printWebView != webView) return;
 
         File tempFile = new File(
                 getContext().getCacheDir(),
-                "rossie_pdf_" + System.currentTimeMillis() + ".pdf"
+                "rossie_print_" + System.currentTimeMillis() + ".pdf"
         );
 
-        PdfDocument document = new PdfDocument();
-
         try {
-            // Force a deterministic A4-sized WebView layout. The old
-            // implementation could reach the PDF stage with a zero/unlaid-out
-            // WebView, which is why it failed at runtime.
-            int widthSpec = View.MeasureSpec.makeMeasureSpec(
-                    PAGE_WIDTH,
-                    View.MeasureSpec.EXACTLY
+            // A dedicated WebView + createPrintDocumentAdapter is Android's
+            // supported HTML-to-PDF path. It handles A4 page geometry and
+            // multi-page pagination instead of slicing a screen-sized canvas.
+            PrintDocumentAdapter adapter =
+                    webView.createPrintDocumentAdapter(fileName);
+
+            PrintAttributes attributes = new PrintAttributes.Builder()
+                    .setMediaSize(PrintAttributes.MediaSize.ISO_A4)
+                    .setResolution(new PrintAttributes.Resolution(
+                            "rossie_pdf",
+                            "Rossie PDF",
+                            300,
+                            300
+                    ))
+                    .setMinMargins(new PrintAttributes.Margins(
+                            0,
+                            0,
+                            0,
+                            0
+                    ))
+                    .build();
+
+            adapter.onLayout(
+                    null,
+                    attributes,
+                    new CancellationSignal(),
+                    new PrintDocumentAdapter.LayoutResultCallback() {
+                        @Override
+                        public void onLayoutFinished(
+                                PrintDocumentInfo info,
+                                boolean changed
+                        ) {
+                            writePrintAdapter(adapter, tempFile, call, fileName);
+                        }
+
+                        @Override
+                        public void onLayoutFailed(CharSequence error) {
+                            rejectAndCleanup(
+                                    call,
+                                    "Unable to lay out A4 PDF: " +
+                                            (error == null ? "unknown error" : error)
+                            );
+                        }
+
+                        @Override
+                        public void onLayoutCancelled() {
+                            rejectAndCleanup(call, "PDF layout was cancelled");
+                        }
+                    },
+                    new Bundle()
             );
-            int heightSpec = View.MeasureSpec.makeMeasureSpec(
-                    0,
-                    View.MeasureSpec.UNSPECIFIED
-            );
-
-            webView.measure(widthSpec, heightSpec);
-
-            int contentHeight = Math.max(PAGE_HEIGHT, reportedHeight);
-
-            webView.layout(
-                    0,
-                    0,
-                    PAGE_WIDTH,
-                    contentHeight
-            );
-
-            // WebView content height can occasionally be reported before its
-            // document body has expanded. Fall back to the measured/layout
-            // height rather than allowing a zero-page PDF.
-            contentHeight = Math.max(
-                    PAGE_HEIGHT,
-                    webView.getHeight()
-            );
-
-            int pageCount =
-                    (contentHeight + PAGE_HEIGHT - 1) / PAGE_HEIGHT;
-
-            for (int pageIndex = 0; pageIndex < pageCount; pageIndex++) {
-                PdfDocument.PageInfo pageInfo =
-                        new PdfDocument.PageInfo.Builder(
-                                PAGE_WIDTH,
-                                PAGE_HEIGHT,
-                                pageIndex + 1
-                        ).create();
-
-                PdfDocument.Page page = document.startPage(pageInfo);
-                Canvas canvas = page.getCanvas();
-
-                canvas.drawColor(Color.WHITE);
-                canvas.save();
-                canvas.clipRect(0, 0, PAGE_WIDTH, PAGE_HEIGHT);
-                canvas.translate(0, -(pageIndex * PAGE_HEIGHT));
-
-                webView.draw(canvas);
-
-                canvas.restore();
-                document.finishPage(page);
-            }
-
-            try (FileOutputStream output = new FileOutputStream(tempFile)) {
-                document.writeTo(output);
-            } finally {
-                document.close();
-            }
-
-            saveTempPdfToDownloads(tempFile, fileName, call);
         } catch (Exception error) {
-            try {
-                document.close();
-            } catch (Exception ignored) {
-            }
-
             tempFile.delete();
-
             rejectAndCleanup(
                     call,
-                    "Unable to render PDF: " + safeMessage(error)
+                    "Unable to prepare A4 PDF: " + safeMessage(error)
+            );
+        }
+    }
+
+    private void writePrintAdapter(
+            PrintDocumentAdapter adapter,
+            File tempFile,
+            PluginCall call,
+            String fileName
+    ) {
+        if (finished) return;
+
+        try {
+            final ParcelFileDescriptor destination =
+                    ParcelFileDescriptor.open(
+                            tempFile,
+                            ParcelFileDescriptor.MODE_CREATE |
+                                    ParcelFileDescriptor.MODE_TRUNCATE |
+                                    ParcelFileDescriptor.MODE_READ_WRITE
+                    );
+
+            adapter.onWrite(
+                    new PageRange[]{PageRange.ALL_PAGES},
+                    destination,
+                    new CancellationSignal(),
+                    new PrintDocumentAdapter.WriteResultCallback() {
+                        @Override
+                        public void onWriteFinished(PageRange[] pages) {
+                            closeQuietly(destination);
+                            saveTempPdfToDownloads(tempFile, fileName, call);
+                        }
+
+                        @Override
+                        public void onWriteFailed(CharSequence error) {
+                            closeQuietly(destination);
+                            tempFile.delete();
+                            rejectAndCleanup(
+                                    call,
+                                    "Unable to render A4 PDF: " +
+                                            (error == null ? "unknown error" : error)
+                            );
+                        }
+
+                        @Override
+                        public void onWriteCancelled() {
+                            closeQuietly(destination);
+                            tempFile.delete();
+                            rejectAndCleanup(call, "PDF rendering was cancelled");
+                        }
+                    }
+            );
+        } catch (Exception error) {
+            tempFile.delete();
+            rejectAndCleanup(
+                    call,
+                    "Unable to write A4 PDF: " + safeMessage(error)
             );
         }
     }
@@ -277,7 +294,6 @@ public class AttendancePdfPlugin extends Plugin {
                 });
             } catch (Exception error) {
                 source.delete();
-
                 rejectAndCleanup(
                         call,
                         "PDF could not be saved to Downloads: " +
@@ -291,13 +307,6 @@ public class AttendancePdfPlugin extends Plugin {
         ContentResolver resolver = getContext().getContentResolver();
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            // MediaProvider can reject an insert when the requested display name
-            // already exists in Downloads ("Failed to build unique file"). Pick
-            // an unused display name before inserting instead of relying on the
-            // provider to rename/reconcile the collision.
-            // Always use a fresh filename. Some Android MediaProvider versions can
-            // still reject a duplicate even after a DISPLAY_NAME query, so avoid
-            // the collision path entirely.
             String uniqueName = addTimestampSuffix(fileName);
 
             ContentValues values = new ContentValues();
@@ -316,8 +325,6 @@ public class AttendancePdfPlugin extends Plugin {
                         values
                 );
             } catch (Exception firstError) {
-                // A concurrent save can claim the chosen name between the query
-                // and insert. Retry once with a timestamped name.
                 String retryName = addTimestampSuffix(uniqueName);
                 values.put(MediaStore.Downloads.DISPLAY_NAME, retryName);
                 try {
@@ -368,61 +375,16 @@ public class AttendancePdfPlugin extends Plugin {
             throw new IOException("Unable to create Downloads directory");
         }
 
-        File destination = new File(downloads, findUniqueLegacyName(downloads, fileName));
-        try (FileOutputStream output = new FileOutputStream(destination)) {
+        File destination = new File(
+                downloads,
+                findUniqueLegacyName(downloads, fileName)
+        );
+
+        try (FileOutputStreamCompat output = new FileOutputStreamCompat(destination)) {
             copyFile(source, output);
         }
 
         return Uri.fromFile(destination);
-    }
-
-    private String findUniqueDownloadName(
-            ContentResolver resolver,
-            String fileName
-    ) {
-        String base = fileName;
-        String extension = "";
-        int dot = fileName.lastIndexOf('.');
-        if (dot > 0) {
-            base = fileName.substring(0, dot);
-            extension = fileName.substring(dot);
-        }
-
-        String candidate = fileName;
-        for (int index = 0; index < 100; index++) {
-            if (!downloadNameExists(resolver, candidate)) {
-                return candidate;
-            }
-            candidate = base + " (" + (index + 1) + ")" + extension;
-        }
-
-        return base + " (" + System.currentTimeMillis() + ")" + extension;
-    }
-
-    private boolean downloadNameExists(
-            ContentResolver resolver,
-            String fileName
-    ) {
-        String[] projection = {MediaStore.Downloads.DISPLAY_NAME};
-        String selection =
-                MediaStore.Downloads.DISPLAY_NAME + " = ? AND " +
-                MediaStore.Downloads.RELATIVE_PATH + " = ?";
-        String[] selectionArgs = {
-                fileName,
-                Environment.DIRECTORY_DOWNLOADS + "/"
-        };
-
-        try (android.database.Cursor cursor = resolver.query(
-                MediaStore.Downloads.EXTERNAL_CONTENT_URI,
-                projection,
-                selection,
-                selectionArgs,
-                null
-        )) {
-            return cursor != null && cursor.moveToFirst();
-        } catch (Exception ignored) {
-            return false;
-        }
     }
 
     private String addTimestampSuffix(String fileName) {
@@ -483,6 +445,13 @@ public class AttendancePdfPlugin extends Plugin {
                 : message;
     }
 
+    private void closeQuietly(ParcelFileDescriptor descriptor) {
+        try {
+            if (descriptor != null) descriptor.close();
+        } catch (Exception ignored) {
+        }
+    }
+
     private void rejectAndCleanup(PluginCall call, String message) {
         getActivity().runOnUiThread(() -> {
             if (finished) return;
@@ -522,5 +491,35 @@ public class AttendancePdfPlugin extends Plugin {
     protected void handleOnDestroy() {
         cleanupWebViewNow();
         super.handleOnDestroy();
+    }
+
+    // Small OutputStream wrapper so the same copy helper works for both
+    // MediaStore and legacy filesystem destinations.
+    private static class FileOutputStreamCompat extends OutputStream {
+        private final java.io.FileOutputStream delegate;
+
+        FileOutputStreamCompat(File file) throws IOException {
+            delegate = new java.io.FileOutputStream(file);
+        }
+
+        @Override
+        public void write(int b) throws IOException {
+            delegate.write(b);
+        }
+
+        @Override
+        public void write(byte[] b, int off, int len) throws IOException {
+            delegate.write(b, off, len);
+        }
+
+        @Override
+        public void flush() throws IOException {
+            delegate.flush();
+        }
+
+        @Override
+        public void close() throws IOException {
+            delegate.close();
+        }
     }
 }
