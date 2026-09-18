@@ -77,6 +77,13 @@ public class AttendancePdfPlugin extends Plugin {
                 webView.setBackgroundColor(Color.WHITE);
                 webView.getSettings().setJavaScriptEnabled(true);
                 webView.getSettings().setDomStorageEnabled(false);
+                // The native WebView uses the device density by default. Without
+                // an explicit print viewport, the 794px report is treated like a
+                // phone-width page and text becomes oversized/wraps incorrectly.
+                // Keep CSS pixels 1:1 with our A4 canvas.
+                webView.getSettings().setUseWideViewPort(false);
+                webView.getSettings().setLoadWithOverviewMode(false);
+                webView.getSettings().setTextZoom(100);
                 webView.getSettings().setLoadsImagesAutomatically(true);
                 webView.setVerticalScrollBarEnabled(false);
                 webView.setHorizontalScrollBarEnabled(false);
@@ -129,7 +136,10 @@ public class AttendancePdfPlugin extends Plugin {
 
                 webView.loadDataWithBaseURL(
                         "https://rossie.local/",
-                        html,
+                        html.replace(
+                                "<head>",
+                                "<head><meta name=\"viewport\" content=\"width=794, initial-scale=1, maximum-scale=1, user-scalable=no\" />"
+                        ),
                         "text/html",
                         "UTF-8",
                         null
