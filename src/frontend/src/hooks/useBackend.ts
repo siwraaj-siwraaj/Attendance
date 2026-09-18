@@ -28,9 +28,9 @@ export function useAddLabour() {
   return useMutation({
     retry: 3,
     retryDelay: 1000,
-    mutationFn: async ({ name, employeeId, joinDate }: { name: string; employeeId: string; joinDate: string }) => {
+    mutationFn: async ({ name, employeeId, joinDate, phoneNumber }: { name: string; employeeId: string; joinDate: string; phoneNumber: string }) => {
       if (!actor) throw new Error("Backend not connected");
-      const result = await actor.addLabour(name, employeeId, joinDate);
+      const result = await actor.addLabour(name, employeeId, joinDate, phoneNumber);
       if (result.__kind__ === "err") throw new Error(result.err);
       return result.ok;
     },
@@ -38,7 +38,7 @@ export function useAddLabour() {
       await qc.cancelQueries({ queryKey: ["labours"] });
       const prev = qc.getQueryData(["labours"]);
       const tempId = BigInt(`-1${Date.now()}`);
-      const optimistic: Record<string, unknown> = { id: tempId, name: vars.name, employeeId: vars.employeeId, joinDate: vars.joinDate, isActive: true, createdAt: BigInt(Date.now()) * 1_000_000n, __optimistic: true };
+      const optimistic: Record<string, unknown> = { id: tempId, name: vars.name, employeeId: vars.employeeId, joinDate: vars.joinDate, phoneNumber: vars.phoneNumber, isActive: true, createdAt: BigInt(Date.now()) * 1_000_000n, __optimistic: true };
       qc.setQueryData(["labours"], (old: Array<Record<string, unknown>> | undefined) => [...(old ?? []), optimistic]);
       return { prev, tempId };
     },
@@ -59,16 +59,16 @@ export function useUpdateLabour() {
   return useMutation({
     retry: 3,
     retryDelay: 1000,
-    mutationFn: async ({ id, name, employeeId, joinDate, isActive }: { id: bigint; name: string; employeeId: string; joinDate: string; isActive: boolean }) => {
+    mutationFn: async ({ id, name, employeeId, joinDate, isActive, phoneNumber }: { id: bigint; name: string; employeeId: string; joinDate: string; isActive: boolean; phoneNumber: string }) => {
       if (!actor) throw new Error("Backend not connected");
-      const result = await actor.updateLabour(id, name, employeeId, joinDate, isActive);
+      const result = await actor.updateLabour(id, name, employeeId, joinDate, isActive, phoneNumber);
       if (result.__kind__ === "err") throw new Error(result.err);
       return result.ok;
     },
     onMutate: async (vars) => {
       await qc.cancelQueries({ queryKey: ["labours"] });
       const prev = qc.getQueryData<unknown[]>(["labours"]) ?? [];
-      qc.setQueryData(["labours"], (prev as Array<{ id: bigint; isActive?: boolean }>).map((l) => l.id === vars.id ? { ...l, isActive: vars.isActive, name: vars.name, employeeId: vars.employeeId, joinDate: vars.joinDate } : l));
+      qc.setQueryData(["labours"], (prev as Array<{ id: bigint; isActive?: boolean }>).map((l) => l.id === vars.id ? { ...l, isActive: vars.isActive, name: vars.name, employeeId: vars.employeeId, joinDate: vars.joinDate, phoneNumber: vars.phoneNumber } : l));
       return { prev };
     },
     onError: (_e, _v, ctx) => { if (ctx?.prev) qc.setQueryData(["labours"], ctx.prev); },
