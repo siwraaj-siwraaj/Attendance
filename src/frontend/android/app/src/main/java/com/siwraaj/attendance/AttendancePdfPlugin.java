@@ -11,6 +11,10 @@ import android.os.Environment;
 import android.provider.MediaStore;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.ViewParent;
+import android.widget.FrameLayout;
 import android.graphics.pdf.PdfDocument;
 
 import com.getcapacitor.JSObject;
@@ -31,6 +35,7 @@ import java.util.concurrent.Executors;
 public class AttendancePdfPlugin extends Plugin {
     private final ExecutorService ioExecutor = Executors.newSingleThreadExecutor();
     private WebView printWebView;
+    private FrameLayout printContainer;
 
     private static final int PAGE_WIDTH = 595;
     private static final int PAGE_HEIGHT = 842;
@@ -56,6 +61,20 @@ public class AttendancePdfPlugin extends Plugin {
             try {
                 WebView webView = new WebView(getContext());
                 printWebView = webView;
+
+                // Attach the temporary WebView to the Activity so Android WebView
+                // completes layout/painting reliably before we render the PDF.
+                printContainer = new FrameLayout(getContext());
+                printContainer.setVisibility(View.INVISIBLE);
+                printContainer.setLayoutParams(new ViewGroup.LayoutParams(1, 1));
+                printContainer.addView(
+                        webView,
+                        new FrameLayout.LayoutParams(CONTENT_WIDTH, 1)
+                );
+                getActivity().addContentView(
+                        printContainer,
+                        new ViewGroup.LayoutParams(1, 1)
+                );
                 webView.setBackgroundColor(Color.WHITE);
                 webView.getSettings().setJavaScriptEnabled(false);
                 webView.getSettings().setDomStorageEnabled(false);
@@ -296,8 +315,20 @@ public class AttendancePdfPlugin extends Plugin {
             if (printWebView != null) {
                 printWebView.stopLoading();
                 printWebView.setWebViewClient(null);
+                if (printContainer != null) {
+                    printContainer.removeView(printWebView);
+                }
                 printWebView.destroy();
                 printWebView = null;
+            }
+            if (printContainer != null) {
+                ViewParent parent = printContainer.getParent() instanceof ViewParent
+                        ? (ViewParent) printContainer.getParent()
+                        : null;
+                if (parent instanceof ViewGroup) {
+                    ((ViewGroup) parent).removeView(printContainer);
+                }
+                printContainer = null;
             }
         });
     }
