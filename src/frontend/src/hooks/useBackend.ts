@@ -496,15 +496,34 @@ export function useLogout() {
   return useMutation({ retry: 3, retryDelay: 1000, mutationFn: async () => { if (!actor) throw new Error("Backend not connected"); await actor.logout(); } });
 }
 
-export function useListUsers() {
+export function useListUsers(enabled = true) {
   const { actor, actorReady } = useBackendActor();
-  return useQuery({ queryKey: ["users"], staleTime: 30 * 1000, gcTime: 60 * 1000, queryFn: () => actor!.listUsers(), enabled: actorReady });
+  return useQuery({
+    queryKey: ["users"],
+    staleTime: 5 * 1000,
+    gcTime: 60 * 1000,
+    refetchInterval: enabled ? 8000 : false,
+    queryFn: () => actor!.listUsers(),
+    enabled: actorReady && enabled,
+  });
 }
 
 export function useCreateUser() {
   const qc = useQueryClient();
   const { actor } = useBackendActor();
   return useMutation({ retry: 3, retryDelay: 1000, mutationFn: async ({ username, password, role }: { username: string; password: string; role: Role | Role[] }) => { if (!actor) throw new Error("Backend not connected"); return actor.createUser(username, password, role); }, onSettled: () => qc.invalidateQueries({ queryKey: ["users"] }) });
+}
+
+export function useChangeOwnPassword() {
+  const { actor } = useBackendActor();
+  return useMutation({
+    mutationFn: async (newPassword: string) => {
+      if (!actor) throw new Error("Not signed in");
+      const result = await actor.changeOwnPassword(newPassword);
+      if (result?.__kind__ === "err") throw new Error(result.message);
+      return true;
+    },
+  });
 }
 
 export function useUpdateUserCredentials() {
