@@ -53,6 +53,8 @@ export function useAddLabour() {
   });
 }
 
+export function useDeleteLabour() { const qc=useQueryClient(); const {actor}=useBackendActor(); return useMutation({mutationFn:async(id:bigint)=>{if(!actor)throw new Error("Backend not connected");const r=await actor.deleteLabour(id);if(r?.error)throw new Error(r.error);return r;},onSettled:()=>{qc.invalidateQueries({queryKey:["labours"]});qc.invalidateQueries({queryKey:["attendance"]});qc.invalidateQueries({queryKey:["advances"]});}}); }
+
 export function useUpdateLabour() {
   const qc = useQueryClient();
   const { actor } = useBackendActor();
@@ -543,6 +545,8 @@ export function useSetUserRole() {
   const { actor } = useBackendActor();
   return useMutation({ retry: 3, retryDelay: 1000, mutationFn: async ({ username, role }: { username: string; role: Role | Role[] }) => { if (!actor) throw new Error("Backend not connected"); await actor.setUserRole(username, role); }, onSettled: () => qc.invalidateQueries({ queryKey: ["users"] }) });
 }
+
+export function useDeleteUserAccount() { const qc=useQueryClient(); const {actor}=useBackendActor(); return useMutation({mutationFn:async(username:string)=>{if(!actor)throw new Error("Backend not connected");const r=await actor.deleteUserAccount(username);if(r?.error)throw new Error(r.error);return r;},onSettled:()=>qc.invalidateQueries({queryKey:["users"]})}); }
 
 export function useCleanupOrphanUserAccounts() {
   const { actor } = useBackendActor();
