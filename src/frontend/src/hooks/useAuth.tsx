@@ -24,7 +24,9 @@ interface AuthContextType {
   isInitializing: boolean;
   isAuthenticated: boolean;
   username: string | null;
+  name: string | null;
   login: (username: string, password: string, rememberMe?: boolean) => Promise<boolean>;
+  registerUser: (username: string, password: string) => Promise<boolean>;
   logout: () => void;
   status: UserStatus | null;
   role: Role | null;
@@ -46,6 +48,7 @@ const AuthContext = createContext<AuthContextType | null>(null);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { actor } = useBackendActor();
   const [username, setUsername] = useState<string | null>(null);
+  const [name, setName] = useState<string | null>(null);
   const [status, setStatus] = useState<UserStatus | null>(null);
   const [role, setRole] = useState<Role | null>(null);
   const [roles, setRoles] = useState<Role[]>([]);
@@ -59,6 +62,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const applyLoginResult = useCallback((result: any) => {
     if (!result) return;
     setUsername(result.username);
+    setName(result.name ?? null);
     setStatus(result.status);
     setRole(result.role);
     setRoles((result as { roles?: Role[]; role: Role }).roles ?? [result.role]);
@@ -160,6 +164,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [actor, applyLoginResult],
   );
 
+  const registerUser = useCallback(
+    async (usernameInput: string, password: string): Promise<boolean> => {
+      if (!actor) return false;
+      setLoginNotice(null);
+      try {
+        const result = await actor.registerUser({ username: usernameInput, password });
+        if (!result) return false;
+        if ((result as any).requestPending) {
+          setLoginNotice({
+            type: "pending",
+            name: String((result as any).name ?? ""),
+            phone: String((result as any).username ?? usernameInput).trim(),
+            message: String((result as any).message ?? "Login request sent to admin"),
+          });
+          return true;
+        }
+        return false;
+      } catch {
+        return false;
+      }
+    },
+    [actor],
+  );
+
   const refreshAuth = useCallback(() => {
     if (!actor || !username) return;
     void (async () => {
@@ -186,6 +214,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.removeItem(REMEMBER_ME_KEY);
     void clearBiometricCredentials();
     setUsername(null);
+    setName(null);
     setStatus(null);
     setRole(null);
     setRoles([]);
@@ -226,7 +255,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isInitializing,
     isAuthenticated,
     username,
+    name,
     login,
+    registerUser,
     logout,
     status,
     role,
