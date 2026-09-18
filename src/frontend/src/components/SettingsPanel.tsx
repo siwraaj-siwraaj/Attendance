@@ -9,10 +9,10 @@ export default function SettingsPanel({
   onClose: _onClose,
 }: SettingsPanelProps) {
   const [bedBase, setBedBase] = useState<string>(
-    () => localStorage.getItem("rossie_bed_base") ?? "11000",
+    () => localStorage.getItem("rossie_bed_base") ?? "",
   );
   const [paperBase, setPaperBase] = useState<string>(
-    () => localStorage.getItem("rossie_paper_base") ?? "7000",
+    () => localStorage.getItem("rossie_paper_base") ?? "",
   );
   const [saved, setSaved] = useState(false);
 
@@ -60,7 +60,7 @@ export default function SettingsPanel({
             value={bedBase}
             onChange={(e) => setBedBase(e.target.value)}
             className="w-full bg-white/5 border border-orange-500/30 focus:border-orange-500 rounded-lg px-2 py-1.5 text-white text-sm outline-none"
-            placeholder="11000"
+            placeholder="Enter amount"
             data-ocid="settings.bed_base_input"
           />
         </div>
@@ -77,7 +77,7 @@ export default function SettingsPanel({
             value={paperBase}
             onChange={(e) => setPaperBase(e.target.value)}
             className="w-full bg-white/5 border border-orange-500/30 focus:border-orange-500 rounded-lg px-2 py-1.5 text-white text-sm outline-none"
-            placeholder="7000"
+            placeholder="Enter amount"
             data-ocid="settings.paper_base_input"
           />
         </div>
