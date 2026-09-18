@@ -544,6 +544,20 @@ export function useSetUserRole() {
   return useMutation({ retry: 3, retryDelay: 1000, mutationFn: async ({ username, role }: { username: string; role: Role | Role[] }) => { if (!actor) throw new Error("Backend not connected"); await actor.setUserRole(username, role); }, onSettled: () => qc.invalidateQueries({ queryKey: ["users"] }) });
 }
 
+export function useCleanupOrphanUserAccounts() {
+  const { actor } = useBackendActor();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      if (!actor) throw new Error("Backend not connected");
+      const result = await actor.cleanupOrphanUserAccounts();
+      if (result?.error) throw new Error(result.error);
+      return result;
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: ["users"] }),
+  });
+}
+
 export function useRevokeAccess() {
   const qc = useQueryClient();
   const { actor } = useBackendActor();
