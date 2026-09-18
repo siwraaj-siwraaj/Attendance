@@ -285,7 +285,10 @@ public class AttendancePdfPlugin extends Plugin {
             // already exists in Downloads ("Failed to build unique file"). Pick
             // an unused display name before inserting instead of relying on the
             // provider to rename/reconcile the collision.
-            String uniqueName = findUniqueDownloadName(resolver, fileName);
+            // Always use a fresh filename. Some Android MediaProvider versions can
+            // still reject a duplicate even after a DISPLAY_NAME query, so avoid
+            // the collision path entirely.
+            String uniqueName = addTimestampSuffix(fileName);
 
             ContentValues values = new ContentValues();
             values.put(MediaStore.Downloads.DISPLAY_NAME, uniqueName);
