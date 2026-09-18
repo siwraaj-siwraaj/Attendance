@@ -1,4 +1,5 @@
 import {
+  ArrowLeft,
   Check,
   KeyRound,
   ShieldCheck,
@@ -61,7 +62,7 @@ function statusLabel(status: UserStatus): string {
 }
 
 export default function AdminPanel() {
-  const { isAdmin } = useAuth();
+  const { isAdmin, setActiveTab } = useAuth();
   const [section, setSection] = useState<"overview" | "users" | "create">("overview");
   const [newUsername, setNewUsername] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -131,7 +132,11 @@ export default function AdminPanel() {
 
   return (
     <div className="flex-1 min-h-0 overflow-y-auto pb-safe" data-ocid="admin_panel">
-      <div className="max-w-5xl mx-auto px-3 sm:px-5 py-4 sm:py-6 space-y-4">
+      <div className="sticky top-0 z-20 flex items-center justify-between px-3 sm:px-5 py-2.5 bg-[#0b1220]/95 backdrop-blur border-b border-white/5">
+        <button type="button" onClick={() => setActiveTab("contracts")} className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-white/80 hover:text-white hover:bg-white/5" data-ocid="admin_panel.back_button"><ArrowLeft size={17}/> Contracts</button>
+        <span className="text-[10px] font-bold uppercase tracking-[.16em] text-white/35">Admin Panel</span>
+      </div>
+      <div className="max-w-5xl mx-auto px-3 sm:px-5 pt-4 sm:pt-6 pb-28 space-y-4">
         {/* Dashboard hero */}
         <section className="relative overflow-hidden rounded-[28px] p-5 sm:p-7" style={{ background: "radial-gradient(circle at 100% 0%,rgba(249,115,22,.22),transparent 38%),linear-gradient(135deg,#121b2e,#0b1220 70%)", border: "1px solid rgba(249,115,22,.18)", boxShadow: "0 18px 45px rgba(0,0,0,.22)" }}>
           <div className="absolute -right-16 -top-20 h-44 w-44 rounded-full border border-orange-400/10" />
