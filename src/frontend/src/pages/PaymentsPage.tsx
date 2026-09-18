@@ -22,9 +22,9 @@ import LoadingSpinner from "../components/LoadingSpinner";
 import { safeParse, safeStringify } from "../lib/bigintJson";
 import { type AttendanceValue, getAttendanceDisplay } from "../types";
 import html2pdf from "html2pdf.js";
-import { PdfGenerator } from "@capgo/capacitor-pdf-generator";
-import { FileSharer } from "@capgo/capacitor-file-sharer";
-import { FileOpener } from "@capacitor-community/file-opener";
+import { registerPlugin } from "@capacitor/core";
+
+const AttendancePdf = registerPlugin<{ savePdf(options: { html: string; fileName: string }): Promise<{ uri: string; fileName: string }> }>("AttendancePdf");
 
 function calculateLabourSalary(
   contract: any,
@@ -147,34 +147,13 @@ const isNative =
     </body>
   </html>
 `;
-      const result = await PdfGenerator.fromData({
-  data: html,
-  documentSize: "A4",
-  orientation: "portrait",
-  type: "base64",
-  fileName: filename,
-});
+      const saved = await AttendancePdf.savePdf({
+        html,
+        fileName: filename,
+      });
 
-if (result.type !== "base64") {
-  throw new Error("PDF was not generated as base64");
-}
-
-const saved = await FileSharer.save({
-  filename,
-  contentType: "application/pdf",
-  base64Data: result.base64,
-  android: {
-    saveDirectory: "downloads",
-    relativePath: "Download",
-  },
-});
-      await FileOpener.open({
-  filePath: saved.uri!,
-  contentType: "application/pdf",
-  openWithDefault: true,
-});
-
-return;
+      console.info("PDF saved to Downloads:", saved.uri);
+      return;
     }
       const pdf = await html2pdf()
   .set({
