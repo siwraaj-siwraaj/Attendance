@@ -166,6 +166,15 @@ export function createSupabaseActor() {
         return null;
       }
     },
+    async registerUser(credentials: { username: string; password: string }) {
+      try {
+        const data = await functionCall("rossie-login", { ...credentials, action: "register" });
+        if (data?.requestPending) return { ...data.user, requestPending: true, message: data.message };
+        return null;
+      } catch (e: any) {
+        throw new Error(e?.message ?? "Could not create account");
+      }
+    },
     async logout() { await supabase.auth.signOut(); },
     async getCallerStatus() {
       const { data } = await supabase.auth.getUser();
