@@ -105,14 +105,20 @@ const REPORT_CSS = `
   .report-table .num, .report-table td.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
   .report-table .center { text-align: center; }
   .report-total-row td { background: #c47716; color: #ffffff; font-weight: 700; border-color: #c47716; }
-  .report-total-label { text-align: right; text-transform: uppercase; letter-spacing: 0.04em; font-size: 11px; }
-  .report-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-top: 18px; }
-  .report-summary-item { background: #f1f3f5; border: 1px solid #d2d7dd; border-radius: 0.375rem; padding: 10px 12px; }
-  .report-summary-label { font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #68727e; }
-  .report-summary-value { font-family: 'Space Grotesk', sans-serif; font-size: 16px; font-weight: 700; color: #c47716; margin-top: 2px; }
-  .report-footer { padding: 12px 24px; border-top: 1px solid #e2e5e9; font-size: 10.5px; color: #68727e; display: flex; justify-content: space-between; gap: 12px; }
-  @media print { @page { size: A4; margin: 12mm; } body { background: #fbfcfd !important; } .report { box-shadow: none; border-radius: 0; max-width: 100%; } .report-table tr, .report-section, .report-summary-item, .report-total-row { page-break-inside: avoid; } .report-table thead { display: table-header-group; } }
-`;
+  .report-total-label { text-align: right; text-transform: uppercase; letter-spacing: 0.04em; font-size: 8pt; }
+  .report-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4mm; margin-top: 5mm; }
+  .report-summary-item { background: #f1f3f5; border: 1px solid #d2d7dd; border-radius: 1.5mm; padding: 3mm; }
+  .report-summary-label { font-size: 7.5pt; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #68727e; }
+  .report-summary-value { font-family: 'Space Grotesk', sans-serif; font-size: 11pt; font-weight: 700; color: #c47716; margin-top: 1mm; }
+  .report-footer { padding: 4mm 7mm; border-top: 1px solid #e2e5e9; font-size: 7.5pt; color: #68727e; display: flex; justify-content: space-between; gap: 4mm; }
+  @media print {
+    @page { size: A4 portrait; margin: 8mm; }
+    body { background: #ffffff !important; }
+    .report { box-shadow: none; border-radius: 0; max-width: none; }
+    .report-table tr, .report-section, .report-summary-item, .report-total-row { break-inside: avoid; page-break-inside: avoid; }
+    .report-table thead { display: table-header-group; }
+  }
+
 
 async function openPrintWindow(title: string, bodyHTML: string) {
   const wrapper = document.createElement("div");
