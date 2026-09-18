@@ -75,7 +75,16 @@ function SettledPage() {
             {open && <div className="border-t border-white/[0.07] px-4 pb-4 pt-3">
               <div className="grid grid-cols-2 gap-2"><div className="rounded-2xl bg-white/[0.035] p-3"><p className="text-[10px] text-white/30">Contract</p><p className="mt-1 text-sm font-bold">{money(c.contractAmount)}</p></div><div className="rounded-2xl bg-white/[0.035] p-3"><p className="text-[10px] text-white/30">Multiplier</p><p className="mt-1 text-sm font-bold">{c.multiplier}×</p></div><div className="rounded-2xl bg-white/[0.035] p-3"><p className="text-[10px] text-white/30">Attendance</p><p className="mt-1 text-sm font-bold">{present} records</p></div><div className="rounded-2xl bg-white/[0.035] p-3"><p className="text-[10px] text-white/30">Advances</p><p className="mt-1 text-sm font-bold text-red-300">{money(advanceTotal)}</p></div></div>
               <div className="mt-3 rounded-2xl bg-white/[0.035] p-3"><div className="flex items-center gap-2 text-xs font-semibold text-white/55"><Clock3 className="h-4 w-4 text-orange-400"/>Timeline</div><div className="mt-2 flex justify-between text-[11px]"><span className="text-white/30">Created</span><span>{date(c.createdAt)}</span></div><div className="mt-1 flex justify-between text-[11px]"><span className="text-white/30">Settled</span><span className={c.settled?'text-emerald-300':'text-amber-300'}>{c.settled?date(c.settledAt||c.updatedAt||c.createdAt):'Not settled'}</span></div></div>
-              <div className="mt-3 flex gap-2">{!isViewMode && (tab==='pending'?<button type="button" onClick={()=>toggleSettled(c)} disabled={processing!==null} className="flex-1 rounded-xl bg-emerald-500 py-2.5 text-xs font-bold text-white disabled:opacity-40">Mark settled</button>:<button type="button" onClick={()=>toggleSettled(c)} disabled={processing!==null} className="flex-1 rounded-xl bg-amber-500/10 py-2.5 text-xs font-bold text-amber-300">Reopen</button>)}{!isViewMode && <button type="button" onClick={()=>setConfirmDelete(c.id)} className="rounded-xl border border-red-500/15 bg-red-500/5 px-3 text-red-300"><Trash2 className="h-4 w-4"/></button></div>
+              {!isViewMode && (
+                <div className="mt-3 flex gap-2">
+                  {tab === "pending" ? (
+                    <button type="button" onClick={()=>toggleSettled(c)} disabled={processing!==null} className="flex-1 rounded-xl bg-emerald-500 py-2.5 text-xs font-bold text-white disabled:opacity-40">Mark settled</button>
+                  ) : (
+                    <button type="button" onClick={()=>toggleSettled(c)} disabled={processing!==null} className="flex-1 rounded-xl bg-amber-500/10 py-2.5 text-xs font-bold text-amber-300">Reopen</button>
+                  )}
+                  <button type="button" onClick={()=>setConfirmDelete(c.id)} className="rounded-xl border border-red-500/15 bg-red-500/5 px-3 text-red-300"><Trash2 className="h-4 w-4"/></button>
+                </div>
+              )}
             </div>}
           </article>;
         })}
