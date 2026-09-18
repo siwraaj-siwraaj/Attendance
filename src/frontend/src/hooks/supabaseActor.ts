@@ -176,6 +176,15 @@ export function createSupabaseActor() {
       }
     },
     async logout() { await supabase.auth.signOut(); },
+    async getRegistrationStatus(username: string, requestToken: string) {
+      try {
+        const data = await functionCall("rossie-login", { action: "status", username, requestToken });
+        return data;
+      } catch {
+        return null;
+      }
+    },
+
     async changeOwnPassword(newPassword: string) {
       try {
         const password = String(newPassword ?? "");
