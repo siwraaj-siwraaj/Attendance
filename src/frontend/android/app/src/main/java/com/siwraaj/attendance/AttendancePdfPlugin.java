@@ -13,6 +13,7 @@ import android.provider.MediaStore;
 import android.print.PrintAttributes;
 import android.print.PrintDocumentAdapter;
 import android.print.PrintDocumentInfo;
+import android.print.PageRange;
 import android.webkit.RenderProcessGoneDetail;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -248,15 +249,15 @@ public class AttendancePdfPlugin extends Plugin {
             final ParcelFileDescriptor writePfd = pfd;
 
             adapter.onWrite(
-                    new PrintDocumentAdapter.PageRange[]{
-                            PrintDocumentAdapter.PageRange.ALL_PAGES
+                    new PageRange[]{
+                            PageRange.ALL_PAGES
                     },
                     writePfd,
                     new CancellationSignal(),
                     new PrintDocumentAdapter.WriteResultCallback() {
                         @Override
                         public void onWriteFinished(
-                                PrintDocumentAdapter.PageRange[] pages
+                                PageRange[] pages
                         ) {
                             closeQuietly(writePfd);
                             saveTempPdfToDownloads(
