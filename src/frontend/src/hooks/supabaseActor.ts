@@ -169,7 +169,7 @@ export function createSupabaseActor() {
     async registerUser(credentials: { username: string; password: string }) {
       try {
         const data = await functionCall("rossie-login", { ...credentials, action: "register" });
-        if (data?.requestPending) return { ...data.user, requestPending: true, message: data.message };
+        if (data?.requestPending) return { ...data.user, requestPending: true, message: data.message, requestToken: data.requestToken };
         return null;
       } catch (e: any) {
         throw new Error(e?.message ?? "Could not create account");
