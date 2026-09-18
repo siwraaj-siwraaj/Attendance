@@ -197,6 +197,18 @@ export function createSupabaseActor() {
       }
     },
 
+    async registerPushToken(token: string) {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user || !token) return false;
+      await rest("push_tokens", {
+        method: "POST",
+        query: "?on_conflict=token",
+        body: { user_id: user.id, token, platform: "android", updated_at: new Date().toISOString() },
+        headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
+      });
+      return true;
+    },
+
     async getCallerStatus() {
       const { data } = await supabase.auth.getUser();
       if (!data.user) return "pending";
