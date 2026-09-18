@@ -107,6 +107,9 @@ const REPORT_CSS = `
   .report-table tbody tr:nth-child(even) { background: #f1f3f5; }
   .report-table .num, .report-table td.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
   .report-table .center { text-align: center; }
+  /* Strong vertical boundaries make each contract group easy to identify in the PDF. */
+  .report-table .contract-boundary-left { border-left: 3px solid #26384f !important; }
+  .report-table .contract-boundary-right { border-right: 3px solid #26384f !important; }
   .report-total-row td { background: #c47716; color: #ffffff; font-weight: 700; border-color: #c47716; }
   .report-total-label { text-align: right; text-transform: uppercase; letter-spacing: 0.04em; font-size: 8pt; }
   .report-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4mm; margin-top: 5mm; }
@@ -414,10 +417,13 @@ export default function PaymentsPage({
       </div>`;
 
     const thead = `<tr><th>Labour</th>${selectedContracts
-      .map((c: any) => `<th class="num">${c.name}</th>`)
-      .join(
-        "",
-      )}<th class="num">Net Salary</th><th class="num">Advances</th><th class="num">Payable</th></tr>`;
+      .map((c: any, index: number) => {
+        const boundary = index === 0
+          ? "contract-boundary-left contract-boundary-right"
+          : "contract-boundary-left contract-boundary-right";
+        return `<th class="num ${boundary}">${c.name}</th>`;
+      })
+      .join("")}<th class="num">Net Salary</th><th class="num">Advances</th><th class="num">Payable</th></tr>`;
 
     const bodyRows = rows
       .map(
@@ -540,14 +546,22 @@ export default function PaymentsPage({
     // its header remains visible.
     let tableHeaderHTML = "";
     let subHeaderHTML = "";
-    for (const { contract, visible } of contractVisibleCols) {
+    for (let contractIndex = 0; contractIndex < contractVisibleCols.length; contractIndex++) {
+      const { contract, visible } = contractVisibleCols[contractIndex];
       const colCount = Math.max(visible.length, 1);
-      tableHeaderHTML += `<th class="center" colspan="${colCount}">${contract.name}</th>`;
+      const groupClass = "contract-boundary-left contract-boundary-right";
+      tableHeaderHTML += `<th class="center ${groupClass}" colspan="${colCount}">${contract.name}</th>`;
       if (visible.length === 0) {
-        subHeaderHTML += '<th class="center">—</th>';
+        subHeaderHTML += `<th class="center ${groupClass}">—</th>`;
       } else {
-        for (const col of visible) {
-          subHeaderHTML += `<th class="center">${col.name}</th>`;
+        for (let colIndex = 0; colIndex < visible.length; colIndex++) {
+          const col = visible[colIndex];
+          const boundaryClass = colIndex === 0
+            ? "contract-boundary-left"
+            : colIndex === visible.length - 1
+              ? "contract-boundary-right"
+              : "";
+          subHeaderHTML += `<th class="center ${boundaryClass}">${col.name}</th>`;
         }
       }
     }
@@ -556,11 +570,13 @@ export default function PaymentsPage({
     let bodyRows = "";
     for (const row of visibleRows) {
       let cells = "";
-      for (const { contract, visible } of contractVisibleCols) {
+      for (let contractIndex = 0; contractIndex < contractVisibleCols.length; contractIndex++) {
+        const { contract, visible } = contractVisibleCols[contractIndex];
         if (visible.length === 0) {
-          cells += '<td class="center">—</td>';
+          cells += '<td class="center contract-boundary-left contract-boundary-right">—</td>';
         } else {
-          for (const col of visible) {
+          for (let colIndex = 0; colIndex < visible.length; colIndex++) {
+            const col = visible[colIndex];
             const rec = allAttendance.find(
               (r: any) =>
                 r.contractId === contract.id &&
@@ -575,7 +591,12 @@ export default function PaymentsPage({
                 : v.__kind__ === "partial"
                   ? String(v.partial)
                   : "A";
-            cells += `<td class="center">${display}</td>`;
+            const boundaryClass = colIndex === 0
+              ? "contract-boundary-left"
+              : colIndex === visible.length - 1
+                ? "contract-boundary-right"
+                : "";
+            cells += `<td class="center ${boundaryClass}">${display}</td>`;
           }
         }
       }
