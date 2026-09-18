@@ -9,8 +9,9 @@ import {
   ShieldCheck,
   UserRound,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "../hooks/useAuth";
+import { showAppNotification } from "../hooks/nativeNotifications";
 
 function PeopleIllustration() {
   return (
@@ -53,7 +54,8 @@ function PeopleIllustration() {
 type LoginMode = "choice" | "admin" | "user" | "existing-user" | "new-user";
 
 export default function LoginPage() {
-  const { login, registerUser, loginNotice } = useAuth();
+  const { login, registerUser, loginNotice, getRegistrationStatus } = useAuth();
+  const [requestStatus, setRequestStatus] = useState<"pending" | "approved" | "revoked">("pending");
   const [mode, setMode] = useState<LoginMode>("choice");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -63,6 +65,46 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    setRequestStatus("pending");
+    const token = loginNotice?.requestToken;
+    const phone = loginNotice?.phone;
+    if (!token || !phone) return;
+
+    let stopped = false;
+    let timer: ReturnType<typeof setInterval> | null = null;
+
+    const check = async () => {
+      const result = await getRegistrationStatus(phone, token);
+      const status = result?.status as "pending" | "approved" | "revoked" | undefined;
+      if (stopped || !status) return;
+      if (status === "approved") {
+        setRequestStatus("approved");
+        stopped = true;
+        if (timer) clearInterval(timer);
+        void showAppNotification(
+          "Rossie access approved",
+          `${loginNotice?.name || "Your account"} (${phone}) has been approved by admin. You can now log in.`,
+        );
+      } else if (status === "revoked") {
+        setRequestStatus("revoked");
+        stopped = true;
+        if (timer) clearInterval(timer);
+        void showAppNotification(
+          "Rossie access update",
+          `${loginNotice?.name || "Your account"} (${phone}) was revoked by admin.`,
+        );
+      }
+    };
+
+    void check();
+    timer = setInterval(() => void check(), 6000);
+    return () => {
+      stopped = true;
+      if (timer) clearInterval(timer);
+    };
+  }, [loginNotice?.requestToken, loginNotice?.phone, loginNotice?.name, getRegistrationStatus]);
 
   const resetForm = (next: LoginMode) => {
     setMode(next);
@@ -163,7 +205,16 @@ export default function LoginPage() {
           {mode === "new-user" && (
             <form onSubmit={handleRegister} data-ocid="login.register_form">
               <div className="mb-4"><h2 className="text-xl font-bold text-white">Create your account</h2><p className="mt-1 text-sm text-white/45">Your mobile number must already be saved in Labour details.</p></div>
-              {loginNotice && <div className="mb-4 rounded-2xl border border-orange-400/25 bg-orange-500/10 p-4" role="status"><p className="text-sm font-bold text-orange-200">Login request sent to admin</p><p className="mt-1 text-xs text-orange-100/70">{loginNotice.name || "Labour"} • {loginNotice.phone}</p><p className="mt-2 text-xs text-white/55">Admin must accept your request before you can log in.</p></div>}
+              {loginNotice && <div className={`mb-4 rounded-2xl border p-4 ${requestStatus === "approved" ? "border-emerald-400/25 bg-emerald-500/10" : requestStatus === "revoked" ? "border-red-400/25 bg-red-500/10" : "border-orange-400/25 bg-orange-500/10"}`} role="status">
+                <p className={`text-sm font-bold ${requestStatus === "approved" ? "text-emerald-200" : requestStatus === "revoked" ? "text-red-200" : "text-orange-200"}`}>
+                  {requestStatus === "approved" ? "Access approved" : requestStatus === "revoked" ? "Access revoked" : "Login request sent to admin"}
+                </p>
+                <p className="mt-1 text-xs text-white/65">{loginNotice.name || "Labour"} • {loginNotice.phone}</p>
+                <p className="mt-2 text-xs text-white/55">
+                  {requestStatus === "approved" ? "Admin approved your account. Tap Already have an account to log in." : requestStatus === "revoked" ? "Admin revoked this request. Contact admin if this was unexpected." : "Admin can accept or revoke your request. Rossie will notify you when the status changes."}
+                </p>
+                {requestStatus === "approved" && <button type="button" onClick={() => { setUsername(loginNotice.phone); setPassword(""); setMode("existing-user"); }} className="mt-3 w-full rounded-xl bg-emerald-500/15 border border-emerald-400/25 py-2.5 text-xs font-bold text-emerald-200">Continue to login</button>}
+              </div>}
               <div className="mb-4"><label className="login-label">Mobile number</label><input type="tel" inputMode="numeric" value={username} onChange={e=>{setUsername(e.target.value);setError(null)}} className="login-input h-12" placeholder="10-digit mobile number" /></div>
               <div className="mb-4"><label className="login-label">Create password</label><input type="password" value={newPassword} onChange={e=>{setNewPassword(e.target.value);setError(null)}} className="login-input h-12" placeholder="Create a password (6+ characters)" autoComplete="new-password" /></div>
               <div className="mb-4"><label className="login-label">Confirm password</label><input type="password" value={confirmPassword} onChange={e=>{setConfirmPassword(e.target.value);setError(null)}} className="login-input h-12" placeholder="Re-enter your password" autoComplete="new-password" /></div>
