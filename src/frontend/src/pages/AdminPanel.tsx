@@ -28,6 +28,7 @@ import { requestNotificationPermission, showAppNotification } from "../hooks/nat
 import {
   useApproveUser,
   useCreateUser,
+  useCleanupOrphanUserAccounts,
   useListUsers,
   useRevokeAccess,
   useSetUserRole,
@@ -81,6 +82,7 @@ export default function AdminPanel() {
   const approveMutation = useApproveUser();
   const setRoleMutation = useSetUserRole();
   const revokeMutation = useRevokeAccess();
+  const cleanupMutation = useCleanupOrphanUserAccounts();
   const notifiedPendingRef = useRef<Set<string> | null>(null);
 
   if (!isAdmin) {
@@ -120,6 +122,18 @@ export default function AdminPanel() {
     }
     notifiedPendingRef.current = current;
   }, [pending]);
+
+  const handleCleanupOrphans = () => {
+    cleanupMutation.mutate(undefined, {
+      onSuccess: (result: any) => {
+        const count = Number(result?.count ?? 0);
+        void showAppNotification(
+          "Rossie account cleanup",
+          count ? `${count} account${count === 1 ? "" : "s"} removed because the mobile number is not in Labour details.` : "No orphan user accounts found.",
+        );
+      },
+    });
+  };
 
   const handleCreate = () => {
     const username = newUsername.trim();
@@ -231,6 +245,20 @@ export default function AdminPanel() {
             {usersQuery.isLoading && <StateBox text="Loading users…" />}
             {usersQuery.isError && <StateBox text="Could not load users. Please try again." error data-ocid="admin_panel.error_state" />}
             {!usersQuery.isLoading && !usersQuery.isError && users.length === 0 && <StateBox text="No users yet. Create the first account from Add user." />}
+            {section === "users" && (
+              <div className="mb-1 flex justify-end">
+                <button
+                  type="button"
+                  onClick={handleCleanupOrphans}
+                  disabled={cleanupMutation.isPending}
+                  className="admin-action danger"
+                  data-ocid="admin_panel.cleanup_orphan_accounts"
+                >
+                  <Trash2 size={14} />
+                  {cleanupMutation.isPending ? "Checking accounts…" : "Remove accounts not in Labour details"}
+                </button>
+              </div>
+            )}
             {pending.length > 0 && <UserGroup title="Pending approval" count={pending.length} icon={<UserPlus size={16}/>} users={pending} renderExtra={(u,i)=><><RoleMultiSelect value={pendingRoles[u.username]??[Role.viewOnly]} onChange={roles=>setPendingRoles(p=>({...p,[u.username]:roles}))} dataOcid={`admin_panel.pending_role.${i}`}/><button type="button" onClick={()=>handleApprove(u)} disabled={approveMutation.isPending} className="admin-action primary" data-ocid={`admin_panel.approve_button.${i}`}><Check size={14}/>Approve</button></>} />}
             {approved.length > 0 && <UserGroup title="Active accounts" count={approved.length} icon={<ShieldCheck size={16}/>} users={approved} renderExtra={(u,i)=><><RoleMultiSelect value={u.roles??[u.role]} onChange={roles=>setRoleMutation.mutate({username:u.username,role:roles})} dataOcid={`admin_panel.role_select.${i}`}/><div className="flex flex-wrap gap-2"><button type="button" onClick={()=>openEdit(u)} className="admin-action secondary" data-ocid={`admin_panel.edit_button.${i}`}><KeyRound size={14}/>Credentials</button><button type="button" onClick={()=>revokeMutation.mutate(u.username)} disabled={revokeMutation.isPending} className="admin-action danger" data-ocid={`admin_panel.revoke_button.${i}`}><Trash2 size={14}/>Remove</button></div></>} />}
             {revoked.length > 0 && <UserGroup title="Revoked access" count={revoked.length} icon={<UserX size={16}/>} users={revoked} renderExtra={(u,i)=><><RoleMultiSelect value={u.roles??[u.role]} onChange={roles=>setRoleMutation.mutate({username:u.username,role:roles})} dataOcid={`admin_panel.revoked_role.${i}`}/><div className="flex flex-wrap gap-2"><button type="button" onClick={()=>openEdit(u)} className="admin-action secondary" data-ocid={`admin_panel.revoked_edit_button.${i}`}><KeyRound size={14}/>Credentials</button><button type="button" onClick={()=>approveMutation.mutate({username:u.username,role:u.roles??[u.role]})} disabled={approveMutation.isPending} className="admin-action primary" data-ocid={`admin_panel.restore_button.${i}`}><Check size={14}/>Restore</button></div></>} />}
