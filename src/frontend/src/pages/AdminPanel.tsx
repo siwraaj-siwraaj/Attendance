@@ -29,6 +29,7 @@ import {
   useApproveUser,
   useCreateUser,
   useCleanupOrphanUserAccounts,
+  useDeleteUserAccount,
   useListUsers,
   useRevokeAccess,
   useSetUserRole,
@@ -83,6 +84,8 @@ export default function AdminPanel() {
   const setRoleMutation = useSetUserRole();
   const revokeMutation = useRevokeAccess();
   const cleanupMutation = useCleanupOrphanUserAccounts();
+  const deleteUserMutation = useDeleteUserAccount();
+  const [deleteUserTarget, setDeleteUserTarget] = useState<UserInfo | null>(null);
   const notifiedPendingRef = useRef<Set<string> | null>(null);
 
   if (!isAdmin) {
@@ -260,11 +263,13 @@ export default function AdminPanel() {
               </div>
             )}
             {pending.length > 0 && <UserGroup title="Pending approval" count={pending.length} icon={<UserPlus size={16}/>} users={pending} renderExtra={(u,i)=><><RoleMultiSelect value={pendingRoles[u.username]??[Role.viewOnly]} onChange={roles=>setPendingRoles(p=>({...p,[u.username]:roles}))} dataOcid={`admin_panel.pending_role.${i}`}/><button type="button" onClick={()=>handleApprove(u)} disabled={approveMutation.isPending} className="admin-action primary" data-ocid={`admin_panel.approve_button.${i}`}><Check size={14}/>Approve</button></>} />}
-            {approved.length > 0 && <UserGroup title="Active accounts" count={approved.length} icon={<ShieldCheck size={16}/>} users={approved} renderExtra={(u,i)=><><RoleMultiSelect value={u.roles??[u.role]} onChange={roles=>setRoleMutation.mutate({username:u.username,role:roles})} dataOcid={`admin_panel.role_select.${i}`}/><div className="flex flex-wrap gap-2"><button type="button" onClick={()=>openEdit(u)} className="admin-action secondary" data-ocid={`admin_panel.edit_button.${i}`}><KeyRound size={14}/>Credentials</button><button type="button" onClick={()=>revokeMutation.mutate(u.username)} disabled={revokeMutation.isPending} className="admin-action danger" data-ocid={`admin_panel.revoke_button.${i}`}><Trash2 size={14}/>Remove</button></div></>} />}
+            {approved.length > 0 && <UserGroup title="Active accounts" count={approved.length} icon={<ShieldCheck size={16}/>} users={approved} renderExtra={(u,i)=><><RoleMultiSelect value={u.roles??[u.role]} onChange={roles=>setRoleMutation.mutate({username:u.username,role:roles})} dataOcid={`admin_panel.role_select.${i}`}/><div className="flex flex-wrap gap-2"><button type="button" onClick={()=>openEdit(u)} className="admin-action secondary" data-ocid={`admin_panel.edit_button.${i}`}><KeyRound size={14}/>Credentials</button><><button type="button" onClick={()=>revokeMutation.mutate(u.username)} disabled={revokeMutation.isPending} className="admin-action danger" data-ocid={`admin_panel.revoke_button.${i}`}><Trash2 size={14}/>Revoke</button><button type="button" onClick={()=>setDeleteUserTarget(u)} className="admin-action danger" data-ocid={`admin_panel.delete_user_button.${i}`}><Trash2 size={14}/>Delete account</button></></div></>} />}
             {revoked.length > 0 && <UserGroup title="Revoked access" count={revoked.length} icon={<UserX size={16}/>} users={revoked} renderExtra={(u,i)=><><RoleMultiSelect value={u.roles??[u.role]} onChange={roles=>setRoleMutation.mutate({username:u.username,role:roles})} dataOcid={`admin_panel.revoked_role.${i}`}/><div className="flex flex-wrap gap-2"><button type="button" onClick={()=>openEdit(u)} className="admin-action secondary" data-ocid={`admin_panel.revoked_edit_button.${i}`}><KeyRound size={14}/>Credentials</button><button type="button" onClick={()=>approveMutation.mutate({username:u.username,role:u.roles??[u.role]})} disabled={approveMutation.isPending} className="admin-action primary" data-ocid={`admin_panel.restore_button.${i}`}><Check size={14}/>Restore</button></div></>} />}
           </div>
         )}
       </div>
+
+      <Dialog open={deleteUserTarget!==null} onOpenChange={open=>{if(!open)setDeleteUserTarget(null)}}><DialogContent className="glass-dialog border-border"><DialogHeader><DialogTitle className="text-white">Delete user account?</DialogTitle><DialogDescription>Permanently delete {deleteUserTarget?.username}? This cannot be undone.</DialogDescription></DialogHeader><DialogFooter><Button variant="outline" onClick={()=>setDeleteUserTarget(null)}>Cancel</Button><Button variant="destructive" disabled={deleteUserMutation.isPending} onClick={()=>{if(deleteUserTarget)deleteUserMutation.mutate(deleteUserTarget.username,{onSuccess:()=>setDeleteUserTarget(null),onError:e=>void showAppNotification("Account deletion failed",e instanceof Error?e.message:"Could not delete account")})}}>{deleteUserMutation.isPending?"Deleting…":"Delete account"}</Button></DialogFooter></DialogContent></Dialog>
 
       <Dialog open={editingUser!==null} onOpenChange={open=>{if(!open)setEditingUser(null)}}>
         <DialogContent className="glass-dialog border-border" data-ocid="admin_panel.edit_modal">
