@@ -158,10 +158,13 @@ export function createSupabaseActor() {
     async login(credentials: { username: string; password: string }) {
       try {
         const data = await functionCall("rossie-login", credentials);
+        if (data?.requestPending) return { ...data.user, requestPending: true, message: data.message };
         if (!data?.session) return null;
         await supabase.auth.setSession({ access_token: data.session.access_token, refresh_token: data.session.refresh_token });
         return data.user;
-      } catch { return null; }
+      } catch (e: any) {
+        return null;
+      }
     },
     async logout() { await supabase.auth.signOut(); },
     async getCallerStatus() {
