@@ -2,16 +2,13 @@ package com.siwraaj.attendance;
 
 import android.content.ContentResolver;
 import android.content.ContentValues;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.pdf.PdfDocument;
 import android.net.Uri;
 import android.os.Build;
-import android.os.CancellationSignal;
 import android.os.Environment;
-import android.os.ParcelFileDescriptor;
 import android.provider.MediaStore;
-import android.print.PageRange;
-import android.print.PrintAttributes;
-import android.print.PrintDocumentAdapter;
-import android.print.PrintDocumentInfo;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewParent;
@@ -32,18 +29,11 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
-/**
- * Native Android PDF writer.
- *
- * The previous implementation manually called WebView.draw(Canvas) into
- * PdfDocument. Android explicitly documents createPrintDocumentAdapter() as
- * the WebView-to-PDF path and warns that WebView drawing during print
- * conversion is undefined. This plugin now uses the platform print adapter
- * with a dedicated off-screen WebView, then writes the generated PDF into
- * Downloads through MediaStore.
- */
 @CapacitorPlugin(name = "AttendancePdf")
 public class AttendancePdfPlugin extends Plugin {
+    private static final int PAGE_WIDTH = 794;
+    private static final int PAGE_HEIGHT = 1123;
+
     private WebView printWebView;
     private FrameLayout printContainer;
     private boolean finished;
@@ -64,250 +54,220 @@ public class AttendancePdfPlugin extends Plugin {
                         : requestedName
         );
 
-        getActivity().runOnUiThread(() -> startPrint(call, html, fileName));
+        getActivity().runOnUiThread(() -> {
+            finished = false;
+            try {
+                cleanupWebViewNow();
+
+                WebView webView = new WebView(getActivity());
+                printWebView = webView;
+
+                printContainer = new FrameLayout(getActivity());
+                FrameLayout.LayoutParams containerParams =
+                        new FrameLayout.LayoutParams(PAGE_WIDTH, PAGE_HEIGHT);
+                containerParams.leftMargin = 0;
+                containerParams.topMargin = 0;
+
+                FrameLayout.LayoutParams webParams =
+                        new FrameLayout.LayoutParams(PAGE_WIDTH, PAGE_HEIGHT);
+                printContainer.addView(webView, webParams);
+                getActivity().addContentView(printContainer, containerParams);
+
+                webView.setAlpha(1f);
+                webView.setBackgroundColor(Color.WHITE);
+                webView.getSettings().setJavaScriptEnabled(true);
+                webView.getSettings().setDomStorageEnabled(false);
+                webView.getSettings().setLoadsImagesAutomatically(true);
+                webView.setVerticalScrollBarEnabled(false);
+                webView.setHorizontalScrollBarEnabled(false);
+                webView.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
+
+                webView.setWebViewClient(new WebViewClient() {
+                    private boolean started = false;
+
+                    @Override
+                    public void onPageFinished(WebView view, String url) {
+                        if (started) return;
+                        started = true;
+
+                        // Wait for one layout/paint cycle so the DOM has a real
+                        // measured height before drawing it into PdfDocument.
+                        view.evaluateJavascript(
+                                "(function(){return Math.max(document.body.scrollHeight,document.documentElement.scrollHeight,document.body.offsetHeight,document.documentElement.offsetHeight);})()",
+                                value -> view.postDelayed(
+                                        () -> renderWebViewToPdf(view, call, fileName, parseHeight(value)),
+                                        250
+                                )
+                        );
+                    }
+
+                    @Override
+                    public void onReceivedError(
+                            WebView view,
+                            int errorCode,
+                            String description,
+                            String failingUrl
+                    ) {
+                        rejectAndCleanup(
+                                call,
+                                "PDF page failed to load: " + description
+                        );
+                    }
+
+                    @Override
+                    public boolean onRenderProcessGone(
+                            WebView view,
+                            RenderProcessGoneDetail detail
+                    ) {
+                        rejectAndCleanup(
+                                call,
+                                "Android WebView renderer stopped while creating the PDF"
+                        );
+                        return true;
+                    }
+                });
+
+                webView.loadDataWithBaseURL(
+                        "https://rossie.local/",
+                        html,
+                        "text/html",
+                        "UTF-8",
+                        null
+                );
+            } catch (Exception error) {
+                rejectAndCleanup(
+                        call,
+                        "Unable to start PDF generation: " + safeMessage(error)
+                );
+            }
+        });
     }
 
-    private void startPrint(final PluginCall call, final String html, final String fileName) {
-        finished = false;
+    private int parseHeight(String value) {
+        try {
+            String clean = value == null ? "" : value.replace("\"", "").trim();
+            double parsed = Double.parseDouble(clean);
+            if (parsed > 0 && parsed < 1000000) return (int) Math.ceil(parsed);
+        } catch (Exception ignored) {}
+        return PAGE_HEIGHT;
+    }
+
+    private void renderWebViewToPdf(
+            WebView webView,
+            PluginCall call,
+            String fileName,
+            int reportedHeight
+    ) {
+        if (finished || printWebView != webView) return;
+
+        File tempFile = new File(
+                getContext().getCacheDir(),
+                "rossie_pdf_" + System.currentTimeMillis() + ".pdf"
+        );
+
+        PdfDocument document = new PdfDocument();
 
         try {
-            cleanupWebViewNow();
-
-            WebView webView = new WebView(getActivity());
-            printWebView = webView;
-
-            printContainer = new FrameLayout(getActivity());
-            FrameLayout.LayoutParams containerParams =
-                    new FrameLayout.LayoutParams(2, 2);
-            containerParams.leftMargin = 0;
-            containerParams.topMargin = 0;
-
-            FrameLayout.LayoutParams webParams =
-                    new FrameLayout.LayoutParams(794, 1123);
-            printContainer.addView(webView, webParams);
-            getActivity().addContentView(printContainer, containerParams);
-
-            webView.setAlpha(0.01f);
-            webView.setBackgroundColor(android.graphics.Color.WHITE);
-            webView.setVisibility(View.VISIBLE);
-
-            webView.getSettings().setJavaScriptEnabled(false);
-            webView.getSettings().setDomStorageEnabled(false);
-            webView.getSettings().setLoadsImagesAutomatically(true);
-            webView.getSettings().setOffscreenPreRaster(true);
-            webView.setVerticalScrollBarEnabled(false);
-            webView.setHorizontalScrollBarEnabled(false);
-
-            webView.setWebViewClient(new WebViewClient() {
-                private boolean started;
-
-                @Override
-                public void onPageFinished(WebView view, String url) {
-                    if (started || printWebView != view) return;
-                    started = true;
-
-                    // Give WebView one layout/visual-state cycle before asking
-                    // the Android print adapter to snapshot it.
-                    view.postVisualStateCallback(1L, ignored ->
-                            view.postDelayed(
-                                    () -> createNativePrintAdapter(call, fileName),
-                                    250
-                            )
-                    );
-                }
-
-                @Override
-                public void onReceivedError(
-                        WebView view,
-                        int errorCode,
-                        String description,
-                        String failingUrl
-                ) {
-                    rejectAndCleanup(
-                            call,
-                            "PDF page failed to load: " + description
-                    );
-                }
-
-                @Override
-                public boolean onRenderProcessGone(
-                        WebView view,
-                        RenderProcessGoneDetail detail
-                ) {
-                    rejectAndCleanup(
-                            call,
-                            "Android WebView renderer stopped while creating the PDF"
-                    );
-                    return true;
-                }
-            });
-
-            webView.loadDataWithBaseURL(
-                    "https://rossie.local/",
-                    html,
-                    "text/html",
-                    "UTF-8",
-                    null
+            // Force a deterministic A4-sized WebView layout. The old
+            // implementation could reach the PDF stage with a zero/unlaid-out
+            // WebView, which is why it failed at runtime.
+            int widthSpec = View.MeasureSpec.makeMeasureSpec(
+                    PAGE_WIDTH,
+                    View.MeasureSpec.EXACTLY
             );
+            int heightSpec = View.MeasureSpec.makeMeasureSpec(
+                    0,
+                    View.MeasureSpec.UNSPECIFIED
+            );
+
+            webView.measure(widthSpec, heightSpec);
+
+            int contentHeight = Math.max(PAGE_HEIGHT, reportedHeight);
+
+            webView.layout(
+                    0,
+                    0,
+                    PAGE_WIDTH,
+                    contentHeight
+            );
+
+            // WebView content height can occasionally be reported before its
+            // document body has expanded. Fall back to the measured/layout
+            // height rather than allowing a zero-page PDF.
+            contentHeight = Math.max(
+                    PAGE_HEIGHT,
+                    webView.getHeight()
+            );
+
+            int pageCount =
+                    (contentHeight + PAGE_HEIGHT - 1) / PAGE_HEIGHT;
+
+            for (int pageIndex = 0; pageIndex < pageCount; pageIndex++) {
+                PdfDocument.PageInfo pageInfo =
+                        new PdfDocument.PageInfo.Builder(
+                                PAGE_WIDTH,
+                                PAGE_HEIGHT,
+                                pageIndex + 1
+                        ).create();
+
+                PdfDocument.Page page = document.startPage(pageInfo);
+                Canvas canvas = page.getCanvas();
+
+                canvas.drawColor(Color.WHITE);
+                canvas.save();
+                canvas.clipRect(0, 0, PAGE_WIDTH, PAGE_HEIGHT);
+                canvas.translate(0, -(pageIndex * PAGE_HEIGHT));
+
+                webView.draw(canvas);
+
+                canvas.restore();
+                document.finishPage(page);
+            }
+
+            try (FileOutputStream output = new FileOutputStream(tempFile)) {
+                document.writeTo(output);
+            } finally {
+                document.close();
+            }
+
+            saveTempPdfToDownloads(tempFile, fileName, call);
         } catch (Exception error) {
+            try {
+                document.close();
+            } catch (Exception ignored) {
+            }
+
+            tempFile.delete();
+
             rejectAndCleanup(
                     call,
-                    "Unable to start PDF generation: " + safeMessage(error)
+                    "Unable to render PDF: " + safeMessage(error)
             );
         }
     }
 
-    private void createNativePrintAdapter(final PluginCall call, final String fileName) {
-        if (finished || printWebView == null) return;
-
-        try {
-            PrintDocumentAdapter adapter =
-                    printWebView.createPrintDocumentAdapter(fileName);
-
-            PrintAttributes attributes = new PrintAttributes.Builder()
-                    .setMediaSize(PrintAttributes.MediaSize.ISO_A4)
-                    .setResolution(new PrintAttributes.Resolution(
-                            "rossie_pdf",
-                            "Rossie PDF",
-                            300,
-                            300
-                    ))
-                    .setMinMargins(PrintAttributes.Margins.NO_MARGINS)
-                    .build();
-
-            File tempFile = new File(
-                    getContext().getCacheDir(),
-                    "rossie_print_" + System.currentTimeMillis() + ".pdf"
-            );
-
-            adapter.onLayout(
-                    null,
-                    attributes,
-                    new CancellationSignal(),
-                    new PrintDocumentAdapter.LayoutResultCallback() {
-                        @Override
-                        public void onLayoutFinished(
-                                PrintDocumentInfo info,
-                                boolean changed
-                        ) {
-                            if (finished) return;
-
-                            try {
-                                ParcelFileDescriptor descriptor =
-                                        ParcelFileDescriptor.open(
-                                                tempFile,
-                                                ParcelFileDescriptor.MODE_CREATE
-                                                        | ParcelFileDescriptor.MODE_READ_WRITE
-                                                        | ParcelFileDescriptor.MODE_TRUNCATE
-                                        );
-
-                                adapter.onWrite(
-                                        new PageRange[]{PageRange.ALL_PAGES},
-                                        descriptor,
-                                        new CancellationSignal(),
-                                        new PrintDocumentAdapter.WriteResultCallback() {
-                                            @Override
-                                            public void onWriteFinished(PageRange[] pages) {
-                                                closeQuietly(descriptor);
-                                                saveGeneratedPdf(
-                                                        tempFile,
-                                                        fileName,
-                                                        call
-                                                );
-                                            }
-
-                                            @Override
-                                            public void onWriteFailed(CharSequence error) {
-                                                closeQuietly(descriptor);
-                                                tempFile.delete();
-                                                rejectAndCleanup(
-                                                        call,
-                                                        "Android PDF writer failed: " +
-                                                                (error == null
-                                                                        ? "unknown error"
-                                                                        : error.toString())
-                                                );
-                                            }
-
-                                            @Override
-                                            public void onWriteCancelled() {
-                                                closeQuietly(descriptor);
-                                                tempFile.delete();
-                                                rejectAndCleanup(
-                                                        call,
-                                                        "Android PDF writer was cancelled"
-                                                );
-                                            }
-                                        },
-                                        null
-                                );
-                            } catch (Exception error) {
-                                tempFile.delete();
-                                rejectAndCleanup(
-                                        call,
-                                        "Unable to open PDF output: " +
-                                                safeMessage(error)
-                                );
-                            }
-                        }
-
-                        @Override
-                        public void onLayoutFailed(CharSequence error) {
-                            tempFile.delete();
-                            rejectAndCleanup(
-                                    call,
-                                    "Android PDF layout failed: " +
-                                            (error == null
-                                                    ? "unknown error"
-                                                    : error.toString())
-                            );
-                        }
-
-                        @Override
-                        public void onLayoutCancelled() {
-                            tempFile.delete();
-                            rejectAndCleanup(
-                                    call,
-                                    "Android PDF layout was cancelled"
-                            );
-                        }
-                    },
-                    null
-            );
-        } catch (Exception error) {
-            rejectAndCleanup(
-                    call,
-                    "Unable to start Android PDF writer: " +
-                            safeMessage(error)
-            );
-        }
-    }
-
-    private void saveGeneratedPdf(
+    private void saveTempPdfToDownloads(
             File source,
             String fileName,
             PluginCall call
     ) {
         new Thread(() -> {
             try {
-                if (!source.exists() || source.length() == 0) {
-                    throw new IOException("Android PDF writer produced an empty file");
-                }
-
                 Uri uri = copyToDownloads(source, fileName);
                 source.delete();
 
                 getActivity().runOnUiThread(() -> {
+                    finished = true;
                     cleanupWebViewNow();
 
                     JSObject result = new JSObject();
                     result.put("uri", uri.toString());
                     result.put("fileName", fileName);
                     call.resolve(result);
-                    finished = true;
                 });
             } catch (Exception error) {
                 source.delete();
+
                 rejectAndCleanup(
                         call,
                         "PDF could not be saved to Downloads: " +
@@ -404,14 +364,6 @@ public class AttendancePdfPlugin extends Plugin {
         return message == null || message.trim().isEmpty()
                 ? error.getClass().getSimpleName()
                 : message;
-    }
-
-    private void closeQuietly(ParcelFileDescriptor descriptor) {
-        if (descriptor == null) return;
-        try {
-            descriptor.close();
-        } catch (Exception ignored) {
-        }
     }
 
     private void rejectAndCleanup(PluginCall call, String message) {
