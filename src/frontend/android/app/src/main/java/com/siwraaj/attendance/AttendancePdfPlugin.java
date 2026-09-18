@@ -2,17 +2,14 @@ package com.siwraaj.attendance;
 
 import android.content.ContentResolver;
 import android.content.ContentValues;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.pdf.PdfDocument;
 import android.net.Uri;
 import android.os.Build;
-import android.os.Bundle;
-import android.os.CancellationSignal;
 import android.os.Environment;
-import android.os.ParcelFileDescriptor;
 import android.provider.MediaStore;
-import android.print.PageRange;
-import android.print.PrintAttributes;
-import android.print.PrintDocumentAdapter;
-import android.print.PrintDocumentInfo;
+import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewParent;
 import android.webkit.RenderProcessGoneDetail;
@@ -34,6 +31,9 @@ import java.io.OutputStream;
 
 @CapacitorPlugin(name = "AttendancePdf")
 public class AttendancePdfPlugin extends Plugin {
+    private static final int PAGE_WIDTH = 794;
+    private static final int PAGE_HEIGHT = 1123;
+
     private WebView printWebView;
     private FrameLayout printContainer;
 
@@ -60,9 +60,6 @@ public class AttendancePdfPlugin extends Plugin {
                 WebView webView = new WebView(getActivity());
                 printWebView = webView;
 
-                // Android recommends a dedicated WebView for createPrintDocumentAdapter().
-                // Keep it attached to the Activity and VISIBLE, but outside the user's
-                // usable area so the print renderer has a real window to render into.
                 printContainer = new FrameLayout(getActivity());
                 FrameLayout.LayoutParams containerParams =
                         new FrameLayout.LayoutParams(1, 1);
@@ -70,16 +67,17 @@ public class AttendancePdfPlugin extends Plugin {
                 containerParams.topMargin = 0;
 
                 FrameLayout.LayoutParams webParams =
-                        new FrameLayout.LayoutParams(794, 1123);
-
+                        new FrameLayout.LayoutParams(PAGE_WIDTH, PAGE_HEIGHT);
                 printContainer.addView(webView, webParams);
                 getActivity().addContentView(printContainer, containerParams);
 
                 webView.setAlpha(0.01f);
-                webView.setBackgroundColor(android.graphics.Color.WHITE);
+                webView.setBackgroundColor(Color.WHITE);
                 webView.getSettings().setJavaScriptEnabled(false);
                 webView.getSettings().setDomStorageEnabled(false);
                 webView.getSettings().setLoadsImagesAutomatically(true);
+                webView.setVerticalScrollBarEnabled(false);
+                webView.setHorizontalScrollBarEnabled(false);
 
                 webView.setWebViewClient(new WebViewClient() {
                     private boolean started = false;
@@ -89,11 +87,11 @@ public class AttendancePdfPlugin extends Plugin {
                         if (started) return;
                         started = true;
 
-                        // Give WebView one frame to finish layout/paint before
-                        // handing it to Android's print renderer.
+                        // Wait for one layout/paint cycle so the DOM has a real
+                        // measured height before drawing it into PdfDocument.
                         view.postDelayed(
-                                () -> beginPrint(view, call, fileName),
-                                300
+                                () -> renderWebViewToPdf(view, call, fileName),
+                                350
                         );
                     }
 
@@ -139,127 +137,98 @@ public class AttendancePdfPlugin extends Plugin {
         });
     }
 
-    private void beginPrint(
+    private void renderWebViewToPdf(
             WebView webView,
             PluginCall call,
             String fileName
     ) {
         if (printWebView != webView) return;
 
-        try {
-            final PrintDocumentAdapter adapter =
-                    webView.createPrintDocumentAdapter(fileName);
-
-            final PrintAttributes attributes =
-                    new PrintAttributes.Builder()
-                            .setMediaSize(PrintAttributes.MediaSize.ISO_A4)
-                            .setResolution(
-                                    new PrintAttributes.Resolution(
-                                            "rossie_pdf",
-                                            "Rossie PDF",
-                                            300,
-                                            300
-                                    )
-                            )
-                            .setMinMargins(PrintAttributes.Margins.NO_MARGINS)
-                            .build();
-
-            adapter.onLayout(
-                    null,
-                    attributes,
-                    new CancellationSignal(),
-                    new PrintDocumentAdapter.LayoutResultCallback() {
-                        @Override
-                        public void onLayoutFinished(
-                                PrintDocumentInfo info,
-                                boolean changed
-                        ) {
-                            writePdf(adapter, attributes, call, fileName);
-                        }
-
-                        @Override
-                        public void onLayoutFailed(CharSequence error) {
-                            rejectAndCleanup(
-                                    call,
-                                    "Android could not lay out the PDF: " +
-                                            (error == null ? "unknown error" : error)
-                            );
-                        }
-
-                        @Override
-                        public void onLayoutCancelled() {
-                            rejectAndCleanup(call, "PDF layout was cancelled");
-                        }
-                    },
-                    new Bundle()
-            );
-        } catch (Exception error) {
-            rejectAndCleanup(
-                    call,
-                    "Unable to prepare PDF printer: " + safeMessage(error)
-            );
-        }
-    }
-
-    private void writePdf(
-            PrintDocumentAdapter adapter,
-            PrintAttributes attributes,
-            PluginCall call,
-            String fileName
-    ) {
         File tempFile = new File(
                 getContext().getCacheDir(),
-                "rossie_print_" + System.currentTimeMillis() + ".pdf"
+                "rossie_pdf_" + System.currentTimeMillis() + ".pdf"
         );
 
-        ParcelFileDescriptor pfd = null;
+        PdfDocument document = new PdfDocument();
 
         try {
-            pfd = ParcelFileDescriptor.open(
-                    tempFile,
-                    ParcelFileDescriptor.MODE_CREATE |
-                            ParcelFileDescriptor.MODE_TRUNCATE |
-                            ParcelFileDescriptor.MODE_WRITE_ONLY
+            // Force a deterministic A4-sized WebView layout. The old
+            // implementation could reach the PDF stage with a zero/unlaid-out
+            // WebView, which is why it failed at runtime.
+            int widthSpec = View.MeasureSpec.makeMeasureSpec(
+                    PAGE_WIDTH,
+                    View.MeasureSpec.EXACTLY
+            );
+            int heightSpec = View.MeasureSpec.makeMeasureSpec(
+                    0,
+                    View.MeasureSpec.UNSPECIFIED
             );
 
-            final ParcelFileDescriptor destination = pfd;
+            webView.measure(widthSpec, heightSpec);
 
-            adapter.onWrite(
-                    new PageRange[]{PageRange.ALL_PAGES},
-                    destination,
-                    new CancellationSignal(),
-                    new PrintDocumentAdapter.WriteResultCallback() {
-                        @Override
-                        public void onWriteFinished(PageRange[] pages) {
-                            closeQuietly(destination);
-                            saveTempPdfToDownloads(tempFile, fileName, call);
-                        }
-
-                        @Override
-                        public void onWriteFailed(CharSequence error) {
-                            closeQuietly(destination);
-                            tempFile.delete();
-                            rejectAndCleanup(
-                                    call,
-                                    "Android could not write the PDF: " +
-                                            (error == null ? "unknown error" : error)
-                            );
-                        }
-
-                        @Override
-                        public void onWriteCancelled() {
-                            closeQuietly(destination);
-                            tempFile.delete();
-                            rejectAndCleanup(call, "PDF writing was cancelled");
-                        }
-                    }
+            int contentHeight = Math.max(
+                    PAGE_HEIGHT,
+                    webView.getMeasuredHeight()
             );
+
+            webView.layout(
+                    0,
+                    0,
+                    PAGE_WIDTH,
+                    contentHeight
+            );
+
+            // WebView content height can occasionally be reported before its
+            // document body has expanded. Fall back to the measured/layout
+            // height rather than allowing a zero-page PDF.
+            contentHeight = Math.max(
+                    PAGE_HEIGHT,
+                    webView.getHeight()
+            );
+
+            int pageCount =
+                    (contentHeight + PAGE_HEIGHT - 1) / PAGE_HEIGHT;
+
+            for (int pageIndex = 0; pageIndex < pageCount; pageIndex++) {
+                PdfDocument.PageInfo pageInfo =
+                        new PdfDocument.PageInfo.Builder(
+                                PAGE_WIDTH,
+                                PAGE_HEIGHT,
+                                pageIndex + 1
+                        ).create();
+
+                PdfDocument.Page page = document.startPage(pageInfo);
+                Canvas canvas = page.getCanvas();
+
+                canvas.drawColor(Color.WHITE);
+                canvas.save();
+                canvas.clipRect(0, 0, PAGE_WIDTH, PAGE_HEIGHT);
+                canvas.translate(0, -(pageIndex * PAGE_HEIGHT));
+
+                webView.draw(canvas);
+
+                canvas.restore();
+                document.finishPage(page);
+            }
+
+            try (FileOutputStream output = new FileOutputStream(tempFile)) {
+                document.writeTo(output);
+            } finally {
+                document.close();
+            }
+
+            saveTempPdfToDownloads(tempFile, fileName, call);
         } catch (Exception error) {
-            closeQuietly(pfd);
+            try {
+                document.close();
+            } catch (Exception ignored) {
+            }
+
             tempFile.delete();
+
             rejectAndCleanup(
                     call,
-                    "Unable to write PDF: " + safeMessage(error)
+                    "Unable to render PDF: " + safeMessage(error)
             );
         }
     }
@@ -284,6 +253,7 @@ public class AttendancePdfPlugin extends Plugin {
                 });
             } catch (Exception error) {
                 source.delete();
+
                 rejectAndCleanup(
                         call,
                         "PDF could not be saved to Downloads: " +
@@ -369,7 +339,9 @@ public class AttendancePdfPlugin extends Plugin {
 
     private String sanitizeFileName(String value) {
         String name = value.replaceAll("[^a-zA-Z0-9._-]", "_");
-        if (!name.toLowerCase().endsWith(".pdf")) name += ".pdf";
+        if (!name.toLowerCase().endsWith(".pdf")) {
+            name += ".pdf";
+        }
         return name;
     }
 
@@ -385,14 +357,6 @@ public class AttendancePdfPlugin extends Plugin {
             cleanupWebViewNow();
             call.reject(message);
         });
-    }
-
-    private void closeQuietly(ParcelFileDescriptor pfd) {
-        if (pfd == null) return;
-        try {
-            pfd.close();
-        } catch (IOException ignored) {
-        }
     }
 
     private void cleanupWebViewNow() {
