@@ -34,6 +34,7 @@ function mapLabour(row: any) {
     name: row.name,
     employeeId: row.employee_id,
     joinDate: row.join_date ? String(row.join_date).slice(0, 10) : "",
+    phoneNumber: row.phone_number ?? "",
     isActive: Boolean(row.is_active),
     createdAt: ns(row.created_at),
   };
@@ -189,22 +190,30 @@ export function createSupabaseActor() {
       const rows = await rest("labours", { query: "?select=*&is_active=eq.true&order=id.asc" });
       return rows.map(mapLabour);
     },
-    async addLabour(name: string, employeeId: string, joinDate: string) {
+    async addLabour(name: string, employeeId: string, joinDate: string, phoneNumber: string) {
       try {
+        const phone = String(phoneNumber ?? "").replace(/\D/g, "");
+        if (!/^\d{10}$/.test(phone)) return err("Enter a valid 10-digit mobile number");
+        const duplicate = await rest("labours", { query: `?select=id&phone_number=eq.${encodeURIComponent(phone)}&limit=1` });
+        if (duplicate?.length) return err("This mobile number is already saved for another labour");
         const rows = await rest("labours", {
           method: "POST",
           headers: { Prefer: "return=representation" },
-          body: { name, employee_id: employeeId, join_date: joinDate ? new Date(joinDate).toISOString() : null, is_active: true },
+          body: { name, employee_id: employeeId, phone_number: phone, join_date: joinDate ? new Date(joinDate).toISOString() : null, is_active: true },
         });
         return ok(mapLabour(rows[0]));
       } catch (e: any) { return err(e.message); }
     },
-    async updateLabour(id: bigint, name: string, employeeId: string, joinDate: string, active: boolean) {
+    async updateLabour(id: bigint, name: string, employeeId: string, joinDate: string, active: boolean, phoneNumber: string) {
       try {
+        const phone = String(phoneNumber ?? "").replace(/\D/g, "");
+        if (!/^\d{10}$/.test(phone)) return err("Enter a valid 10-digit mobile number");
+        const duplicate = await rest("labours", { query: `?select=id&phone_number=eq.${encodeURIComponent(phone)}&id=neq.${id}&limit=1` });
+        if (duplicate?.length) return err("This mobile number is already saved for another labour");
         const rows = await rest("labours", {
           method: "PATCH",
           query: `?id=eq.${id}`,
-          body: { name, employee_id: employeeId, join_date: joinDate ? new Date(joinDate).toISOString() : null, is_active: active },
+          body: { name, employee_id: employeeId, phone_number: phone, join_date: joinDate ? new Date(joinDate).toISOString() : null, is_active: active },
         });
         if (!rows?.length) return err("Labour not found");
         return ok(mapLabour(rows[0]));
