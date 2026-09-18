@@ -281,8 +281,14 @@ public class AttendancePdfPlugin extends Plugin {
         ContentResolver resolver = getContext().getContentResolver();
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            // MediaProvider can reject an insert when the requested display name
+            // already exists in Downloads ("Failed to build unique file"). Pick
+            // an unused display name before inserting instead of relying on the
+            // provider to rename/reconcile the collision.
+            String uniqueName = findUniqueDownloadName(resolver, fileName);
+
             ContentValues values = new ContentValues();
-            values.put(MediaStore.Downloads.DISPLAY_NAME, fileName);
+            values.put(MediaStore.Downloads.DISPLAY_NAME, uniqueName);
             values.put(MediaStore.Downloads.MIME_TYPE, "application/pdf");
             values.put(
                     MediaStore.Downloads.RELATIVE_PATH,
@@ -290,10 +296,30 @@ public class AttendancePdfPlugin extends Plugin {
             );
             values.put(MediaStore.Downloads.IS_PENDING, 1);
 
-            Uri uri = resolver.insert(
-                    MediaStore.Downloads.EXTERNAL_CONTENT_URI,
-                    values
-            );
+            Uri uri;
+            try {
+                uri = resolver.insert(
+                        MediaStore.Downloads.EXTERNAL_CONTENT_URI,
+                        values
+                );
+            } catch (Exception firstError) {
+                // A concurrent save can claim the chosen name between the query
+                // and insert. Retry once with a timestamped name.
+                String retryName = addTimestampSuffix(uniqueName);
+                values.put(MediaStore.Downloads.DISPLAY_NAME, retryName);
+                try {
+                    uri = resolver.insert(
+                            MediaStore.Downloads.EXTERNAL_CONTENT_URI,
+                            values
+                    );
+                } catch (Exception retryError) {
+                    throw new IOException(
+                            "Unable to create Downloads entry: " +
+                                    safeMessage(retryError),
+                            retryError
+                    );
+                }
+            }
 
             if (uri == null) {
                 throw new IOException("Unable to create Downloads entry");
@@ -329,12 +355,90 @@ public class AttendancePdfPlugin extends Plugin {
             throw new IOException("Unable to create Downloads directory");
         }
 
-        File destination = new File(downloads, fileName);
+        File destination = new File(downloads, findUniqueLegacyName(downloads, fileName));
         try (FileOutputStream output = new FileOutputStream(destination)) {
             copyFile(source, output);
         }
 
         return Uri.fromFile(destination);
+    }
+
+    private String findUniqueDownloadName(
+            ContentResolver resolver,
+            String fileName
+    ) {
+        String base = fileName;
+        String extension = "";
+        int dot = fileName.lastIndexOf('.');
+        if (dot > 0) {
+            base = fileName.substring(0, dot);
+            extension = fileName.substring(dot);
+        }
+
+        String candidate = fileName;
+        for (int index = 0; index < 100; index++) {
+            if (!downloadNameExists(resolver, candidate)) {
+                return candidate;
+            }
+            candidate = base + " (" + (index + 1) + ")" + extension;
+        }
+
+        return base + " (" + System.currentTimeMillis() + ")" + extension;
+    }
+
+    private boolean downloadNameExists(
+            ContentResolver resolver,
+            String fileName
+    ) {
+        String[] projection = {MediaStore.Downloads.DISPLAY_NAME};
+        String selection =
+                MediaStore.Downloads.DISPLAY_NAME + " = ? AND " +
+                MediaStore.Downloads.RELATIVE_PATH + " = ?";
+        String[] selectionArgs = {
+                fileName,
+                Environment.DIRECTORY_DOWNLOADS + "/"
+        };
+
+        try (android.database.Cursor cursor = resolver.query(
+                MediaStore.Downloads.EXTERNAL_CONTENT_URI,
+                projection,
+                selection,
+                selectionArgs,
+                null
+        )) {
+            return cursor != null && cursor.moveToFirst();
+        } catch (Exception ignored) {
+            return false;
+        }
+    }
+
+    private String addTimestampSuffix(String fileName) {
+        int dot = fileName.lastIndexOf('.');
+        if (dot > 0) {
+            return fileName.substring(0, dot) + "_" +
+                    System.currentTimeMillis() + fileName.substring(dot);
+        }
+        return fileName + "_" + System.currentTimeMillis();
+    }
+
+    private String findUniqueLegacyName(File downloads, String fileName) {
+        String base = fileName;
+        String extension = "";
+        int dot = fileName.lastIndexOf('.');
+        if (dot > 0) {
+            base = fileName.substring(0, dot);
+            extension = fileName.substring(dot);
+        }
+
+        File candidate = new File(downloads, fileName);
+        for (int index = 1; candidate.exists() && index < 100; index++) {
+            candidate = new File(
+                    downloads,
+                    base + " (" + index + ")" + extension
+            );
+        }
+
+        return candidate.getName();
     }
 
     private void copyFile(File source, OutputStream output) throws IOException {
