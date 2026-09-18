@@ -198,7 +198,7 @@ export default function Layout({ children }: LayoutProps) {
       <BackButtonGuard enabled={mode !== null} returnToContractsOnly={activeTab === "admin"} onReturnToSelection={() => setActiveTab("contracts")} />
 
       <header
-        className={`${activeTab === "admin" ? "hidden" : ""} sticky top-0 z-40 overflow-hidden border-b"`
+        className={`${activeTab === "admin" ? "hidden" : ""} sticky top-0 z-40 overflow-hidden border-b`}
         style={{
           background: "linear-gradient(135deg, #040913 0%, #071321 45%, #0a1726 70%, #12100e 100%)",
           borderColor: "rgba(116,143,181,0.22)",
