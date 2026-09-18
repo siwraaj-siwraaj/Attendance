@@ -195,10 +195,10 @@ export default function Layout({ children }: LayoutProps) {
 
   return (
     <div className="min-h-screen flex flex-col bg-[#0a0f1e]">
-      <BackButtonGuard enabled={mode !== null} returnToContractsOnly={activeTab === "admin"} onReturnToSelection={() => { logout(); setActiveTab("contracts"); }} />
+      <BackButtonGuard enabled={mode !== null} returnToContractsOnly={activeTab === "admin"} onReturnToSelection={() => setActiveTab("contracts")} />
 
       <header
-        className="sticky top-0 z-40 overflow-hidden border-b"
+        className={`${activeTab === "admin" ? "hidden" : ""} sticky top-0 z-40 overflow-hidden border-b"`
         style={{
           background: "linear-gradient(135deg, #040913 0%, #071321 45%, #0a1726 70%, #12100e 100%)",
           borderColor: "rgba(116,143,181,0.22)",
@@ -381,7 +381,7 @@ export default function Layout({ children }: LayoutProps) {
         </div>
       </main>
 
-      {mode && <BottomTabBar activeTab={activeTab} onTabChange={onTabChange} />}
+      {mode && activeTab !== "admin" && <BottomTabBar activeTab={activeTab} onTabChange={onTabChange} />}
       <input ref={csvInputRef} type="file" accept=".csv" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) handleImportCSV(file); e.target.value = ""; }} />
     </div>
   );
