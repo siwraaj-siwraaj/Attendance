@@ -40,7 +40,20 @@ function LaboursPage() {
   const openEdit = useCallback((l: any) => {
     setEditing(l); setName(l.name ?? ""); setEmployeeId(l.employeeId ?? ""); setPhoneNumber(l.phoneNumber ?? ""); setJoinDate(l.joinDate ?? ""); setActive(l.isActive !== false); setError(""); setShowForm(true);
   }, []);
-  const confirmDelete = useCallback(() => {\n    if (!deleteTarget) return;\n    deleteLabour.mutate(deleteTarget.id, {\n      onSuccess: () => {\n        toast.success("Labour deleted");\n        setDeleteTarget(null);\n        setShowForm(false);\n        setEditing(null);\n      },\n      onError: (e: unknown) => toast.error(e instanceof Error ? e.message : "Could not delete labour"),\n    });\n  }, [deleteTarget, deleteLabour]);\n\n  const save = useCallback(() => {
+  const confirmDelete = useCallback(() => {
+    if (!deleteTarget) return;
+    deleteLabour.mutate(deleteTarget.id, {
+      onSuccess: () => {
+        toast.success("Labour deleted");
+        setDeleteTarget(null);
+        setShowForm(false);
+        setEditing(null);
+      },
+      onError: (e: unknown) => toast.error(e instanceof Error ? e.message : "Could not delete labour"),
+    });
+  }, [deleteTarget, deleteLabour]);
+
+  const save = useCallback(() => {
     if (!name.trim()) { setError("Name is required"); return; }
     const normalizedPhone = phoneNumber.replace(/\D/g, "");
     if (!/^\d{10}$/.test(normalizedPhone)) { setError("Enter a valid 10-digit mobile number"); return; }
