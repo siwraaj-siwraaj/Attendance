@@ -7,6 +7,7 @@ on:
 
 # Keep only the newest APK build for main. If a new commit is pushed while
 # an older build is running, GitHub Actions cancels the older run.
+# Firebase Android config is injected from FIREBASE_GOOGLE_SERVICES_JSON.
 concurrency:
   group: build-apk-main
   cancel-in-progress: true
