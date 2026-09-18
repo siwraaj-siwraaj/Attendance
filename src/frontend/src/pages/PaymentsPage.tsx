@@ -180,7 +180,13 @@ link.download = filename;
 link.click();
   } catch (error) {
     console.error("PDF generation failed:", error);
-    alert("Unable to create the PDF. Please try again.");
+    const message =
+      error instanceof Error
+        ? error.message
+        : typeof error === "string"
+          ? error
+          : (error as any)?.message || JSON.stringify(error);
+    alert(`Unable to create the PDF.\\n\\n${message || "Unknown PDF error"}`);
   } finally {
     wrapper.remove();
   }
