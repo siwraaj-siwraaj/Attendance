@@ -16,6 +16,7 @@ import {
   saveBiometricCredentials,
 } from "./nativeBiometric";
 import { useBackendActor } from "./useBackend";
+import { registerPushTokenForCurrentUser, deletePushToken } from "./pushNotifications";
 
 const REMEMBER_ME_KEY = "rossie.rememberMe";
 const RESTORE_TIMEOUT_MS = 10000;
@@ -59,6 +60,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [attendanceContractId, setAttendanceContractId] = useState<bigint | null>(null);
 
   const isAuthenticated = username !== null;
+
+  const registerCurrentDeviceForPush = useCallback(async () => {
+    if (!actor) return;
+    const token = await registerPushTokenForCurrentUser();
+    if (token) {
+      try { await actor.registerPushToken(token); } catch { /* Push setup is optional until Firebase is configured. */ }
+    }
+  }, [actor]);
 
   const applyLoginResult = useCallback((result: any) => {
     if (!result) return;
@@ -116,6 +125,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         if (result) {
           applyLoginResult(result);
+          void registerCurrentDeviceForPush();
         } else {
           localStorage.removeItem(REMEMBER_ME_KEY);
           await clearBiometricCredentials();
@@ -133,7 +143,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       cancelled = true;
       if (timeoutId) clearTimeout(timeoutId);
     };
-  }, [actor, applyLoginResult]);
+  }, [actor, applyLoginResult, registerCurrentDeviceForPush]);
 
   const login = useCallback(
     async (usernameInput: string, password: string, rememberMe = false): Promise<boolean> => {
@@ -153,6 +163,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       applyLoginResult(result);
+      void registerCurrentDeviceForPush();
 
       if (rememberMe) {
         localStorage.setItem(REMEMBER_ME_KEY, "true");
@@ -220,6 +231,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [actor, username]);
 
   const logout = useCallback(() => {
+    void deletePushToken();
     if (actor) void actor.logout();
     setLoginNotice(null);
     localStorage.removeItem(REMEMBER_ME_KEY);
