@@ -2,43 +2,40 @@ package com.siwraaj.attendance;
 
 import android.content.ContentResolver;
 import android.content.ContentValues;
+import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.pdf.PdfDocument;
 import android.net.Uri;
 import android.os.Build;
-import android.os.Bundle;
-import android.os.CancellationSignal;
 import android.os.Environment;
-import android.os.ParcelFileDescriptor;
 import android.provider.MediaStore;
-import android.print.PrintAttributes;
-import android.print.PrintDocumentAdapter;
-import android.print.PrintDocumentInfo;
-import android.print.PageRange;
-import android.webkit.RenderProcessGoneDetail;
-import android.webkit.WebView;
-import android.webkit.WebViewClient;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewParent;
+import android.webkit.RenderProcessGoneDetail;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
 
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
 import com.getcapacitor.annotation.CapacitorPlugin;
-import com.getcapacitor.PluginMethod;
+import com.getcapacitor.annotation.PluginMethod;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 @CapacitorPlugin(name = "AttendancePdf")
 public class AttendancePdfPlugin extends Plugin {
-    private final ExecutorService ioExecutor = Executors.newSingleThreadExecutor();
+    private static final int PAGE_WIDTH = 595;
+    private static final int PAGE_HEIGHT = 842;
+    private static final int CONTENT_WIDTH = 794;
+    private static final int MAX_HEIGHT = 20000;
+
     private WebView printWebView;
     private FrameLayout printContainer;
 
@@ -65,9 +62,6 @@ public class AttendancePdfPlugin extends Plugin {
                 WebView webView = new WebView(getContext());
                 printWebView = webView;
 
-                // Keep the print WebView attached to a real window. It is transparent
-                // and positioned outside the visible app area, but remains VISIBLE so
-                // WebView can complete its first render before Android printing starts.
                 printContainer = new FrameLayout(getContext());
                 printContainer.setBackgroundColor(Color.TRANSPARENT);
                 printContainer.setAlpha(0f);
@@ -76,16 +70,12 @@ public class AttendancePdfPlugin extends Plugin {
                         new FrameLayout.LayoutParams(2, 2);
                 containerParams.leftMargin = -10;
                 containerParams.topMargin = -10;
-                printContainer.setLayoutParams(containerParams);
 
                 FrameLayout.LayoutParams webParams =
-                        new FrameLayout.LayoutParams(794, 2);
-                printContainer.addView(webView, webParams);
+                        new FrameLayout.LayoutParams(CONTENT_WIDTH, 2);
 
-                getActivity().addContentView(
-                        printContainer,
-                        containerParams
-                );
+                printContainer.addView(webView, webParams);
+                getActivity().addContentView(printContainer, containerParams);
 
                 webView.setBackgroundColor(Color.WHITE);
                 webView.getSettings().setJavaScriptEnabled(false);
@@ -94,18 +84,16 @@ public class AttendancePdfPlugin extends Plugin {
                 webView.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
 
                 webView.setWebViewClient(new WebViewClient() {
-                    private boolean started = false;
+                    private boolean finished = false;
 
                     @Override
                     public void onPageFinished(WebView view, String url) {
-                        if (started) {
-                            return;
-                        }
-                        started = true;
+                        if (finished) return;
+                        finished = true;
 
                         view.postDelayed(
-                                () -> startPrint(view, call, fileName),
-                                350
+                                () -> renderPdf(view, call, fileName),
+                                500
                         );
                     }
 
@@ -151,147 +139,84 @@ public class AttendancePdfPlugin extends Plugin {
         });
     }
 
-    private void startPrint(
+    private void renderPdf(
             WebView webView,
             PluginCall call,
             String fileName
     ) {
-        if (printWebView != webView) {
-            return;
-        }
-
-        final File tempFile = new File(
-                getContext().getCacheDir(),
-                "rossie_print_" + System.currentTimeMillis() + ".pdf"
-        );
+        if (printWebView != webView) return;
 
         try {
-            final PrintDocumentAdapter adapter =
-                    webView.createPrintDocumentAdapter(fileName);
-
-            final PrintAttributes attributes =
-                    new PrintAttributes.Builder()
-                            .setMediaSize(PrintAttributes.MediaSize.ISO_A4)
-                            .setResolution(
-                                    new PrintAttributes.Resolution(
-                                            "rossie_pdf",
-                                            "Rossie PDF",
-                                            600,
-                                            600
-                                    )
-                            )
-                            .setMinMargins(PrintAttributes.Margins.NO_MARGINS)
-                            .build();
-
-            adapter.onLayout(
-                    null,
-                    attributes,
-                    new CancellationSignal(),
-                    new PrintDocumentAdapter.LayoutResultCallback() {
-                        @Override
-                        public void onLayoutFinished(
-                                PrintDocumentInfo info,
-                                boolean changed
-                        ) {
-                            writePrintedPdf(
-                                    adapter,
-                                    attributes,
-                                    tempFile,
-                                    call,
-                                    fileName
-                            );
-                        }
-
-                        @Override
-                        public void onLayoutFailed(CharSequence error) {
-                            tempFile.delete();
-                            rejectAndCleanup(
-                                    call,
-                                    "Android could not lay out the PDF: " +
-                                            (error == null ? "unknown error" : error)
-                            );
-                        }
-
-                        @Override
-                        public void onLayoutCancelled() {
-                            tempFile.delete();
-                            rejectAndCleanup(call, "PDF layout was cancelled");
-                        }
-                    },
-                    new Bundle()
+            webView.measure(
+                    View.MeasureSpec.makeMeasureSpec(
+                            CONTENT_WIDTH,
+                            View.MeasureSpec.EXACTLY
+                    ),
+                    View.MeasureSpec.makeMeasureSpec(
+                            MAX_HEIGHT,
+                            View.MeasureSpec.AT_MOST
+                    )
             );
+
+            int measuredHeight = webView.getMeasuredHeight();
+            int contentHeight = Math.max(
+                    (int) Math.ceil(webView.getContentHeight() * webView.getScale()),
+                    measuredHeight
+            );
+
+            if (contentHeight <= 1) {
+                rejectAndCleanup(call, "PDF content has no measurable height");
+                return;
+            }
+
+            contentHeight = Math.min(contentHeight, MAX_HEIGHT);
+            webView.layout(0, 0, CONTENT_WIDTH, contentHeight);
+
+            PdfDocument document = new PdfDocument();
+            float scale = PAGE_WIDTH / (float) CONTENT_WIDTH;
+            int pageCount = (int) Math.ceil(
+                    contentHeight * scale / PAGE_HEIGHT
+            );
+
+            if (pageCount < 1) pageCount = 1;
+
+            for (int pageNumber = 0; pageNumber < pageCount; pageNumber++) {
+                PdfDocument.PageInfo pageInfo =
+                        new PdfDocument.PageInfo.Builder(
+                                PAGE_WIDTH,
+                                PAGE_HEIGHT,
+                                pageNumber + 1
+                        ).create();
+
+                PdfDocument.Page page = document.startPage(pageInfo);
+                Canvas canvas = page.getCanvas();
+
+                canvas.drawColor(Color.WHITE);
+                canvas.save();
+                canvas.scale(scale, scale);
+                canvas.translate(0, -(pageNumber * PAGE_HEIGHT) / scale);
+                webView.draw(canvas);
+                canvas.restore();
+
+                document.finishPage(page);
+            }
+
+            File tempFile = new File(
+                    getContext().getCacheDir(),
+                    "rossie_print_" + System.currentTimeMillis() + ".pdf"
+            );
+
+            try (FileOutputStream output = new FileOutputStream(tempFile)) {
+                document.writeTo(output);
+            } finally {
+                document.close();
+            }
+
+            saveTempPdfToDownloads(tempFile, fileName, call);
         } catch (Exception error) {
-            tempFile.delete();
             rejectAndCleanup(
                     call,
-                    "Unable to prepare PDF printer: " + safeMessage(error)
-            );
-        }
-    }
-
-    private void writePrintedPdf(
-            PrintDocumentAdapter adapter,
-            PrintAttributes attributes,
-            File tempFile,
-            PluginCall call,
-            String fileName
-    ) {
-        ParcelFileDescriptor pfd = null;
-
-        try {
-            pfd = ParcelFileDescriptor.open(
-                    tempFile,
-                    ParcelFileDescriptor.MODE_CREATE |
-                            ParcelFileDescriptor.MODE_TRUNCATE |
-                            ParcelFileDescriptor.MODE_WRITE_ONLY
-            );
-
-            final ParcelFileDescriptor writePfd = pfd;
-
-            adapter.onWrite(
-                    new PageRange[]{
-                            PageRange.ALL_PAGES
-                    },
-                    writePfd,
-                    new CancellationSignal(),
-                    new PrintDocumentAdapter.WriteResultCallback() {
-                        @Override
-                        public void onWriteFinished(
-                                PageRange[] pages
-                        ) {
-                            closeQuietly(writePfd);
-                            saveTempPdfToDownloads(
-                                    tempFile,
-                                    fileName,
-                                    call
-                            );
-                        }
-
-                        @Override
-                        public void onWriteFailed(CharSequence error) {
-                            closeQuietly(writePfd);
-                            tempFile.delete();
-                            rejectAndCleanup(
-                                    call,
-                                    "Android could not write the PDF: " +
-                                            (error == null ? "unknown error" : error)
-                            );
-                        }
-
-                        @Override
-                        public void onWriteCancelled() {
-                            closeQuietly(writePfd);
-                            tempFile.delete();
-                            rejectAndCleanup(call, "PDF writing was cancelled");
-                        }
-                    }
-            );
-        } catch (Exception error) {
-            closeQuietly(pfd);
-            tempFile.delete();
-            rejectAndCleanup(
-                    call,
-                    "Unable to write PDF: " + safeMessage(error)
+                    "Unable to render PDF: " + safeMessage(error)
             );
         }
     }
@@ -301,7 +226,7 @@ public class AttendancePdfPlugin extends Plugin {
             String fileName,
             PluginCall call
     ) {
-        ioExecutor.execute(() -> {
+        new Thread(() -> {
             try {
                 Uri uri = copyToDownloads(source, fileName);
                 source.delete();
@@ -322,7 +247,7 @@ public class AttendancePdfPlugin extends Plugin {
                                 safeMessage(error)
                 );
             }
-        });
+        }).start();
     }
 
     private Uri copyToDownloads(File source, String fileName) throws IOException {
@@ -359,6 +284,7 @@ public class AttendancePdfPlugin extends Plugin {
                 ContentValues done = new ContentValues();
                 done.put(MediaStore.Downloads.IS_PENDING, 0);
                 resolver.update(uri, done, null, null);
+
                 completed = true;
                 return uri;
             } finally {
@@ -400,11 +326,7 @@ public class AttendancePdfPlugin extends Plugin {
 
     private String sanitizeFileName(String value) {
         String name = value.replaceAll("[^a-zA-Z0-9._-]", "_");
-
-        if (!name.toLowerCase().endsWith(".pdf")) {
-            name += ".pdf";
-        }
-
+        if (!name.toLowerCase().endsWith(".pdf")) name += ".pdf";
         return name;
     }
 
@@ -422,27 +344,20 @@ public class AttendancePdfPlugin extends Plugin {
         });
     }
 
-    private void closeQuietly(ParcelFileDescriptor pfd) {
-        if (pfd == null) {
-            return;
-        }
-        try {
-            pfd.close();
-        } catch (IOException ignored) {
-        }
-    }
-
     private void cleanupWebViewNow() {
         if (printWebView != null) {
             try {
                 printWebView.stopLoading();
                 printWebView.setWebViewClient(null);
+
                 if (printContainer != null) {
                     printContainer.removeView(printWebView);
                 }
+
                 printWebView.destroy();
             } catch (Exception ignored) {
             }
+
             printWebView = null;
         }
 
@@ -458,7 +373,6 @@ public class AttendancePdfPlugin extends Plugin {
     @Override
     protected void handleOnDestroy() {
         cleanupWebViewNow();
-        ioExecutor.shutdownNow();
         super.handleOnDestroy();
     }
 }
