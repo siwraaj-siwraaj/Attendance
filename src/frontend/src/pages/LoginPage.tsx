@@ -9,6 +9,10 @@ import {
 import { useState } from "react";
 import { useAuth } from "../hooks/useAuth";
 
+function BadgeCheckIcon() {
+  return <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-orange-500/15 text-orange-300">✓</span>;
+}
+
 function PeopleIllustration() {
   return (
     <div className="relative mx-auto mb-4 h-[102px] w-[224px]" aria-hidden="true">
@@ -46,7 +50,7 @@ function PeopleIllustration() {
 }
 
 export default function LoginPage() {
-  const { login } = useAuth();
+  const { login, loginNotice } = useAuth();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
@@ -85,13 +89,23 @@ export default function LoginPage() {
             <h2 className="mb-1 text-xl font-bold text-white" style={{ fontFamily: "Figtree, sans-serif" }}>Welcome Back</h2>
             <p className="text-sm" style={{ color: "#9aa6ba" }}>Sign in to continue to Rossie</p>
           </div>
+          {loginNotice && <div className="mb-4 rounded-2xl border border-orange-400/25 bg-orange-500/10 p-4" role="status" data-ocid="login.request_sent">
+            <div className="flex items-start gap-3">
+              <BadgeCheckIcon />
+              <div>
+                <p className="text-sm font-bold text-orange-200">Login request sent to admin</p>
+                <p className="mt-1 text-xs text-orange-100/70">{loginNotice.name || "Labour"} • {loginNotice.phone}</p>
+                <p className="mt-2 text-xs text-white/55">Admin must accept your request before you can log in.</p>
+              </div>
+            </div>
+          </div>}
           {error && <div className="login-error mb-4" role="alert" data-ocid="login.error"><AlertCircle size={16} aria-hidden="true" /><span>{error}</span></div>}
 
           <div className="mb-4">
-            <label className="login-label" htmlFor="login-username" style={{ color: "#b3bdcc" }}>Username</label>
+            <label className="login-label" htmlFor="login-username" style={{ color: "#b3bdcc" }}>Mobile number / Admin username</label>
             <div className="relative">
               <UserRound size={19} strokeWidth={1.8} className="pointer-events-none absolute left-4 top-1/2 z-10 -translate-y-1/2 text-[#aab5c7]" aria-hidden="true" />
-              <input id="login-username" type="text" autoComplete="username" value={username} onChange={(e) => { setUsername(e.target.value); if (error) setError(null); }} className={`login-input h-12 ${error ? "login-input-error" : ""}`} style={{ color: "#ffffff", WebkitTextFillColor: "#ffffff", caretColor: "#f97316", paddingLeft: "3.25rem", paddingRight: "1rem" }} placeholder="Enter your username" data-ocid="login.username_input" />
+              <input id="login-username" type="text" autoComplete="username" value={username} onChange={(e) => { setUsername(e.target.value); if (error) setError(null); }} className={`login-input h-12 ${error ? "login-input-error" : ""}`} style={{ color: "#ffffff", WebkitTextFillColor: "#ffffff", caretColor: "#f97316", paddingLeft: "3.25rem", paddingRight: "1rem" }} placeholder="Enter mobile number" data-ocid="login.username_input" />
             </div>
           </div>
 
@@ -99,7 +113,7 @@ export default function LoginPage() {
             <label className="login-label" htmlFor="login-password" style={{ color: "#b3bdcc" }}>Password</label>
             <div className="relative">
               <LockKeyhole size={19} strokeWidth={1.8} className="pointer-events-none absolute left-4 top-1/2 z-10 -translate-y-1/2 text-[#aab5c7]" aria-hidden="true" />
-              <input id="login-password" type={showPassword ? "text" : "password"} autoComplete="current-password" value={password} onChange={(e) => { setPassword(e.target.value); if (error) setError(null); }} className={`login-input h-12 ${error ? "login-input-error" : ""}`} style={{ color: "#ffffff", WebkitTextFillColor: "#ffffff", caretColor: "#f97316", paddingLeft: "3.25rem", paddingRight: "3.25rem" }} placeholder="Enter your password" data-ocid="login.password_input" />
+              <input id="login-password" type={showPassword ? "text" : "password"} autoComplete="current-password" value={password} onChange={(e) => { setPassword(e.target.value); if (error) setError(null); }} className={`login-input h-12 ${error ? "login-input-error" : ""}`} style={{ color: "#ffffff", WebkitTextFillColor: "#ffffff", caretColor: "#f97316", paddingLeft: "3.25rem", paddingRight: "3.25rem" }} placeholder="123456 for labour users" data-ocid="login.password_input" />
               <button type="button" onClick={() => setShowPassword((v) => !v)} className="absolute right-3 top-1/2 z-10 -translate-y-1/2 rounded-md p-1.5 text-[#9aa6ba] transition-colors hover:text-white active:scale-95" aria-label={showPassword ? "Hide password" : "Show password"} data-ocid="login.toggle_password">
                 {showPassword ? <EyeOff size={18} aria-hidden="true" /> : <Eye size={18} aria-hidden="true" />}
               </button>
