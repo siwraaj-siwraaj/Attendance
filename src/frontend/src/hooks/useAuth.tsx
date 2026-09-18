@@ -38,6 +38,7 @@ interface AuthContextType {
   attendanceContractId: bigint | null;
   setAttendanceContractId: (id: bigint | null) => void;
   refreshAuth: () => void;
+  loginNotice: { type: "pending"; name: string; phone: string; message: string } | null;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -48,6 +49,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [status, setStatus] = useState<UserStatus | null>(null);
   const [role, setRole] = useState<Role | null>(null);
   const [roles, setRoles] = useState<Role[]>([]);
+  const [loginNotice, setLoginNotice] = useState<{ type: "pending"; name: string; phone: string; message: string } | null>(null);
   const [isInitializing, setIsInitializing] = useState(true);
   const [activeTab, setActiveTabState] = useState<Tab>("contracts");
   const [attendanceContractId, setAttendanceContractId] = useState<bigint | null>(null);
@@ -131,8 +133,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = useCallback(
     async (usernameInput: string, password: string, rememberMe = false): Promise<boolean> => {
       if (!actor) return false;
+      setLoginNotice(null);
       const result = await actor.login({ username: usernameInput, password });
       if (!result) return false;
+      if ((result as any).requestPending) {
+        setLoginNotice({
+          type: "pending",
+          name: String((result as any).name ?? ""),
+          phone: String((result as any).username ?? usernameInput).trim(),
+          message: String((result as any).message ?? "Login request sent to admin"),
+        });
+        return false;
+      }
 
       applyLoginResult(result);
 
@@ -170,6 +182,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = useCallback(() => {
     if (actor) void actor.logout();
+    setLoginNotice(null);
     localStorage.removeItem(REMEMBER_ME_KEY);
     void clearBiometricCredentials();
     setUsername(null);
@@ -227,6 +240,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     attendanceContractId,
     setAttendanceContractId,
     refreshAuth,
+    loginNotice,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
