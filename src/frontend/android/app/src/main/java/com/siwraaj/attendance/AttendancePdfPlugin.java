@@ -2,12 +2,14 @@ package com.siwraaj.attendance;
 
 import android.content.ContentResolver;
 import android.content.ContentValues;
+import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.CancellationSignal;
 import android.os.Environment;
 import android.os.ParcelFileDescriptor;
+import androidx.core.content.FileProvider;
 import android.provider.MediaStore;
 import android.print.PageRange;
 import android.print.PrintAttributes;
@@ -42,6 +44,44 @@ public class AttendancePdfPlugin extends Plugin {
     private WebView printWebView;
     private FrameLayout printContainer;
     private boolean finished;
+
+    @PluginMethod
+    public void openPdf(final PluginCall call) {
+        final String uriString = call.getString("uri");
+
+        if (uriString == null || uriString.trim().isEmpty()) {
+            call.reject("PDF URI is empty");
+            return;
+        }
+
+        try {
+            Uri uri = Uri.parse(uriString);
+
+            // Downloads/MediaStore returns a content:// URI on modern Android.
+            // For older Android versions, convert our file:// URI through the
+            // existing FileProvider before handing it to a PDF viewer.
+            if ("file".equalsIgnoreCase(uri.getScheme())) {
+                uri = FileProvider.getUriForFile(
+                        getContext(),
+                        getContext().getPackageName() + ".fileprovider",
+                        new File(uri.getPath())
+                );
+            }
+
+            Intent intent = new Intent(Intent.ACTION_VIEW);
+            intent.setDataAndType(uri, "application/pdf");
+            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+
+            getContext().startActivity(intent);
+            call.resolve();
+        } catch (Exception error) {
+            call.reject(
+                    "PDF was saved, but no PDF viewer could be opened: " +
+                            safeMessage(error)
+            );
+        }
+    }
 
     @PluginMethod
     public void savePdf(final PluginCall call) {
