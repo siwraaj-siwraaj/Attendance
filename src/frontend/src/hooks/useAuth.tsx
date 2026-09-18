@@ -40,7 +40,8 @@ interface AuthContextType {
   attendanceContractId: bigint | null;
   setAttendanceContractId: (id: bigint | null) => void;
   refreshAuth: () => void;
-  loginNotice: { type: "pending"; name: string; phone: string; message: string } | null;
+  loginNotice: { type: "pending"; name: string; phone: string; message: string; requestToken?: string } | null;
+  getRegistrationStatus: (username: string, requestToken: string) => Promise<any>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -52,7 +53,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [status, setStatus] = useState<UserStatus | null>(null);
   const [role, setRole] = useState<Role | null>(null);
   const [roles, setRoles] = useState<Role[]>([]);
-  const [loginNotice, setLoginNotice] = useState<{ type: "pending"; name: string; phone: string; message: string } | null>(null);
+  const [loginNotice, setLoginNotice] = useState<{ type: "pending"; name: string; phone: string; message: string; requestToken?: string } | null>(null);
   const [isInitializing, setIsInitializing] = useState(true);
   const [activeTab, setActiveTabState] = useState<Tab>("contracts");
   const [attendanceContractId, setAttendanceContractId] = useState<bigint | null>(null);
@@ -146,6 +147,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           name: String((result as any).name ?? ""),
           phone: String((result as any).username ?? usernameInput).trim(),
           message: String((result as any).message ?? "Login request sent to admin"),
+          requestToken: (result as any).requestToken,
         });
         return false;
       }
@@ -177,6 +179,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             name: String((result as any).name ?? ""),
             phone: String((result as any).username ?? usernameInput).trim(),
             message: String((result as any).message ?? "Login request sent to admin"),
+            requestToken: (result as any).requestToken,
           });
           return true;
         }
@@ -184,6 +187,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } catch {
         return false;
       }
+    },
+    [actor],
+  );
+
+  const getRegistrationStatus = useCallback(
+    async (usernameInput: string, requestToken: string) => {
+      if (!actor) return null;
+      return actor.getRegistrationStatus(usernameInput, requestToken);
     },
     [actor],
   );
@@ -272,6 +283,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setAttendanceContractId,
     refreshAuth,
     loginNotice,
+    getRegistrationStatus,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
