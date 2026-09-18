@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 interface BackButtonGuardProps {
   onReturnToSelection: () => void;
   enabled: boolean;
+  returnToContractsOnly?: boolean;
 }
 
 function closeOpenModal(): boolean {
@@ -32,6 +33,7 @@ function closeOpenModal(): boolean {
 export function BackButtonGuard({
   onReturnToSelection,
   enabled,
+  returnToContractsOnly = false,
 }: BackButtonGuardProps) {
   const [showDialog, setShowDialog] = useState(false);
 
@@ -40,14 +42,20 @@ export function BackButtonGuard({
 
     const handlePopState = (e: PopStateEvent) => {
       e.preventDefault();
+      if (returnToContractsOnly) {
+        onReturnToSelection();
+        return;
+      }
       setShowDialog(true);
       window.history.pushState(null, "", window.location.href);
     };
 
     const handleHardwareBack = async () => {
-      // Modal state always wins over page navigation. This makes Android's
-      // system Back button close the currently open dialog first.
       if (closeOpenModal()) return;
+      if (returnToContractsOnly) {
+        onReturnToSelection();
+        return;
+      }
       window.history.back();
     };
 
@@ -59,7 +67,7 @@ export function BackButtonGuard({
       window.removeEventListener("popstate", handlePopState);
       backListener.then((listener) => listener.remove()).catch(() => {});
     };
-  }, [enabled]);
+  }, [enabled, onReturnToSelection, returnToContractsOnly]);
 
   const handleConfirm = () => {
     setShowDialog(false);
