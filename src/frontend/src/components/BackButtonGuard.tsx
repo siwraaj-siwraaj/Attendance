@@ -7,27 +7,46 @@ interface BackButtonGuardProps {
   returnToContractsOnly?: boolean;
 }
 
-function closeOpenModal(): boolean {
-  const modal = document.querySelector<HTMLElement>(
-    '.fixed.inset-0[class*="bg-black/"], [data-slot="dialog-content"]',
+function closeOpenSurface(): boolean {
+  const sidebarClose = document.querySelector<HTMLElement>(
+    '[data-ocid="sidebar.close_button"], [aria-label="Close sidebar"]',
   );
-  if (!modal) return false;
-
-  const closeButton = modal.querySelector<HTMLElement>(
-    '[aria-label*="Close" i], [data-ocid$=".close"], [data-ocid$=".close_button"]',
-  );
-
-  if (closeButton) {
-    closeButton.click();
+  if (sidebarClose) {
+    sidebarClose.click();
     return true;
   }
 
-  // Radix dialogs also respond to Escape. This is a safe fallback when a
-  // custom modal has no explicit close control.
-  modal.dispatchEvent(
-    new KeyboardEvent("keydown", { key: "Escape", bubbles: true }),
+  const dialog = document.querySelector<HTMLElement>(
+    '[role="dialog"], [data-slot="dialog-content"]',
   );
-  return true;
+  if (dialog) {
+    const closeButton = dialog.querySelector<HTMLElement>(
+      '[aria-label*="Close" i], [data-ocid$=".close"], [data-ocid$=".close_button"]',
+    );
+    if (closeButton) {
+      closeButton.click();
+      return true;
+    }
+    dialog.dispatchEvent(
+      new KeyboardEvent("keydown", { key: "Escape", bubbles: true }),
+    );
+    return true;
+  }
+
+  const customModal = document.querySelector<HTMLElement>(
+    '.fixed.inset-0[class*="bg-black/"], [data-modal="true"], [data-pdf-preview]',
+  );
+  if (customModal) {
+    const closeButton = customModal.querySelector<HTMLElement>(
+      '[aria-label*="Close" i], [data-ocid$=".close"], [data-ocid$=".close_button"]',
+    );
+    if (closeButton) {
+      closeButton.click();
+      return true;
+    }
+  }
+
+  return false;
 }
 
 export function BackButtonGuard({
@@ -42,6 +61,10 @@ export function BackButtonGuard({
 
     const handlePopState = (e: PopStateEvent) => {
       e.preventDefault();
+      if (closeOpenSurface()) {
+        window.history.pushState(null, "", window.location.href);
+        return;
+      }
       if (returnToContractsOnly) {
         onReturnToSelection();
         return;
@@ -51,7 +74,7 @@ export function BackButtonGuard({
     };
 
     const handleHardwareBack = async () => {
-      if (closeOpenModal()) return;
+      if (closeOpenSurface()) return;
       if (returnToContractsOnly) {
         onReturnToSelection();
         return;
@@ -76,6 +99,7 @@ export function BackButtonGuard({
 
   const handleCancel = () => {
     setShowDialog(false);
+    window.history.pushState(null, "", window.location.href);
   };
 
   if (!showDialog) return null;
@@ -88,22 +112,8 @@ export function BackButtonGuard({
           Are you sure you want to sign out and return to the login screen?
         </p>
         <div className="flex gap-3">
-          <button
-            type="button"
-            onClick={handleCancel}
-            className="flex-1 py-2.5 rounded-xl border border-white/20 text-gray-300 text-sm font-medium hover:text-white hover:border-white/40 transition-colors"
-            data-ocid="back_button.cancel_button"
-          >
-            Stay
-          </button>
-          <button
-            type="button"
-            onClick={handleConfirm}
-            className="flex-1 py-2.5 rounded-xl btn-orange text-sm font-medium"
-            data-ocid="back_button.confirm_button"
-          >
-            Sign out
-          </button>
+          <button type="button" onClick={handleCancel} className="flex-1 py-2.5 rounded-xl border border-white/20 text-gray-300 text-sm font-medium hover:text-white hover:border-white/40 transition-colors" data-ocid="back_button.cancel_button">Stay</button>
+          <button type="button" onClick={handleConfirm} className="flex-1 py-2.5 rounded-xl btn-orange text-sm font-medium" data-ocid="back_button.confirm_button">Sign out</button>
         </div>
       </div>
     </div>
