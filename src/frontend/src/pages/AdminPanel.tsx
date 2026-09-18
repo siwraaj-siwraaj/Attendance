@@ -83,6 +83,23 @@ export default function AdminPanel() {
   const revokeMutation = useRevokeAccess();
   const notifiedPendingRef = useRef<Set<string> | null>(null);
 
+  if (!isAdmin) {
+    return (
+      <div className="flex-1 flex items-center justify-center p-6" data-ocid="admin_panel.denied">
+        <div className="text-center max-w-sm rounded-3xl p-8" style={{ background: "linear-gradient(145deg,rgba(255,255,255,.055),rgba(255,255,255,.018))", border: "1px solid rgba(249,115,22,.18)" }}>
+          <div className="mx-auto mb-5 w-14 h-14 rounded-2xl flex items-center justify-center" style={{ background: "rgba(249,115,22,.12)", border: "1px solid rgba(249,115,22,.25)" }}><ShieldCheck size={28} className="text-[#f97316]" /></div>
+          <h2 className="font-display text-xl font-bold text-white mb-2">Admin access required</h2>
+          <p className="text-sm" style={{ color: "#8892a4" }}>Only users with the Admin role can manage accounts and credentials.</p>
+        </div>
+      </div>
+    );
+  }
+
+  const users = usersQuery.data ?? [];
+  const pending = users.filter((u) => u.status === UserStatus.pending);
+  const approved = users.filter((u) => u.status === UserStatus.approved);
+  const revoked = users.filter((u) => u.status === UserStatus.revoked);
+
   useEffect(() => {
     void requestNotificationPermission();
   }, []);
@@ -103,23 +120,6 @@ export default function AdminPanel() {
     }
     notifiedPendingRef.current = current;
   }, [pending]);
-
-  if (!isAdmin) {
-    return (
-      <div className="flex-1 flex items-center justify-center p-6" data-ocid="admin_panel.denied">
-        <div className="text-center max-w-sm rounded-3xl p-8" style={{ background: "linear-gradient(145deg,rgba(255,255,255,.055),rgba(255,255,255,.018))", border: "1px solid rgba(249,115,22,.18)" }}>
-          <div className="mx-auto mb-5 w-14 h-14 rounded-2xl flex items-center justify-center" style={{ background: "rgba(249,115,22,.12)", border: "1px solid rgba(249,115,22,.25)" }}><ShieldCheck size={28} className="text-[#f97316]" /></div>
-          <h2 className="font-display text-xl font-bold text-white mb-2">Admin access required</h2>
-          <p className="text-sm" style={{ color: "#8892a4" }}>Only users with the Admin role can manage accounts and credentials.</p>
-        </div>
-      </div>
-    );
-  }
-
-  const users = usersQuery.data ?? [];
-  const pending = users.filter((u) => u.status === UserStatus.pending);
-  const approved = users.filter((u) => u.status === UserStatus.approved);
-  const revoked = users.filter((u) => u.status === UserStatus.revoked);
 
   const handleCreate = () => {
     const username = newUsername.trim();
