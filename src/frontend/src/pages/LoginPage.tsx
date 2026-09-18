@@ -50,7 +50,7 @@ function PeopleIllustration() {
 
 
 
-type LoginMode = "choice" | "admin" | "user" | "new-user";
+type LoginMode = "choice" | "admin" | "user" | "existing-user" | "new-user";
 
 export default function LoginPage() {
   const { login, registerUser, loginNotice } = useAuth();
@@ -141,12 +141,12 @@ export default function LoginPage() {
               <p className="mb-5 text-sm" style={{ color: "#9aa6ba" }}>Do you already have an account?</p>
               <div className="space-y-3">
                 <button type="button" onClick={() => resetForm("new-user")} className="w-full rounded-2xl border border-orange-400/20 bg-orange-500/10 p-4 text-left" data-ocid="login.new_user_button"><div className="flex items-center gap-3"><CheckCircle2 className="text-orange-300"/><span><span className="block text-sm font-bold text-white">New user</span><span className="block text-xs text-white/45 mt-0.5">Create your password and send an access request</span></span></div></button>
-                <button type="button" onClick={() => resetForm("user")} className="w-full rounded-2xl border border-white/10 bg-white/[0.035] p-4 text-left" data-ocid="login.existing_user_button"><div className="flex items-center gap-3"><LockKeyhole className="text-white/65"/><span><span className="block text-sm font-bold text-white">Already have an account</span><span className="block text-xs text-white/45 mt-0.5">Log in with your mobile number and password</span></span></div></button>
+                <button type="button" onClick={() => resetForm("existing-user")} className="w-full rounded-2xl border border-white/10 bg-white/[0.035] p-4 text-left" data-ocid="login.existing_user_button"><div className="flex items-center gap-3"><LockKeyhole className="text-white/65"/><span><span className="block text-sm font-bold text-white">Already have an account</span><span className="block text-xs text-white/45 mt-0.5">Log in with your mobile number and password</span></span></div></button>
               </div>
             </div>
           )}
 
-          {(mode === "admin" || (mode === "user" && username !== "")) && (
+          {(mode === "admin" || mode === "existing-user") && (
             <form onSubmit={handleLogin} className={mode === "admin" ? "" : "mt-5"} data-ocid="login.form">
               <div className="mb-4"><label className="login-label" htmlFor="login-username">{mode === "admin" ? "Admin username" : "Mobile number"}</label><div className="relative"><UserRound size={19} className="pointer-events-none absolute left-4 top-1/2 z-10 -translate-y-1/2 text-[#aab5c7]" /><input id="login-username" type="text" inputMode={mode === "admin" ? "text" : "tel"} autoComplete="username" value={username} onChange={e=>{setUsername(e.target.value);setError(null)}} className="login-input h-12" style={{color:"#fff",WebkitTextFillColor:"#fff",paddingLeft:"3.25rem"}} placeholder={mode === "admin" ? "Enter admin username" : "Enter registered mobile number"} data-ocid="login.username_input"/></div></div>
               <div className="mb-4"><label className="login-label" htmlFor="login-password">Password</label><div className="relative"><LockKeyhole size={19} className="pointer-events-none absolute left-4 top-1/2 z-10 -translate-y-1/2 text-[#aab5c7]" /><input id="login-password" type={showPassword?"text":"password"} autoComplete="current-password" value={password} onChange={e=>{setPassword(e.target.value);setError(null)}} className="login-input h-12" style={{color:"#fff",WebkitTextFillColor:"#fff",paddingLeft:"3.25rem",paddingRight:"3.25rem"}} placeholder="Enter your password" data-ocid="login.password_input"/><button type="button" onClick={()=>setShowPassword(v=>!v)} className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-[#9aa6ba]" aria-label={showPassword?"Hide password":"Show password"}>{showPassword?<EyeOff size={18}/>:<Eye size={18}/>}</button></div></div>
@@ -156,8 +156,8 @@ export default function LoginPage() {
             </form>
           )}
 
-          {mode === "user" && username === "" && (
-            <p className="mt-5 text-center text-[11px] text-white/35">Choose an option above to continue.</p>
+          {mode === "user" && (
+            <div className="mt-5 rounded-2xl border border-white/10 bg-white/[0.025] p-3 text-center text-[11px] text-white/40">Tap <span className="font-semibold text-white/60">Already have an account</span> to sign in.</div>
           )}
 
           {mode === "new-user" && (
