@@ -228,6 +228,7 @@ export default function PaymentsPage({
   const [showOverview, setShowOverview] = useState(false);
   const [showPaymentPdfPreview, setShowPaymentPdfPreview] = useState(false);
   const [paymentPreviewHTML, setPaymentPreviewHTML] = useState("");
+  const [paymentPreviewTitle, setPaymentPreviewTitle] = useState<"Payment Sheet" | "Attendance Sheet">("Payment Sheet");
   const paymentsScrollRef = useRef<HTMLDivElement>(null);
   const [overviewMode, setOverviewMode] = useState<"oneByOne" | "multiSelect">(
     "oneByOne",
@@ -471,7 +472,9 @@ export default function PaymentsPage({
         ${footerHTML}
       </div>`;
 
-    void openPrintWindow("Payment Sheet", bodyHTML);
+    setPaymentPreviewTitle("Payment Sheet");
+    setPaymentPreviewHTML(bodyHTML);
+    setShowPaymentPdfPreview(true);
   };
 
   const downloadAttendancePDF = () => {
@@ -622,7 +625,9 @@ export default function PaymentsPage({
         ${footerHTML}
       </div>`;
 
-    void openPrintWindow("Attendance Sheet", bodyHTML);
+    setPaymentPreviewTitle("Attendance Sheet");
+    setPaymentPreviewHTML(bodyHTML);
+    setShowPaymentPdfPreview(true);
   };
 
   const overviewData = paymentData || [];
@@ -1374,7 +1379,9 @@ export default function PaymentsPage({
       
       <div className="flex-1 overflow-auto p-2">
         <div
-          dangerouslySetInnerHTML={{ __html: paymentPreviewHTML }}
+          dangerouslySetInnerHTML={{
+            __html: `<style>${REPORT_CSS}</style>${paymentPreviewHTML}`,
+          }}
         />
       </div>
 
@@ -1390,12 +1397,7 @@ export default function PaymentsPage({
         <button
           type="button"
           onClick={async () => {
-  await openPrintWindow(
-  paymentPreviewHTML.includes("Attendance Report")
-    ? "Attendance Sheet"
-    : "Payment Sheet",
-  paymentPreviewHTML,
-);
+  await openPrintWindow(paymentPreviewTitle, paymentPreviewHTML);
   setShowPaymentPdfPreview(false);
 }}
           className="flex-1 rounded-lg bg-orange-500 px-4 py-3 font-semibold text-white"
