@@ -302,7 +302,7 @@ export default function Layout({ children }: LayoutProps) {
         ref={mainRef}
         onTouchStart={(e) => {
           const target = e.target as HTMLElement | null;
-          swipeBlocked.current = !!target?.closest('table, [role="dialog"], [data-pdf-preview], input, textarea, select, button, [data-no-tab-swipe]');
+          swipeBlocked.current = !!target?.closest('table, [role="dialog"], [data-pdf-preview], [data-ocid="admin_panel"], input, textarea, select, button, [data-no-tab-swipe]');
           swipeIntent.current = false;
           touchStartX.current = e.touches[0]?.clientX ?? null;
           touchStartY.current = e.touches[0]?.clientY ?? null;
