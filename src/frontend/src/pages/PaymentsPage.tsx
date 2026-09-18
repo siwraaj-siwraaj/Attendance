@@ -24,7 +24,10 @@ import { type AttendanceValue, getAttendanceDisplay } from "../types";
 import html2pdf from "html2pdf.js";
 import { registerPlugin } from "@capacitor/core";
 
-const AttendancePdf = registerPlugin<{ savePdf(options: { html: string; fileName: string }): Promise<{ uri: string; fileName: string }> }>("AttendancePdf");
+const AttendancePdf = registerPlugin<{
+  savePdf(options: { html: string; fileName: string }): Promise<{ uri: string; fileName: string }>;
+  openPdf(options: { uri: string }): Promise<void>;
+}>("AttendancePdf");
 
 function calculateLabourSalary(
   contract: any,
