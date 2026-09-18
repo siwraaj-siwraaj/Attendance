@@ -119,6 +119,7 @@ const REPORT_CSS = `
     .report-table thead { display: table-header-group; }
   }
 
+`;
 
 async function openPrintWindow(title: string, bodyHTML: string) {
   const wrapper = document.createElement("div");
