@@ -65,7 +65,7 @@ function statusLabel(status: UserStatus): string {
 }
 
 export default function AdminPanel() {
-  const { isAdmin, setActiveTab } = useAuth();
+  const { isAdmin, setActiveTab, username } = useAuth();
   const [section, setSection] = useState<"overview" | "users" | "create">("overview");
   const [newUsername, setNewUsername] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -254,7 +254,7 @@ export default function AdminPanel() {
                   type="button"
                   onClick={handleCleanupOrphans}
                   disabled={cleanupMutation.isPending}
-                  className="admin-action danger"
+                  className="flex items-center gap-2 rounded-xl border border-red-400/25 bg-red-500/10 px-3 py-2 text-xs font-bold text-red-200 transition-colors hover:bg-red-500/15 disabled:opacity-50"
                   data-ocid="admin_panel.cleanup_orphan_accounts"
                 >
                   <Trash2 size={14} />
@@ -263,7 +263,7 @@ export default function AdminPanel() {
               </div>
             )}
             {pending.length > 0 && <UserGroup title="Pending approval" count={pending.length} icon={<UserPlus size={16}/>} users={pending} renderExtra={(u,i)=><><RoleMultiSelect value={pendingRoles[u.username]??[Role.viewOnly]} onChange={roles=>setPendingRoles(p=>({...p,[u.username]:roles}))} dataOcid={`admin_panel.pending_role.${i}`}/><button type="button" onClick={()=>handleApprove(u)} disabled={approveMutation.isPending} className="admin-action primary" data-ocid={`admin_panel.approve_button.${i}`}><Check size={14}/>Approve</button></>} />}
-            {approved.length > 0 && <UserGroup title="Active accounts" count={approved.length} icon={<ShieldCheck size={16}/>} users={approved} renderExtra={(u,i)=><><RoleMultiSelect value={u.roles??[u.role]} onChange={roles=>setRoleMutation.mutate({username:u.username,role:roles})} dataOcid={`admin_panel.role_select.${i}`}/><div className="flex flex-wrap gap-2"><button type="button" onClick={()=>openEdit(u)} className="admin-action secondary" data-ocid={`admin_panel.edit_button.${i}`}><KeyRound size={14}/>Credentials</button><><button type="button" onClick={()=>revokeMutation.mutate(u.username)} disabled={revokeMutation.isPending} className="admin-action danger" data-ocid={`admin_panel.revoke_button.${i}`}><Trash2 size={14}/>Revoke</button><button type="button" onClick={()=>setDeleteUserTarget(u)} className="admin-action danger" data-ocid={`admin_panel.delete_user_button.${i}`}><Trash2 size={14}/>Delete account</button></></div></>} />}
+            {approved.length > 0 && <UserGroup title="Active accounts" count={approved.length} icon={<ShieldCheck size={16}/>} users={approved} renderExtra={(u,i)=><><RoleMultiSelect value={u.roles??[u.role]} onChange={roles=>setRoleMutation.mutate({username:u.username,role:roles})} dataOcid={`admin_panel.role_select.${i}`}/><div className="flex flex-wrap gap-2"><button type="button" onClick={()=>openEdit(u)} className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.045] px-3 py-2 text-[11px] font-bold text-white/85 transition-colors hover:bg-white/[0.08]" data-ocid={`admin_panel.edit_button.${i}`}><KeyRound size={14}/>Credentials</button>{u.username !== username && <><button type="button" onClick={()=>revokeMutation.mutate(u.username)} disabled={revokeMutation.isPending} className="flex items-center gap-1.5 rounded-xl border border-red-400/25 bg-red-500/10 px-3 py-2 text-[11px] font-bold text-red-200 transition-colors hover:bg-red-500/15 disabled:opacity-50" data-ocid={`admin_panel.revoke_button.${i}`}><Trash2 size={14}/>Revoke</button><button type="button" onClick={()=>setDeleteUserTarget(u)} className="flex items-center gap-1.5 rounded-xl border border-red-400/25 bg-red-500/10 px-3 py-2 text-[11px] font-bold text-red-200 transition-colors hover:bg-red-500/15" data-ocid={`admin_panel.delete_user_button.${i}`}><Trash2 size={14}/>Delete account</button></>}</div></>} />}
             {revoked.length > 0 && <UserGroup title="Revoked access" count={revoked.length} icon={<UserX size={16}/>} users={revoked} renderExtra={(u,i)=><><RoleMultiSelect value={u.roles??[u.role]} onChange={roles=>setRoleMutation.mutate({username:u.username,role:roles})} dataOcid={`admin_panel.revoked_role.${i}`}/><div className="flex flex-wrap gap-2"><button type="button" onClick={()=>openEdit(u)} className="admin-action secondary" data-ocid={`admin_panel.revoked_edit_button.${i}`}><KeyRound size={14}/>Credentials</button><button type="button" onClick={()=>approveMutation.mutate({username:u.username,role:u.roles??[u.role]})} disabled={approveMutation.isPending} className="admin-action primary" data-ocid={`admin_panel.restore_button.${i}`}><Check size={14}/>Restore</button></div></>} />}
           </div>
         )}
