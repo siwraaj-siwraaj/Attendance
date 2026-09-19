@@ -1231,10 +1231,18 @@ export default function AttendancePage({
             )}
 
             {/* Attendance Table */}
+            <input
+              type="search"
+              value={labourSearch}
+              onChange={(e) => setLabourSearch(e.target.value)}
+              placeholder="Search labours..."
+              className="mb-2 w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-xs text-white placeholder:text-white/30 outline-none focus:border-orange-500/50"
+              data-ocid="attendance.labour_search"
+            />
             <AttendanceTable
               contract={contract}
               workColumns={sortedWorkColumns}
-              labours={labours}
+              labours={visibleLabours}
               attendance={mergedAttendance}
               canEdit={canEdit}
               onChange={handleAttendanceChange}
