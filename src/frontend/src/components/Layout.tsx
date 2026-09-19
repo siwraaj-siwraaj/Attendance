@@ -1,6 +1,6 @@
 import { type ReactNode, useRef, useState } from "react";
 import * as XLSX from "xlsx";
-import { FileText, KeyRound, LogOut, Settings, ShieldCheck, Upload, UserCircle, X } from "lucide-react";
+import { ArrowLeft, FileText, KeyRound, LogOut, Menu, Settings, ShieldCheck, Upload, X, Filter, Home, ClipboardCheck, CreditCard, Wallet, Users, CheckSquare } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import { markBackupDownloaded, useAutoBackupReminder } from "../hooks/useAutoBackupReminder";
 import { useChangeOwnPassword, useExportData, useImportData } from "../hooks/useBackend";
@@ -22,6 +22,8 @@ export default function Layout({ children }: LayoutProps) {
   const importData = importDataMutation.mutateAsync;
   const changePasswordMutation = useChangeOwnPassword();
   const onTabChange = setActiveTab;
+  const isHome = activeTab === "home";
+  const titleMap: Record<string, string> = { home: "Home", contracts: "Contracts", attendance: "Attendance", payments: "Payments", advances: "Advances", labours: "Labours", settled: "Settled", admin: "Admin Panel" };
   const [changePasswordOpen, setChangePasswordOpen] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
@@ -206,27 +208,17 @@ export default function Layout({ children }: LayoutProps) {
     <div className="min-h-screen flex flex-col bg-[#0a0f1e]">
       <BackButtonGuard enabled={mode !== null} returnToContractsOnly={activeTab === "admin"} onReturnToSelection={() => setActiveTab("contracts")} />
 
-      <header
-        className={`${activeTab === "admin" ? "hidden" : ""} sticky top-0 z-40 border-b`}
-        style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
-      >
-        <div className="mx-auto flex min-h-[66px] max-w-[1120px] items-center justify-between gap-3 px-4 sm:px-6">
-          <div className="flex min-w-0 items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[13px] bg-gradient-to-br from-blue-500 to-blue-700 shadow-lg shadow-blue-500/20">
-              <span className="text-lg font-black text-white">R</span>
-            </div>
-            <div className="min-w-0">
-              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-blue-500">Rossie</p>
-              <h1 className="truncate text-[19px] font-extrabold leading-tight text-slate-900">{tabTitle[activeTab] || "Rossie"}</h1>
-            </div>
+      {!isHome && activeTab !== "admin" && (
+        <header className="rossie-app-header" style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}>
+          <div className="rossie-app-header-inner">
+            <button type="button" className="rossie-header-leading" onClick={() => setActiveTab("home")} aria-label="Back to home">
+              {activeTab === "contracts" ? <Menu size={20} /> : <ArrowLeft size={20} />}
+            </button>
+            <div className="rossie-header-title"><h1>{titleMap[activeTab]}</h1></div>
+            <button type="button" className="rossie-header-action" onClick={() => setMenuOpen(true)} aria-label="Open menu"><Filter size={18} /></button>
           </div>
-          <button type="button" onClick={() => setMenuOpen(true)} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full" aria-label={`Open profile for ${profileName}`} data-ocid="header.profile_button">
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-50">
-              <span className="text-sm font-extrabold text-blue-600">{profileInitial}</span>
-            </span>
-          </button>
-        </div>
-      </header>
+        </header>
+      )}
 
       {menuOpen && <>
         <div className="fixed inset-0 z-[60] bg-black/55 backdrop-blur-[2px]" onClick={() => setMenuOpen(false)} aria-hidden="true" />
@@ -385,7 +377,7 @@ export default function Layout({ children }: LayoutProps) {
         </div>
       </main>
 
-      {mode && activeTab !== "admin" && <BottomTabBar activeTab={activeTab} onTabChange={onTabChange} />}
+      {mode && activeTab !== "admin" && <BottomTabBar activeTab={activeTab} onTabChange={onTabChange} onMore={() => setMenuOpen(true)} />}
       <input ref={csvInputRef} type="file" accept=".csv" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) handleImportCSV(file); e.target.value = ""; }} />
     </div>
   );
