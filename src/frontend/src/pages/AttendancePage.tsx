@@ -346,6 +346,7 @@ export default function AttendancePage({
   const [showCompletion, setShowCompletion] = useState(false);
   const [showContractSwitcher, setShowContractSwitcher] = useState(false);
   const [contractSwitcherQuery, setContractSwitcherQuery] = useState("");
+  const [labourSearch, setLabourSearch] = useState("");
   const [localAttendanceOverrides, setLocalAttendanceOverrides] = useState<
     Record<string, AttendanceValue>
   >({});
@@ -475,6 +476,15 @@ export default function AttendancePage({
         labourIdsWithAttendance.has(String(l.id)),
     );
   }, [contract, contractAttendance, allLabours, activeLabours]);
+
+  const visibleLabours = useMemo(() => {
+    const query = labourSearch.trim().toLowerCase();
+    if (!query) return labours;
+    return labours.filter((labour) =>
+      labour.name.toLowerCase().includes(query) ||
+      labour.employeeId.toLowerCase().includes(query)
+    );
+  }, [labours, labourSearch]);
 
   // Reset all Quick Mark / column-picker state so it reflects the newly
   // selected contract. Mirrors the reset in handleSwitchContract and is
