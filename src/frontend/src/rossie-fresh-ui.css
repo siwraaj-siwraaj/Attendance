@@ -534,3 +534,10 @@ aside [class*="text-white"]{color:var(--r-text)!important;}
 .rossie-nav-icon{display:flex;align-items:center;justify-content:center;width:28px;height:26px;}
 .rossie-nav-label{font-size:8px;line-height:1;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
 @media(max-width:430px){.rossie-bottom-dock{height:68px;border-radius:21px;padding:5px}.rossie-nav-label{font-size:7.5px}.rossie-nav-icon{height:24px}}
+
+/* Root application shell */
+#root > .min-h-screen{
+  min-height:100dvh!important;
+  background:var(--r-bg)!important;
+  color:var(--r-text)!important;
+}
