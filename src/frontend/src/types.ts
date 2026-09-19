@@ -1,6 +1,7 @@
 export type AppMode = "view" | "edit" | null;
 
 export type Tab =
+  | "home"
   | "contracts"
   | "attendance"
   | "advances"
@@ -26,6 +27,7 @@ export interface UserInfo {
 }
 
 export const ALL_TABS: Tab[] = [
+  "home",
   "contracts",
   "attendance",
   "advances",
