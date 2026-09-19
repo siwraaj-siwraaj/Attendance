@@ -252,6 +252,11 @@ function ContractsPage({
             )}
           </button>
         </div>
+        <div className="rossie-filter-row" aria-label="Contract filters">
+          <button type="button" className="active">All ({activeContracts.length + contracts.filter((c:any)=>c.settled).length})</button>
+          <button type="button">Active ({activeContracts.length})</button>
+          <button type="button">Completed ({contracts.filter((c:any)=>c.settled).length})</button>
+        </div>
       </div>
 
       {/* Scrollable contract list */}
