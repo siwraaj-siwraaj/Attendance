@@ -5,6 +5,7 @@ import Layout from "./components/Layout";
 import PendingApproval from "./components/PendingApproval";
 import { AuthProvider, useAuth } from "./hooks/useAuth";
 import LoginPage from "./pages/LoginPage";
+import HomePage from "./pages/HomePage";
 import ContractsPage from "./pages/ContractsPage";
 import AttendancePage from "./pages/AttendancePage";
 import AdvancesPage from "./pages/AdvancesPage";
@@ -81,6 +82,7 @@ function AppContent() {
   if (!isAuthenticated) return <div className="fixed inset-0 flex items-center justify-center" style={{ background: "#0d1220" }}><div className="ambient-glow-1" aria-hidden="true" /><div className="ambient-glow-2" aria-hidden="true" /><LoginPage /></div>;
   if (status !== "approved") return <PendingApproval />;
   return <Layout><div className="flex flex-col h-full"><ErrorBoundary tabName={activeTab} key={activeTab}>
+    {activeTab === "home" && <HomePage key="home" />}
     {activeTab === "admin" && <AdminPanel key="admin" />}
     {mode === "view" && activeTab === "attendance" && <AttendancePage key="attendance" selectedContractId={selectedContractId ?? attendanceContractId} openColumnPickerFor={openColumnPickerFor} onContractChange={setAttendanceContractId} onColumnPickerOpened={() => setOpenColumnPickerFor(null)} />}
     {mode === "view" && activeTab === "contracts" && <ContractsPage key="contracts-view" onViewAttendance={handleViewAttendance} />}
