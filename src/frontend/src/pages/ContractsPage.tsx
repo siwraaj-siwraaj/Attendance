@@ -63,7 +63,7 @@ function ContractsPage({
     null,
   );
   const [searchQuery, setSearchQuery] = useState("");
-  const [viewMode, setViewMode] = useState<"list" | "card">("list");
+  const [viewMode, setViewMode] = useState<"list" | "card">("card");
 
   const getBedBase = () =>
     Number(localStorage.getItem("rossie_bed_base") || "11000") || 11000;
@@ -311,15 +311,7 @@ function ContractsPage({
                       />
                     </svg>
                   </div>
-                  <div className="flex items-center gap-3 mt-2">
-                    <span className="text-orange-400 font-bold text-lg">
-                      {fmt(c.contractAmount)}
-                    </span>
-                    <span className="text-gray-400 text-xs flex items-center gap-1">
-                      <Calendar className="w-3 h-3" />
-                      {fmtDate(c.createdAt)}
-                    </span>
-                  </div>
+                  <div className="rossie-contract-meta">\n                    <span>⌂ C-{String(c.id).slice(-3).padStart(3,"0")}</span>\n                    <span>▣ {fmtDate(c.createdAt)}</span>\n                    <span>{c.workColumns?.length ?? 0} columns</span>\n                  </div>\n                  <div className="rossie-contract-bottom">\n                    <strong>{fmt(c.contractAmount)}</strong>\n                    <span className={c.settled ? "completed" : "active"}>{c.settled ? "Completed" : "Active"}</span>\n                    <span className="rossie-contract-arrow">›</span>\n                  </div>
                   {isExpanded && (
                     <div
                       className="mt-3 pt-3 border-t border-white/10 space-y-3"
