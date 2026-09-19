@@ -266,7 +266,6 @@ function ContractsPage({
               data-ocid={`contracts.filter.${key}`}>{label}</button>
           ))}
         </div>
-      </div>
 
       {/* Scrollable contract list */}
       <div
