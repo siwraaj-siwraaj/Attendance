@@ -621,3 +621,118 @@
 .rossie-theme .border-orange-500\/50 { border-color:#b9d4f8 !important; }
 .rossie-theme .placeholder\:text-white\/30::placeholder { color:#91a0b5 !important; }
 .rossie-theme .focus\:border-orange-500\/60:focus { border-color:#75aaf4 !important; }
+
+/* Component-level Rossie conversion for every authenticated tab. */
+.rossie-theme [style*="#08111f"],
+.rossie-theme [style*="#0a1422"],
+.rossie-theme [style*="#080e18"],
+.rossie-theme [style*="#111a2c"],
+.rossie-theme [style*="#121b2e"],
+.rossie-theme [style*="#0b1220"],
+.rossie-theme [style*="#0f172a"],
+.rossie-theme [style*="#101827"],
+.rossie-theme [style*="#121a2a"] {
+  background: #fff !important;
+  color: #13233f !important;
+  border-color: #dfe8f3 !important;
+}
+.rossie-theme [style*="linear-gradient(135deg,#121b2e"],
+.rossie-theme [style*="linear-gradient(145deg,rgba(255,255,255,.045)"],
+.rossie-theme [style*="linear-gradient(145deg,rgba(255,255,255,.055)"],
+.rossie-theme [style*="radial-gradient(circle at 100% 0%,rgba(249,115,22"] {
+  background: linear-gradient(145deg,#ffffff,#f5f9ff) !important;
+  border-color: #dce8f5 !important;
+  color: #13233f !important;
+}
+.rossie-theme .bg-white\/\[0\.025\],
+.rossie-theme .bg-white\/\[0\.045\],
+.rossie-theme .bg-white\/\[0\.055\],
+.rossie-theme .bg-white\/\[0\.08\],
+.rossie-theme .bg-black\/20,
+.rossie-theme .bg-black\/10 {
+  background: #f7faff !important;
+  border-color: #dfe8f3 !important;
+}
+.rossie-theme .border-white\/5,
+.rossie-theme .border-white\/8,
+.rossie-theme .border-white\/10,
+.rossie-theme .border-white\/15 {
+  border-color: #dfe8f3 !important;
+}
+.rossie-theme .text-slate-300,
+.rossie-theme .text-slate-400,
+.rossie-theme .text-slate-500,
+.rossie-theme .text-slate-600,
+.rossie-theme .text-white\/35,
+.rossie-theme .text-white\/40,
+.rossie-theme .text-white\/50,
+.rossie-theme .text-white\/60,
+.rossie-theme .text-white\/70,
+.rossie-theme .text-white\/80,
+.rossie-theme .text-white\/85 {
+  color: #70819a !important;
+}
+.rossie-theme .text-orange-200,
+.rossie-theme .text-orange-300,
+.rossie-theme .text-orange-400,
+.rossie-theme .text-orange-500,
+.rossie-theme .text-\[\#fb923c\],
+.rossie-theme .text-\[\#f97316\] {
+  color: #2f80ed !important;
+}
+.rossie-theme .bg-orange-500,
+.rossie-theme .bg-orange-600,
+.rossie-theme .btn-orange {
+  background: linear-gradient(135deg,#3f8df3,#2d74df) !important;
+  color: #fff !important;
+}
+.rossie-theme .bg-emerald-500,
+.rossie-theme .bg-emerald-600 { color:#fff !important; }
+.rossie-theme .bg-blue-500,
+.rossie-theme .bg-blue-600,
+.rossie-theme .bg-blue-700 {
+  background: linear-gradient(135deg,#3f8df3,#2d74df) !important;
+  color:#fff !important;
+}
+.rossie-theme .bg-amber-500,
+.rossie-theme .bg-amber-600 {
+  color:#fff !important;
+}
+.rossie-theme .login-input {
+  background:#fff !important;
+  border-color:#d8e2ee !important;
+  color:#172943 !important;
+}
+.rossie-theme .login-label { color:#40516c !important; }
+.rossie-theme .login-error { background:#fff3f5 !important; border-color:#f3c9cf !important; color:#c33d4f !important; }
+.rossie-theme .admin-action {
+  background:#fff !important;
+  border-color:#dfe8f3 !important;
+  color:#40516c !important;
+}
+.rossie-theme .admin-action.primary {
+  background:linear-gradient(135deg,#3f8df3,#2d74df) !important;
+  border-color:transparent !important;
+  color:#fff !important;
+}
+.rossie-theme aside {
+  background:linear-gradient(180deg,#ffffff 0%,#f5f9ff 100%) !important;
+  border-color:#dce7f3 !important;
+  box-shadow:-18px 0 45px rgba(44,82,130,.14) !important;
+  color:#13233f !important;
+}
+.rossie-theme aside .text-white { color:#13233f !important; }
+.rossie-theme aside .text-slate-500,
+.rossie-theme aside .text-slate-400 { color:#7b8ba0 !important; }
+.rossie-theme aside .bg-white\/\[0\.025\],
+.rossie-theme aside .bg-white\/\[0\.045\] { background:#f7faff !important; }
+.rossie-theme .fixed.inset-0.z-\[60\] { background:rgba(22,42,68,.22) !important; }
+.rossie-theme h1,
+.rossie-theme h2,
+.rossie-theme h3,
+.rossie-theme h4 { color:#13233f; }
+.rossie-theme table thead { background:#f3f7fc !important; }
+.rossie-theme table th { color:#65758d !important; border-color:#e1e9f2 !important; }
+.rossie-theme table td { color:#273954 !important; border-color:#e8eef5 !important; }
+.rossie-theme ::-webkit-scrollbar { width:5px; height:5px; }
+.rossie-theme ::-webkit-scrollbar-thumb { background:#c4d3e4; border-radius:10px; }
