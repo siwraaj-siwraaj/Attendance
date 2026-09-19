@@ -1,6 +1,6 @@
 import { type ReactNode, useRef, useState } from "react";
 import * as XLSX from "xlsx";
-import { FileText, KeyRound, LogOut, Settings, ShieldCheck, Upload, UserCircle, X } from "lucide-react";
+import { ArrowLeft, FileText, KeyRound, LogOut, Menu, Settings, ShieldCheck, Upload, X, Filter, Home, ClipboardCheck, CreditCard, Wallet, Users, CheckSquare } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import { markBackupDownloaded, useAutoBackupReminder } from "../hooks/useAutoBackupReminder";
 import { useChangeOwnPassword, useExportData, useImportData } from "../hooks/useBackend";
@@ -22,6 +22,8 @@ export default function Layout({ children }: LayoutProps) {
   const importData = importDataMutation.mutateAsync;
   const changePasswordMutation = useChangeOwnPassword();
   const onTabChange = setActiveTab;
+  const isHome = activeTab === "home";
+  const titleMap: Record<string, string> = { home: "Home", contracts: "Contracts", attendance: "Attendance", payments: "Payments", advances: "Advances", labours: "Labours", settled: "Settled", admin: "Admin Panel" };
   const [changePasswordOpen, setChangePasswordOpen] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
@@ -206,27 +208,17 @@ export default function Layout({ children }: LayoutProps) {
     <div className="min-h-screen flex flex-col bg-[#0a0f1e]">
       <BackButtonGuard enabled={mode !== null} returnToContractsOnly={activeTab === "admin"} onReturnToSelection={() => setActiveTab("contracts")} />
 
-      <header
-        className={`${activeTab === "admin" ? "hidden" : ""} sticky top-0 z-40 border-b`}
-        style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
-      >
-        <div className="mx-auto flex min-h-[66px] max-w-[1120px] items-center justify-between gap-3 px-4 sm:px-6">
-          <div className="flex min-w-0 items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[13px] bg-gradient-to-br from-blue-500 to-blue-700 shadow-lg shadow-blue-500/20">
-              <span className="text-lg font-black text-white">R</span>
-            </div>
-            <div className="min-w-0">
-              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-blue-500">Rossie</p>
-              <h1 className="truncate text-[19px] font-extrabold leading-tight text-slate-900">{tabTitle[activeTab] || "Rossie"}</h1>
-            </div>
+      {!isHome && activeTab !== "admin" && (
+        <header className="rossie-app-header" style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}>
+          <div className="rossie-app-header-inner">
+            <button type="button" className="rossie-header-leading" onClick={() => setActiveTab("home")} aria-label="Back to home">
+              {activeTab === "contracts" ? <Menu size={20} /> : <ArrowLeft size={20} />}
+            </button>
+            <div className="rossie-header-title"><h1>{titleMap[activeTab]}</h1></div>
+            <button type="button" className="rossie-header-action" onClick={() => setMenuOpen(true)} aria-label="Open menu"><Filter size={18} /></button>
           </div>
-          <button type="button" onClick={() => setMenuOpen(true)} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full" aria-label={`Open profile for ${profileName}`} data-ocid="header.profile_button">
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-50">
-              <span className="text-sm font-extrabold text-blue-600">{profileInitial}</span>
-            </span>
-          </button>
-        </div>
-      </header>
+        </header>
+      )}
 
       {menuOpen && <>
         <div className="fixed inset-0 z-[60] bg-black/55 backdrop-blur-[2px]" onClick={() => setMenuOpen(false)} aria-hidden="true" />
@@ -248,13 +240,25 @@ export default function Layout({ children }: LayoutProps) {
           </div>
 
           <div className="flex-1 overflow-y-auto px-2.5 py-3">
-            <p className="px-2.5 pb-2 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">Account</p>
-            {mode === "view" ? (
-              <div className="space-y-2">
-                <div className="rounded-xl border border-white/8 bg-white/[0.025] px-3 py-3">
-                  <p className="text-[10px] uppercase tracking-wider text-slate-500">Mobile number</p>
-                  <p className="mt-1 text-sm font-semibold text-white">{username || "Not available"}</p>
-                </div>
+            <p className="px-2.5 pb-2 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">Navigate</p>
+            <div className="space-y-1">
+              {[
+                ["home","Home",Home],["contracts","Contracts",FileText],["attendance","Attendance",ClipboardCheck],["payments","Payments",CreditCard],["advances","Advances",Wallet],["labours","Labours",Users],["settled","Settled",CheckSquare]
+              ].map(([key,label,Icon]: any) => (
+                <button key={key} type="button" onClick={() => { setActiveTab(key as any); setMenuOpen(false); }} className="rossie-menu-link"><Icon size={18}/><span>{label}</span></button>
+              ))}
+            </div>
+            <div className="my-3 border-t border-white/10" />
+            <div className="space-y-1">
+              <button type="button" onClick={handleAdminPanel} className="rossie-menu-link"><ShieldCheck size={18}/><span>{activeTab === "admin" ? "Close Admin Panel" : "Admin Panel"}</span></button>
+              <button type="button" onClick={handleExportCSV} className="rossie-menu-link"><FileText size={18}/><span>Export CSV</span></button>
+              <button type="button" onClick={handleExportExcel} className="rossie-menu-link"><FileText size={18}/><span>Export Excel</span></button>
+              <button type="button" onClick={() => { setMenuOpen(false); csvInputRef.current?.click(); }} className="rossie-menu-link"><Upload size={18}/><span>Import CSV</span></button>
+            </div>
+            <div className="my-3 border-t border-white/10" />
+            <div className="flex items-center gap-2 px-2.5 pb-2"><Settings size={15} className="text-orange-400" /><p className="text-[10px] font-bold uppercase tracking-[0.18em] text-orange-300/80">Settings</p></div>
+            <SettingsPanel onClose={() => setMenuOpen(false)} />
+          </div>
                 <div className="rounded-xl border border-white/8 bg-white/[0.025] px-3 py-3">
                   <p className="text-[10px] uppercase tracking-wider text-slate-500">Gender</p>
                   <p className="mt-1 text-sm font-semibold text-white">Not set</p>
@@ -385,7 +389,7 @@ export default function Layout({ children }: LayoutProps) {
         </div>
       </main>
 
-      {mode && activeTab !== "admin" && <BottomTabBar activeTab={activeTab} onTabChange={onTabChange} />}
+      {mode && activeTab !== "admin" && <BottomTabBar activeTab={activeTab} onTabChange={onTabChange} onMore={() => setMenuOpen(true)} />}
       <input ref={csvInputRef} type="file" accept=".csv" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) handleImportCSV(file); e.target.value = ""; }} />
     </div>
   );
