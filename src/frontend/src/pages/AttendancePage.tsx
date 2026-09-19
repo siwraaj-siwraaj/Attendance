@@ -778,155 +778,36 @@ export default function AttendancePage({
       className="flex flex-col h-full overflow-hidden"
       data-ocid="attendance.page"
     >
-      {/* Frozen Header Banner */}
-      <div
-        className="shrink-0 sticky top-0 z-10 border-b border-white/10"
-        style={{ background: "#0a0f1e" }}
-      >
-        {/* Banner from uploaded design */}
-        <div
-          className="relative overflow-hidden"
-          style={{
-            background:
-              "linear-gradient(135deg, #0a0f1e 0%, #1a0f00 50%, #0a1a10 100%)",
-            minHeight: "80px",
-          }}
-        >
-          {/* Gradient overlay */}
-          <div
-            className="absolute inset-0"
-            style={{
-              background:
-                "linear-gradient(135deg, rgba(10,15,30,0.85) 0%, rgba(249,115,22,0.15) 60%, rgba(10,15,30,0.9) 100%)",
-            }}
-          />
-          <div className="relative z-10 px-4 pt-3 pb-2 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div
-                className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-                style={{
-                  background: "linear-gradient(135deg, #f97316, #ea580c)",
-                  boxShadow: "0 4px 16px rgba(249,115,22,0.5)",
-                }}
-              >
-                <svg
-                  width="22"
-                  height="22"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="white"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden="true"
-                >
-                  <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
-                  <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
-                  <line x1="9" y1="12" x2="15" y2="12" />
-                  <line x1="9" y1="16" x2="13" y2="16" />
-                </svg>
-              </div>
-              <div>
-                <h1 className="text-xl font-black text-white leading-tight tracking-tight">
-                  Attendance
-                </h1>
-                <p className="text-xs text-white/50">Track daily attendance</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Contract selector inside banner */}
-          <div className="relative z-10 px-4 pb-3">
-            <select
-              id="contract-select"
-              value={
-                effectiveContractId !== null ? String(effectiveContractId) : ""
-              }
-              onChange={(e) => {
-                const val = e.target.value;
-                handleContractSelect(val ? BigInt(val) : null);
-              }}
-              className="w-full px-3 py-2 rounded-xl text-white text-sm focus:outline-none transition-all"
-              style={{
-                background: "rgba(5,10,20,0.85)",
-                border: "1px solid rgba(249,115,22,0.4)",
-              }}
-              data-ocid="attendance.contract_select"
-            >
-              <option value="" className="bg-[#0a0f1e]">
-                -- Choose a contract --
-              </option>
-              {contracts
-                .filter((c) => !c.settled)
-                .map((c) => (
-                  <option
-                    key={String(c.id)}
-                    value={String(c.id)}
-                    className="bg-[#0a0f1e]"
-                  >
-                    {c.name}
-                  </option>
-                ))}
-            </select>
-          </div>
+      {/* Fresh reference header */}
+      <div className="rossie-attendance-header">
+        <div className="rossie-page-toolbar">
+          <button type="button" className="rossie-page-back" onClick={() => window.history.back()} aria-label="Back">‹</button>
+          <h1>Attendance</h1>
+          <button type="button" className="rossie-page-toolbar-icon" aria-label="Calendar">⌗</button>
         </div>
-
-        {/* Pool amount cards — only when a contract is selected */}
+        <div className="rossie-date-picker">
+          <button type="button" aria-label="Previous day">‹</button>
+          <span>▣ &nbsp; {new Intl.DateTimeFormat("en-IN",{day:"2-digit",month:"short",year:"numeric"}).format(new Date())}</span>
+          <button type="button" aria-label="Next day">›</button>
+        </div>
         {contract && (
-          <div className="px-4 py-2 grid grid-cols-3 gap-2">
-            <div
-              className="rounded-xl p-2.5 text-center"
-              style={{
-                background: "rgba(20,184,166,0.12)",
-                border: "1px solid rgba(20,184,166,0.3)",
-              }}
-            >
-              <p className="text-[9px] font-bold text-teal-400 uppercase tracking-widest mb-0.5">
-                Mesh Pool
-              </p>
-              <p className="text-sm font-black text-teal-300">
-                ₹
-                {(contract.meshAmount ?? 0).toLocaleString("en-IN", {
-                  maximumFractionDigits: 0,
-                })}
-              </p>
-            </div>
-            <div
-              className="rounded-xl p-2.5 text-center"
-              style={{
-                background: "rgba(249,115,22,0.12)",
-                border: "1px solid rgba(249,115,22,0.3)",
-              }}
-            >
-              <p className="text-[9px] font-bold text-orange-400 uppercase tracking-widest mb-0.5">
-                Bed Pool
-              </p>
-              <p className="text-sm font-black text-orange-300">
-                ₹
-                {(contract.bedAmount ?? 0).toLocaleString("en-IN", {
-                  maximumFractionDigits: 0,
-                })}
-              </p>
-            </div>
-            <div
-              className="rounded-xl p-2.5 text-center"
-              style={{
-                background: "rgba(168,85,247,0.12)",
-                border: "1px solid rgba(168,85,247,0.3)",
-              }}
-            >
-              <p className="text-[9px] font-bold text-purple-400 uppercase tracking-widest mb-0.5">
-                Paper Pool
-              </p>
-              <p className="text-sm font-black text-purple-300">
-                ₹
-                {(contract.paperAmount ?? 0).toLocaleString("en-IN", {
-                  maximumFractionDigits: 0,
-                })}
-              </p>
-            </div>
+          <div className="rossie-attendance-metrics">
+            <div><span>Total</span><strong>{labours.length}</strong></div>
+            <div><span>Present</span><strong>{labours.filter(l => mergedAttendance.some(r => r.labourId === l.id && (r.value.__kind__ === "present" || (r.value.__kind__ === "partial" && r.value.partial > 0)))).length}</strong></div>
+            <div><span>Absent</span><strong>{labours.filter(l => !mergedAttendance.some(r => r.labourId === l.id && (r.value.__kind__ === "present" || (r.value.__kind__ === "partial" && r.value.partial > 0)))).length}</strong></div>
           </div>
         )}
+        {contract && (
+          <div className="rossie-attendance-search">
+            <span>⌕</span><input placeholder="Search labours..." aria-label="Search labours" />
+          </div>
+        )}
+        <div className="rossie-attendance-contract">
+          <select id="contract-select" value={effectiveContractId !== null ? String(effectiveContractId) : ""} onChange={(e) => handleContractSelect(e.target.value ? BigInt(e.target.value) : null)} data-ocid="attendance.contract_select">
+            <option value="">Select contract</option>
+            {contracts.filter((c) => !c.settled).map((c) => <option key={String(c.id)} value={String(c.id)}>{c.name}</option>)}
+          </select>
+        </div>
       </div>
 
       {/* Scrollable Content */}
