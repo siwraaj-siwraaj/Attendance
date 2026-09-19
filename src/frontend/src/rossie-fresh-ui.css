@@ -655,3 +655,13 @@ main[data-active-tab="admin"] [data-ocid="admin_panel"]>div:first-child{display:
 main[data-active-tab="admin"] [data-ocid="admin_panel"]>div:nth-child(2){padding:10px 8px 100px!important;}
 main[data-active-tab="admin"] [data-ocid="admin_panel"] section{border-radius:15px!important;background:#fff!important;border-color:#dce6f2!important;box-shadow:0 4px 14px rgba(28,62,103,.045)!important;}
 main[data-active-tab="admin"] [data-ocid="admin_panel"] h1,main[data-active-tab="admin"] [data-ocid="admin_panel"] h2{color:#17345f!important;}
+
+main[data-active-tab="contracts"] [data-ocid="contracts.view_toggle"]{display:none!important;}
+.rossie-contract-meta{display:flex;gap:8px;align-items:center;margin-top:6px;color:#7d91aa;font-size:8px!important;white-space:nowrap;overflow:hidden;}
+.rossie-contract-meta span{overflow:hidden;text-overflow:ellipsis;}
+.rossie-contract-bottom{display:flex;align-items:center;gap:8px;margin-top:8px;}
+.rossie-contract-bottom strong{font-size:14px;color:#17345f;}
+.rossie-contract-bottom .active,.rossie-contract-bottom .completed{font-size:7px;font-weight:800;padding:4px 7px;border-radius:9px;margin-left:auto;}
+.rossie-contract-bottom .active{background:#d9f7ec;color:#158665;}
+.rossie-contract-bottom .completed{background:#e9edff;color:#5b65bd;}
+.rossie-contract-arrow{width:24px;height:24px;border-radius:8px;background:#f4f8fd;color:#6e86a5;display:flex;align-items:center;justify-content:center;font-size:16px;}
