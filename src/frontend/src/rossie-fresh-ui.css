@@ -400,3 +400,97 @@ aside [class*="text-white"]{color:var(--r-text)!important;}
 
 /* Safe-area */
 .pb-safe{padding-bottom:max(1.25rem,env(safe-area-inset-bottom));}
+
+/* =========================================================
+   FRESH LOGIN COMPOSITION
+   ========================================================= */
+.rossie-login-page{
+  min-height:100vh;
+  min-height:100dvh;
+  width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  position:relative;
+  overflow:hidden;
+  padding:24px;
+  background:#f4f8fd;
+}
+.rossie-login-art{position:absolute;inset:0;pointer-events:none;overflow:hidden;}
+.rossie-login-orb{position:absolute;border-radius:999px;filter:blur(1px);}
+.rossie-login-orb-a{width:520px;height:520px;right:-220px;top:-230px;background:radial-gradient(circle,#dbeaff 0%,rgba(219,234,255,.35) 44%,transparent 70%);}
+.rossie-login-orb-b{width:460px;height:460px;left:-250px;bottom:-230px;background:radial-gradient(circle,#ffe6ca 0%,rgba(255,230,202,.30) 45%,transparent 70%);}
+.rossie-login-wave{
+  position:absolute;left:-5%;right:-5%;bottom:-110px;height:220px;
+  border-radius:50% 50% 0 0/100% 100% 0 0;
+  background:linear-gradient(180deg,rgba(220,235,255,.72),rgba(242,247,253,0));
+  transform:rotate(-2deg);
+}
+.rossie-login-layout{
+  position:relative;z-index:2;width:min(100%,900px);
+  display:grid;grid-template-columns:1fr 1.08fr;gap:34px;align-items:center;
+}
+.rossie-login-brand{padding:20px 12px 20px 18px;}
+.rossie-logo-mark{
+  width:64px;height:64px;border-radius:20px;display:flex;align-items:center;justify-content:center;
+  color:#fff;background:linear-gradient(145deg,#ff9b3d,#ff7620);
+  box-shadow:0 14px 30px rgba(255,133,43,.22);margin-bottom:18px;
+}
+.rossie-brand-name{font-size:48px;line-height:1;font-weight:900;letter-spacing:-.055em;color:var(--r-navy);}
+.rossie-brand-subtitle{margin-top:8px;font-size:14px;font-weight:700;color:#597397;letter-spacing:.02em;}
+.rossie-login-tagline{
+  margin-top:54px;padding-left:2px;font-size:16px;line-height:1.65;font-weight:600;color:#60799b;
+}
+.rossie-auth-card{
+  background:rgba(255,255,255,.97);border:1px solid #d9e5f2;border-radius:30px;
+  box-shadow:0 24px 70px rgba(35,70,111,.13);padding:34px;
+}
+.rossie-auth-heading{margin-bottom:25px;}
+.rossie-eyebrow{display:block;margin-bottom:8px;color:var(--r-blue);font-size:10px;font-weight:850;letter-spacing:.16em;}
+.rossie-auth-heading h1{margin:0!important;font-size:30px!important;color:var(--r-navy)!important;font-weight:850!important;}
+.rossie-auth-heading p{margin:7px 0 0;color:#7890ae;font-size:13px;line-height:1.55;}
+.rossie-field{display:block;margin-bottom:16px;}
+.rossie-field>span{display:block;margin:0 0 7px 2px;font-size:11px;font-weight:750;color:#5d7596;}
+.rossie-input-wrap{
+  min-height:52px;display:flex;align-items:center;gap:11px;padding:0 14px;
+  border:1px solid #d3e0ee;border-radius:15px;background:#fff;
+  transition:border-color .18s ease,box-shadow .18s ease;
+}
+.rossie-input-wrap:focus-within{border-color:#79aaf3;box-shadow:0 0 0 4px rgba(57,127,241,.09);}
+.rossie-input-wrap>svg{flex:none;color:#7890ad;}
+.rossie-input-wrap input{min-height:48px!important;flex:1;border:0!important;box-shadow:none!important;outline:0!important;padding:0!important;background:transparent!important;color:var(--r-navy)!important;-webkit-text-fill-color:var(--r-navy)!important;font-size:13px;}
+.rossie-input-action{display:flex;align-items:center;justify-content:center;width:32px;height:32px;border:0;background:transparent;color:#7f92ac;cursor:pointer;}
+.rossie-remember{display:flex;align-items:center;gap:9px;margin:4px 0 19px;color:#587090;font-size:12px;font-weight:650;}
+.rossie-remember input{width:18px;height:18px;accent-color:var(--r-blue);}
+.rossie-primary-action{
+  width:100%;min-height:52px;border:0;border-radius:16px;
+  display:flex;align-items:center;justify-content:center;gap:9px;
+  color:#fff;background:linear-gradient(135deg,#3c88f6,#2369dc);
+  font-size:13px;font-weight:850;text-transform:uppercase;letter-spacing:.025em;
+  box-shadow:0 9px 22px rgba(57,127,241,.22);cursor:pointer;
+}
+.rossie-primary-action:disabled{opacity:.62;cursor:default;}
+.rossie-primary-action span{font-size:20px;line-height:1;}
+.rossie-auth-switch{margin-top:20px;padding-top:18px;border-top:1px solid #e5edf6;text-align:center;color:#8293aa;font-size:12px;}
+.rossie-auth-switch button,.rossie-back-link{border:0;background:transparent;color:var(--r-blue);font-weight:800;cursor:pointer;}
+.rossie-back-link{display:flex;align-items:center;gap:6px;margin-bottom:22px;padding:0;font-size:12px;}
+.rossie-login-notice{display:flex;gap:10px;padding:12px;border-radius:14px;border:1px solid;margin-bottom:18px;font-size:12px;}
+.rossie-login-notice.approved{background:#eaf8f2;border-color:#c4eadc;color:#178366;}
+.rossie-login-notice.pending{background:#fff4e5;border-color:#ffdfb4;color:#a7670e;}
+.rossie-login-notice.revoked{background:#fff0f2;border-color:#ffd1d7;color:#c23e4d;}
+.rossie-login-notice strong,.rossie-login-notice span,.rossie-login-notice small{display:block;}
+.rossie-login-notice strong{font-size:12px;}
+.rossie-login-notice span{margin-top:2px;opacity:.8;}
+.rossie-login-notice small{margin-top:3px;opacity:.7;}
+.rossie-form-error{display:flex;gap:8px;align-items:flex-start;margin:0 0 15px;padding:10px 12px;border-radius:12px;background:#fff1f3;border:1px solid #ffd2d8;color:#c33e4e;font-size:11px;line-height:1.45;}
+.rossie-login-footnote{margin:13px 0 0;text-align:center;color:#8a9bb1;font-size:10px;}
+@media(max-width:760px){
+  .rossie-login-page{align-items:flex-start;padding:24px 16px 30px;overflow:auto;}
+  .rossie-login-layout{grid-template-columns:1fr;gap:18px;width:min(100%,430px);margin:auto;}
+  .rossie-login-brand{padding:8px 8px 0;text-align:center;}
+  .rossie-logo-mark{margin:0 auto 13px;width:58px;height:58px;border-radius:18px;}
+  .rossie-brand-name{font-size:42px;}
+  .rossie-brand-subtitle{font-size:12px;}
+  .rossie-login-tagline{display:none;}
+  .rossie-auth-card{padding:24px 20px;border-radius:25px;}
+}
