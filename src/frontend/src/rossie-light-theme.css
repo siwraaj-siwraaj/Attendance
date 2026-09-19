@@ -1,0 +1,435 @@
+/* Rossie — Light reference theme
+   Visual-only layer matching the supplied mobile reference:
+   white / pale-blue surfaces, navy text, blue primary actions,
+   orange secondary accents, soft rounded cards and clean spacing.
+   Business logic and navigation are intentionally untouched. */
+
+:root {
+  --rossie-blue: #2f7ff5;
+  --rossie-blue-dark: #1769df;
+  --rossie-blue-soft: #eaf3ff;
+  --rossie-orange: #ff8a24;
+  --rossie-orange-soft: #fff2e5;
+  --rossie-navy: #102a52;
+  --rossie-text: #17345f;
+  --rossie-muted: #6d82a2;
+  --rossie-bg: #f5f9ff;
+  --rossie-card: #ffffff;
+  --rossie-border: #dbe7f5;
+  --rossie-shadow: 0 4px 18px rgba(45, 92, 150, .09);
+  --rossie-shadow-lg: 0 10px 30px rgba(45, 92, 150, .12);
+}
+
+html, body, #root {
+  background: var(--rossie-bg) !important;
+  color-scheme: light !important;
+  color: var(--rossie-text);
+}
+
+body {
+  background:
+    radial-gradient(circle at 0% 0%, rgba(88, 157, 255, .10), transparent 34%),
+    radial-gradient(circle at 100% 100%, rgba(255, 170, 90, .10), transparent 28%),
+    var(--rossie-bg) !important;
+  color: var(--rossie-text) !important;
+}
+
+/* Replace legacy dark page surfaces. */
+[class*="bg-[#040913]"],
+[class*="bg-[#07111f]"],
+[class*="bg-[#080d1b]"],
+[class*="bg-[#0a0f1e]"],
+[class*="bg-[#0b1220]"],
+[class*="bg-[#0b1222]"],
+[class*="bg-[#0d1220]"],
+[class*="bg-[#0f1525]"],
+[class*="bg-[#10182a]"],
+[class*="bg-[#11192b]"],
+[style*="#040913"],
+[style*="#07111f"],
+[style*="#0a0f1e"],
+[style*="#0d1220"] {
+  background: var(--rossie-bg) !important;
+}
+
+main,
+main > div,
+.min-h-screen {
+  background-color: transparent !important;
+  color: var(--rossie-text) !important;
+}
+
+header {
+  background: rgba(255,255,255,.96) !important;
+  border-color: var(--rossie-border) !important;
+  box-shadow: 0 2px 12px rgba(45,92,150,.06) !important;
+  color: var(--rossie-navy) !important;
+}
+
+header [class*="text-white"],
+header [class*="text-white/"] {
+  color: var(--rossie-navy) !important;
+}
+
+/* Dark utility text -> navy/blue-gray. */
+main [class*="text-white"],
+main [class*="text-white/"],
+main [class*="text-gray-100"],
+main [class*="text-gray-200"],
+main [class*="text-gray-300"],
+main [class*="text-gray-400"],
+main [class*="text-gray-500"],
+main [class*="text-slate-100"],
+main [class*="text-slate-200"],
+main [class*="text-slate-300"],
+main [class*="text-slate-400"],
+main [class*="text-slate-500"] {
+  color: var(--rossie-text) !important;
+}
+
+main [class*="text-white/"],
+main [class*="text-gray-400"],
+main [class*="text-gray-500"],
+main [class*="text-slate-400"],
+main [class*="text-slate-500"] {
+  color: var(--rossie-muted) !important;
+}
+
+[class*="border-white"],
+[class*="border-slate"],
+[class*="border-gray"] {
+  border-color: var(--rossie-border) !important;
+}
+
+[class*="bg-white/"] {
+  background: #ffffff !important;
+}
+
+[class*="bg-black/"] {
+  background: rgba(255,255,255,.94) !important;
+}
+
+/* Shared cards and list surfaces. */
+main [class*="rounded-2xl"][class*="border"],
+main [class*="rounded-3xl"][class*="border"],
+main [class*="rounded-xl"][class*="border"] {
+  border-color: var(--rossie-border) !important;
+  box-shadow: var(--rossie-shadow);
+}
+
+main [class*="bg-[#10182a]"],
+main [class*="bg-[#11192b]"],
+main [class*="bg-[#0f1525]"],
+main [class*="bg-[#0d1220]"] {
+  background: #fff !important;
+}
+
+/* Inputs/selects/search fields. */
+main input,
+main textarea,
+main select,
+header input,
+header select,
+.login-input {
+  color: var(--rossie-navy) !important;
+  -webkit-text-fill-color: var(--rossie-navy) !important;
+  background: #fff !important;
+  border-color: #d4e1f1 !important;
+  box-shadow: inset 0 1px 2px rgba(40,80,130,.03) !important;
+}
+
+main input::placeholder,
+main textarea::placeholder,
+.login-input::placeholder {
+  color: #8aa0bf !important;
+  -webkit-text-fill-color: #8aa0bf !important;
+}
+
+main input:focus,
+main textarea:focus,
+main select:focus,
+.login-input:focus {
+  border-color: rgba(47,127,245,.65) !important;
+  box-shadow: 0 0 0 3px rgba(47,127,245,.11) !important;
+  outline: none !important;
+}
+
+/* Primary action language: vivid blue. */
+.btn-orange,
+.login-submit {
+  background: linear-gradient(135deg, var(--rossie-blue) 0%, var(--rossie-blue-dark) 100%) !important;
+  color: #fff !important;
+  border-color: transparent !important;
+  box-shadow: 0 5px 16px rgba(47,127,245,.24) !important;
+}
+
+.btn-orange:hover,
+.login-submit:hover {
+  box-shadow: 0 7px 20px rgba(47,127,245,.30) !important;
+}
+
+.glow-orange {
+  box-shadow: 0 0 22px rgba(47,127,245,.22) !important;
+}
+
+/* Orange is retained as the secondary/accent color. */
+.text-orange-300,
+.text-orange-400,
+.text-orange-500,
+.text-orange-600,
+[class*="text-[#f97316]"],
+[class*="text-[#fb923c]"] {
+  color: var(--rossie-orange) !important;
+}
+
+.bg-orange-500\/10,
+.bg-orange-500\/15,
+.bg-orange-400\/10 {
+  background: var(--rossie-orange-soft) !important;
+}
+
+.border-orange-400,
+.border-orange-500 {
+  border-color: #ffd2ad !important;
+}
+
+/* Blue status/info surfaces like the reference. */
+.bg-blue-500\/10,
+.bg-blue-500\/15,
+.bg-blue-500\/20,
+.bg-blue-400\/10,
+.bg-sky-500\/10 {
+  background: var(--rossie-blue-soft) !important;
+}
+
+/* Semantic status colors. */
+.badge-present {
+  background: #d7f8ec !important;
+  color: #168b69 !important;
+  border-color: #b7edda !important;
+}
+.badge-absent {
+  background: #ffe2e5 !important;
+  color: #d73b4d !important;
+  border-color: #ffc6cc !important;
+}
+.badge-partial {
+  background: #fff0cf !important;
+  color: #b66b00 !important;
+  border-color: #ffdf9a !important;
+}
+
+/* Common status utility colors. */
+.text-emerald-200,
+.text-emerald-300,
+.text-emerald-400,
+.text-emerald-500 {
+  color: #159b76 !important;
+}
+.text-red-200,
+.text-red-300,
+.text-red-400,
+.text-red-500 {
+  color: #dc3e50 !important;
+}
+.text-amber-200,
+.text-amber-300,
+.text-amber-400,
+.text-amber-500 {
+  color: #b66b00 !important;
+}
+
+/* Floating/background decoration: very subtle, like the reference. */
+.ambient-glow-1 {
+  background: radial-gradient(circle, rgba(66,139,245,.12) 0%, transparent 70%) !important;
+}
+.ambient-glow-2 {
+  background: radial-gradient(circle, rgba(255,159,74,.10) 0%, transparent 70%) !important;
+}
+
+/* Login / account screens. */
+.login-card {
+  background: rgba(255,255,255,.96) !important;
+  border: 1px solid #dbe7f5 !important;
+  box-shadow: 0 12px 34px rgba(45,92,150,.11) !important;
+  color: var(--rossie-navy) !important;
+}
+
+.login-label {
+  color: #647b9e !important;
+}
+
+.login-card h1,
+.login-card h2,
+.login-card p,
+.login-card span {
+  color: var(--rossie-navy);
+}
+
+.login-card [class*="text-white"] {
+  color: var(--rossie-navy) !important;
+}
+
+.login-card .text-orange-300,
+.login-card .text-orange-200 {
+  color: var(--rossie-blue) !important;
+}
+
+.login-input {
+  border-radius: 13px !important;
+  min-height: 48px;
+}
+
+.login-submit {
+  border-radius: 14px !important;
+  min-height: 48px;
+}
+
+.login-error {
+  background: #fff0f2 !important;
+  border-color: #ffd0d6 !important;
+  color: #c93549 !important;
+}
+
+.login-card [class*="border-white"] {
+  border-color: var(--rossie-border) !important;
+}
+
+/* Reference-style bottom navigation: white pill, blue active item. */
+[data-ocid="bottom_tab_bar"] > div {
+  margin-bottom: 10px !important;
+}
+
+[data-ocid="bottom_tab_bar"] > div > div {
+  background: rgba(255,255,255,.98) !important;
+  border-color: var(--rossie-border) !important;
+  box-shadow: 0 8px 26px rgba(48,93,145,.14) !important;
+  backdrop-filter: blur(18px) !important;
+  -webkit-backdrop-filter: blur(18px) !important;
+}
+
+[data-ocid="bottom_tab_bar"] [style*="rgba(13,24,42"] {
+  background: #fff !important;
+}
+
+[data-ocid="bottom_tab_bar"] [style*="rgba(249,115,22"] {
+  background: var(--rossie-blue-soft) !important;
+  border-color: #cfe2ff !important;
+  box-shadow: 0 5px 16px rgba(47,127,245,.10) !important;
+}
+
+[data-ocid="bottom_tab_bar"] button span {
+  color: #7187a7 !important;
+}
+
+[data-ocid="bottom_tab_bar"] button[aria-current="page"] span {
+  color: var(--rossie-blue) !important;
+}
+
+[data-ocid="bottom_tab_bar"] button[aria-current="page"] svg {
+  color: var(--rossie-blue) !important;
+  filter: drop-shadow(0 2px 5px rgba(47,127,245,.20)) !important;
+}
+
+/* Tables: white surface, blue header accents, readable sticky columns. */
+table {
+  color: var(--rossie-text) !important;
+}
+
+thead,
+thead tr {
+  background: #f4f8fd !important;
+}
+
+th {
+  color: #49678f !important;
+  border-color: var(--rossie-border) !important;
+  font-weight: 700 !important;
+}
+
+td {
+  border-color: #e4edf7 !important;
+}
+
+[class*="sticky"][class*="bg-[#"] {
+  background: #fff !important;
+}
+
+/* Dialogs and PDF viewer keep their behavior but use the new light surfaces. */
+[data-slot="dialog-overlay"],
+body:has(.fixed.inset-0[class*="bg-black/"]) .fixed.inset-0[class*="bg-black/"] {
+  background: rgba(236,244,253,.84) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+}
+
+[data-slot="dialog-content"],
+.glass-dialog,
+body:has(.fixed.inset-0[class*="bg-black/"]) .fixed.inset-0[class*="bg-black/"] > div {
+  background: #fff !important;
+  color: var(--rossie-navy) !important;
+  border-color: var(--rossie-border) !important;
+  box-shadow: var(--rossie-shadow-lg) !important;
+}
+
+.glass-dialog label,
+.glass-dialog .text-gray-400,
+.glass-dialog .text-gray-500 {
+  color: #6f85a5 !important;
+}
+
+.glass-dialog input,
+.glass-dialog textarea,
+.glass-dialog select {
+  color: var(--rossie-navy) !important;
+  -webkit-text-fill-color: var(--rossie-navy) !important;
+  background: #fff !important;
+  border-color: #d4e1f1 !important;
+}
+
+[data-slot="dialog-close"] {
+  color: #526f96 !important;
+  background: #f1f6fc !important;
+  border-color: #dbe7f5 !important;
+}
+
+/* Keep report/PDF document itself white and readable. */
+.report,
+body:has(.fixed.inset-0.z-\\[9999\\]) .fixed.inset-0.z-\\[9999\\] {
+  background: #fff !important;
+  color: #17345f !important;
+}
+
+/* Native WebView launch background matches the first light frame. */
+body::before {
+  background: transparent !important;
+}
+
+/* Reduce heavy dark-glass visual effects left by the old theme. */
+.glass-card {
+  background: #fff !important;
+  border-color: var(--rossie-border) !important;
+  box-shadow: var(--rossie-shadow) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.sticky-col {
+  background: #fff !important;
+}
+
+.table-row-hover:hover {
+  background: #f3f8ff !important;
+}
+
+/* Preserve safe-area/layout rules from the existing theme. */
+.pb-safe {
+  padding-bottom: max(1.25rem, env(safe-area-inset-bottom));
+}
+
+@media (max-width: 640px) {
+  main [class*="rounded-3xl"],
+  main [class*="rounded-2xl"] {
+    border-radius: 16px !important;
+  }
+}

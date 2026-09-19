@@ -1,51 +1,55 @@
-# Design Brief — Labour Manager
+# Design Brief — Rossie
 
 ## Overview
-A mobile-first full-stack app for organizations to manage labour contracts, attendance tracking, advances, salary payments, and labour records. Built on the Internet Computer with a Motoko backend and React/TypeScript frontend.
+A mobile-first full-stack app for organizations to manage labour contracts, attendance tracking, advances, salary payments, and labour records.
 
 ## Theme
-- **Type**: Premium dark labour management dashboard
-- **Mood**: Professional, focused, industrial
-- **Visual style**: Deep dark backgrounds with vibrant orange accents, glassmorphism cards, subtle glows
+- **Type**: Clean light mobile workforce management UI
+- **Mood**: Professional, friendly, clear, practical
+- **Visual style**: White cards over a pale blue background, navy typography, blue primary actions, orange secondary accents, soft rounded corners and restrained shadows
+- **Reference**: The supplied Rossie mobile UI reference image
 
 ## Color Palette
 | Token | Value | Usage |
 |-------|-------|-------|
-| Background | #0a0f1e | Page background |
-| Card | #111827 | Card surfaces |
-| Primary | #f97316 | Buttons, accents, highlights |
-| Primary glow | rgba(249,115,22,0.4) | Glow effects |
-| Success | #4ade80 | Present status |
-| Danger | #ef4444 | Absent status |
-| Warning | #f97316 | Partial attendance |
-| Text primary | #f8fafc | Headings |
-| Text secondary | #94a3b8 | Body text |
-| Border | rgba(255,140,0,0.15) | Card borders |
+| Background | #F5F9FF | App/page background |
+| Card | #FFFFFF | Cards, forms, dialogs |
+| Primary | #2F7FF5 | Primary actions, active navigation, links |
+| Primary dark | #1769DF | Button gradient endpoint |
+| Primary soft | #EAF3FF | Active tabs, info surfaces |
+| Secondary | #FF8A24 | Secondary actions and highlights |
+| Secondary soft | #FFF2E5 | Orange status/accent surfaces |
+| Success | #159B76 | Present/approved states |
+| Danger | #DC3E50 | Absent/error states |
+| Warning | #B66B00 | Pending/partial states |
+| Text primary | #102A52 | Headings and primary content |
+| Text secondary | #6D82A2 | Supporting text |
+| Border | #DBE7F5 | Card/input separators |
 
 ## Typography
-- **Display / Body**: Figtree (sans-serif)
-- **Mono**: JetBrains Mono
-- **Scale**: Tight, mobile-optimized
+- **Display / Body**: Figtree
+- **Mono**: Geist Mono
+- **Scale**: Compact, mobile-optimized
 
 ## Layout
-- Mobile-first with bottom tab bar navigation
-- Fixed header (edit mode only)
-- Scrollable content area with bottom padding for tab bar
-- Glassmorphism cards for dialogs and panels
+- Mobile-first with fixed bottom navigation
+- Fixed headers where already required by the existing workflow
+- Scrollable content with safe-area spacing
+- Rounded cards and controls
+- White dialog surfaces over a soft light backdrop
 
 ## Components
-- **Buttons**: Bold orange gradient primary; white outline secondary
-- **Badges**: Color-coded for attendance (green/red/orange)
-- **Cards**: Glassmorphism with subtle orange border glow
-- **Dialogs**: Dark glass with stronger orange border
-- **Tab Bar**: Fixed bottom, dark glass with orange top border
+- **Buttons**: Blue gradient primary; orange reserved for secondary/accent actions
+- **Badges**: Green/red/orange semantic states
+- **Cards**: White surfaces with subtle blue-gray borders and soft shadows
+- **Dialogs**: White cards with light borders and restrained elevation
+- **Tab Bar**: White floating navigation with blue active state
 
 ## Motion
-- Fade-in on load (0.5s ease-out)
-- Smooth transitions on all interactive elements
-- Instant dialog open (no background shift)
+- Keep the existing transitions and swipe behavior
+- Avoid heavy glow effects; use subtle elevation and state transitions
 
 ## Accessibility
-- High contrast text on dark backgrounds
-- Visible focus rings
-- Touch targets >= 44px
+- Maintain touch targets >= 44px
+- Preserve visible focus rings
+- Keep strong navy-on-white contrast
