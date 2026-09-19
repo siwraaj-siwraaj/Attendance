@@ -2,7 +2,7 @@ name: Build APK
 
 on:
   push:
-    branches: [main]
+    branches: [main, rossie-fresh-design]
   workflow_dispatch:
 
 # Keep only the newest APK build for main. If a new commit is pushed while
