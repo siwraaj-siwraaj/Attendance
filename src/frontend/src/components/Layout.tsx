@@ -240,25 +240,13 @@ export default function Layout({ children }: LayoutProps) {
           </div>
 
           <div className="flex-1 overflow-y-auto px-2.5 py-3">
-            <p className="px-2.5 pb-2 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">Navigate</p>
-            <div className="space-y-1">
-              {[
-                ["home","Home",Home],["contracts","Contracts",FileText],["attendance","Attendance",ClipboardCheck],["payments","Payments",CreditCard],["advances","Advances",Wallet],["labours","Labours",Users],["settled","Settled",CheckSquare]
-              ].map(([key,label,Icon]: any) => (
-                <button key={key} type="button" onClick={() => { setActiveTab(key as any); setMenuOpen(false); }} className="rossie-menu-link"><Icon size={18}/><span>{label}</span></button>
-              ))}
-            </div>
-            <div className="my-3 border-t border-white/10" />
-            <div className="space-y-1">
-              <button type="button" onClick={handleAdminPanel} className="rossie-menu-link"><ShieldCheck size={18}/><span>{activeTab === "admin" ? "Close Admin Panel" : "Admin Panel"}</span></button>
-              <button type="button" onClick={handleExportCSV} className="rossie-menu-link"><FileText size={18}/><span>Export CSV</span></button>
-              <button type="button" onClick={handleExportExcel} className="rossie-menu-link"><FileText size={18}/><span>Export Excel</span></button>
-              <button type="button" onClick={() => { setMenuOpen(false); csvInputRef.current?.click(); }} className="rossie-menu-link"><Upload size={18}/><span>Import CSV</span></button>
-            </div>
-            <div className="my-3 border-t border-white/10" />
-            <div className="flex items-center gap-2 px-2.5 pb-2"><Settings size={15} className="text-orange-400" /><p className="text-[10px] font-bold uppercase tracking-[0.18em] text-orange-300/80">Settings</p></div>
-            <SettingsPanel onClose={() => setMenuOpen(false)} />
-          </div>
+            <p className="px-2.5 pb-2 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">Account</p>
+            {mode === "view" ? (
+              <div className="space-y-2">
+                <div className="rounded-xl border border-white/8 bg-white/[0.025] px-3 py-3">
+                  <p className="text-[10px] uppercase tracking-wider text-slate-500">Mobile number</p>
+                  <p className="mt-1 text-sm font-semibold text-white">{username || "Not available"}</p>
+                </div>
                 <div className="rounded-xl border border-white/8 bg-white/[0.025] px-3 py-3">
                   <p className="text-[10px] uppercase tracking-wider text-slate-500">Gender</p>
                   <p className="mt-1 text-sm font-semibold text-white">Not set</p>
