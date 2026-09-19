@@ -575,3 +575,49 @@
   .rossie-auth-content { padding-top:20px; }
   .rossie-auth-card { padding:19px; border-radius:20px; }
 }
+
+/* Shell normalization for legacy screens: preserve behavior while moving their surfaces
+   into the new Rossie light visual language. */
+.rossie-theme > div { background: transparent !important; }
+.rossie-theme header {
+  background: rgba(255,255,255,.94) !important;
+  border-color: #dfe8f3 !important;
+  box-shadow: 0 4px 18px rgba(46,82,126,.08) !important;
+  color: #13233f !important;
+  backdrop-filter: blur(16px);
+}
+.rossie-theme header > .pointer-events-none { display:none !important; }
+.rossie-theme [style*="#121b2e"],
+.rossie-theme [style*="#0b1220"],
+.rossie-theme [style*="#12100e"],
+.rossie-theme [style*="#111827"],
+.rossie-theme [style*="#0f172a"],
+.rossie-theme [style*="#071321"],
+.rossie-theme [style*="#040913"],
+.rossie-theme [style*="#0a0f1e"],
+.rossie-theme [style*="#0d1220"] {
+  background: #ffffff !important;
+  color: #13233f !important;
+}
+.rossie-theme [style*="rgba(5,10,20"] {
+  background: rgba(255,255,255,.97) !important;
+  color: #13233f !important;
+}
+.rossie-theme [style*="rgba(10,15,30"] {
+  background: rgba(255,255,255,.97) !important;
+  color: #13233f !important;
+}
+.rossie-theme [style*="rgba(13,24,42"] {
+  background: rgba(255,255,255,.97) !important;
+  color: #13233f !important;
+}
+.rossie-theme .text-orange-300,
+.rossie-theme .text-orange-400,
+.rossie-theme .text-orange-500 { color:#2f80ed !important; }
+.rossie-theme .bg-orange-500,
+.rossie-theme .bg-orange-600 { background:#2f80ed !important; }
+.rossie-theme .border-orange-500\/30,
+.rossie-theme .border-orange-500\/40,
+.rossie-theme .border-orange-500\/50 { border-color:#b9d4f8 !important; }
+.rossie-theme .placeholder\:text-white\/30::placeholder { color:#91a0b5 !important; }
+.rossie-theme .focus\:border-orange-500\/60:focus { border-color:#75aaf4 !important; }
