@@ -736,3 +736,18 @@
 .rossie-theme table td { color:#273954 !important; border-color:#e8eef5 !important; }
 .rossie-theme ::-webkit-scrollbar { width:5px; height:5px; }
 .rossie-theme ::-webkit-scrollbar-thumb { background:#c4d3e4; border-radius:10px; }
+
+html:has(.rossie-auth-shell),
+body:has(.rossie-auth-shell) {
+  background:#f3f8ff !important;
+}
+body:has(.rossie-theme) {
+  background:#f4f8ff !important;
+}
+.rossie-theme .ambient-glow-1,
+.rossie-theme .ambient-glow-2,
+.rossie-opening-screen .ambient-glow-1,
+.rossie-opening-screen .ambient-glow-2 { display:none !important; }
+.rossie-theme main { background:transparent !important; }
+.rossie-theme .min-h-screen { background:transparent !important; }
+.rossie-theme [class*="shadow-"] { --tw-shadow-color: rgba(46,82,126,.08); }
