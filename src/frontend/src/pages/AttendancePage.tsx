@@ -346,6 +346,7 @@ export default function AttendancePage({
   const [showCompletion, setShowCompletion] = useState(false);
   const [showContractSwitcher, setShowContractSwitcher] = useState(false);
   const [contractSwitcherQuery, setContractSwitcherQuery] = useState("");
+  const [labourSearch, setLabourSearch] = useState("");
   const [localAttendanceOverrides, setLocalAttendanceOverrides] = useState<
     Record<string, AttendanceValue>
   >({});
@@ -475,6 +476,15 @@ export default function AttendancePage({
         labourIdsWithAttendance.has(String(l.id)),
     );
   }, [contract, contractAttendance, allLabours, activeLabours]);
+
+  const visibleLabours = useMemo(() => {
+    const query = labourSearch.trim().toLowerCase();
+    if (!query) return labours;
+    return labours.filter((labour) =>
+      labour.name.toLowerCase().includes(query) ||
+      labour.employeeId.toLowerCase().includes(query)
+    );
+  }, [labours, labourSearch]);
 
   // Reset all Quick Mark / column-picker state so it reflects the newly
   // selected contract. Mirrors the reset in handleSwitchContract and is
@@ -1221,10 +1231,18 @@ export default function AttendancePage({
             )}
 
             {/* Attendance Table */}
+            <input
+              type="search"
+              value={labourSearch}
+              onChange={(e) => setLabourSearch(e.target.value)}
+              placeholder="Search labours..."
+              className="mb-2 w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-xs text-white placeholder:text-white/30 outline-none focus:border-orange-500/50"
+              data-ocid="attendance.labour_search"
+            />
             <AttendanceTable
               contract={contract}
               workColumns={sortedWorkColumns}
-              labours={labours}
+              labours={visibleLabours}
               attendance={mergedAttendance}
               canEdit={canEdit}
               onChange={handleAttendanceChange}

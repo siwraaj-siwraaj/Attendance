@@ -64,6 +64,7 @@ function ContractsPage({
   );
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<"list" | "card">("list");
+  const [contractFilter, setContractFilter] = useState<"all" | "active" | "completed">("all");
 
   const getBedBase = () =>
     Number(localStorage.getItem("rossie_bed_base") || "11000") || 11000;
@@ -175,17 +176,17 @@ function ContractsPage({
     [contracts],
   );
 
-  const filteredContracts = useMemo(
-    () =>
-      activeContracts
-        .slice()
-        .sort((a: any, b: any) => (b.id > a.id ? 1 : b.id < a.id ? -1 : 0))
-        .filter((c: any) => {
-          if (!searchQuery.trim()) return true;
-          return c.name.toLowerCase().includes(searchQuery.toLowerCase());
-        }),
-    [activeContracts, searchQuery],
-  );
+  const filteredContracts = useMemo(() => {
+    const source = contractFilter === "active"
+      ? contracts.filter((c: any) => !c.settled)
+      : contractFilter === "completed"
+        ? contracts.filter((c: any) => c.settled)
+        : contracts;
+    return source
+      .slice()
+      .sort((a: any, b: any) => (b.id > a.id ? 1 : b.id < a.id ? -1 : 0))
+      .filter((c: any) => !searchQuery.trim() || c.name.toLowerCase().includes(searchQuery.toLowerCase()));
+  }, [contracts, contractFilter, searchQuery]);
 
   if (isLoading)
     return (
@@ -251,6 +252,19 @@ function ContractsPage({
               <List className="w-4 h-4 text-white/60" />
             )}
           </button>
+        </div>
+      </div>
+
+        <div className="flex gap-2 overflow-x-auto pb-0.5" data-ocid="contracts.filters">
+          {([
+            ["all", `All (${contracts.length})`],
+            ["active", `Active (${activeContracts.length})`],
+            ["completed", `Completed (${contracts.filter((c: any) => c.settled).length})`],
+          ] as const).map(([key, label]) => (
+            <button key={key} type="button" onClick={() => setContractFilter(key)}
+              className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${contractFilter === key ? "bg-orange-500/20 border-orange-500/60 text-orange-300" : "bg-white/5 border-white/10 text-white/50"}`}
+              data-ocid={`contracts.filter.${key}`}>{label}</button>
+          ))}
         </div>
       </div>
 

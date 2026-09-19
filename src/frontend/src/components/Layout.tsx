@@ -1,6 +1,6 @@
 import { type ReactNode, useRef, useState } from "react";
 import * as XLSX from "xlsx";
-import { FileText, KeyRound, LogOut, Settings, ShieldCheck, Upload, UserCircle, X } from "lucide-react";
+import { FileText, KeyRound, LogOut, Settings, ShieldCheck, Upload, X, Home, ClipboardList, CreditCard, Wallet, Users, CheckSquare } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import { markBackupDownloaded, useAutoBackupReminder } from "../hooks/useAutoBackupReminder";
 import { useChangeOwnPassword, useExportData, useImportData } from "../hooks/useBackend";
@@ -244,6 +244,17 @@ export default function Layout({ children }: LayoutProps) {
           </div>
 
           <div className="flex-1 overflow-y-auto px-2.5 py-3">
+            <p className="px-2.5 pb-2 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">Navigate</p>
+            <div className="space-y-1">
+              <button type="button" onClick={() => { setActiveTab("home"); setMenuOpen(false); }} className="flex w-full items-center gap-3 rounded-xl px-2.5 py-2.5 text-left text-sm font-medium text-white hover:bg-white/5"><Home size={18} className="text-slate-300"/><span>Home</span></button>
+              <button type="button" onClick={() => { setActiveTab("contracts"); setMenuOpen(false); }} className="flex w-full items-center gap-3 rounded-xl px-2.5 py-2.5 text-left text-sm font-medium text-white hover:bg-white/5"><FileText size={18} className="text-slate-300"/><span>Contracts</span></button>
+              <button type="button" onClick={() => { setActiveTab("attendance"); setMenuOpen(false); }} className="flex w-full items-center gap-3 rounded-xl px-2.5 py-2.5 text-left text-sm font-medium text-white hover:bg-white/5"><ClipboardList size={18} className="text-slate-300"/><span>Attendance</span></button>
+              <button type="button" onClick={() => { setActiveTab("payments"); setMenuOpen(false); }} className="flex w-full items-center gap-3 rounded-xl px-2.5 py-2.5 text-left text-sm font-medium text-white hover:bg-white/5"><CreditCard size={18} className="text-slate-300"/><span>Payments</span></button>
+              <button type="button" onClick={() => { setActiveTab("advances"); setMenuOpen(false); }} className="flex w-full items-center gap-3 rounded-xl px-2.5 py-2.5 text-left text-sm font-medium text-white hover:bg-white/5"><Wallet size={18} className="text-slate-300"/><span>Advances</span></button>
+              <button type="button" onClick={() => { setActiveTab("labours"); setMenuOpen(false); }} className="flex w-full items-center gap-3 rounded-xl px-2.5 py-2.5 text-left text-sm font-medium text-white hover:bg-white/5"><Users size={18} className="text-slate-300"/><span>Labours</span></button>
+              <button type="button" onClick={() => { setActiveTab("settled"); setMenuOpen(false); }} className="flex w-full items-center gap-3 rounded-xl px-2.5 py-2.5 text-left text-sm font-medium text-white hover:bg-white/5"><CheckSquare size={18} className="text-slate-300"/><span>Settled</span></button>
+            </div>
+            <div className="my-3 border-t border-white/10" />
             <p className="px-2.5 pb-2 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">Account</p>
             {mode === "view" ? (
               <div className="space-y-2">
@@ -381,7 +392,7 @@ export default function Layout({ children }: LayoutProps) {
         </div>
       </main>
 
-      {mode && activeTab !== "admin" && <BottomTabBar activeTab={activeTab} onTabChange={onTabChange} />}
+      {mode && activeTab !== "admin" && <BottomTabBar activeTab={activeTab} onTabChange={onTabChange} onMore={() => setMenuOpen(true)} />}
       <input ref={csvInputRef} type="file" accept=".csv" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) handleImportCSV(file); e.target.value = ""; }} />
     </div>
   );
