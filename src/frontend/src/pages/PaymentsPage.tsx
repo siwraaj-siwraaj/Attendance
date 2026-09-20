@@ -1186,229 +1186,66 @@ export default function PaymentsPage({
                               const contract = contracts.find(
                                 (c: any) => c.id === a.contractId,
                               );
-                              return (
-                                <div
-                                  key={a.id.toString()}
-                                  className="glass-card rounded-lg p-2 flex justify-between items-center"
-                                >
-                                  <div>
-                                    <p className="text-white text-xs">
-                                      {fmt(a.amount)}
-                                    </p>
-                                    {a.note && (
-                                      <p className="text-gray-500 text-[10px]">
-                                        {a.note}
-                                      </p>
-                                    )}
-                                    {contract && (
-                                      <p className="text-gray-500 text-[10px]">
-                                        {contract.name}
-                                        {contract.settled ? " (Settled)" : ""}
-                                      </p>
-                                    )}
-                                  </div>
-                                  <span
-                                    className={`text-[10px] px-1.5 py-0.5 rounded-full ${contract?.settled ? "bg-gray-700 text-gray-400" : "bg-red-500/20 text-red-400"}`}
-                                  >
-                                    {contract?.settled ? "Cleared" : "Active"}
-                                  </span>
-                                </div>
-                              );
-                            });
-                          })()}
-                        </div>
-                      )}
-                    </div>
-                  )}
+                              const totalNet = visiblePaymentData.reduce((s:number,r:any)=>s+Number(r.totalNetSalary||0),0);
+  const totalAdv = visiblePaymentData.reduce((s:number,r:any)=>s+Number(r.totalAdvances||0),0);
+  const totalPayable = visiblePaymentData.reduce((s:number,r:any)=>s+Number(r.amountPayable||0),0);
 
-                  {/* NET PAY card */}
-                  <div className="rounded-xl p-4 border-2 border-orange-500 bg-orange-500/10 text-center">
-                    <p className="text-xs font-bold text-orange-400 uppercase tracking-wider">
-                      Net Pay
-                    </p>
-                    <p className="text-5xl font-black text-orange-400 mt-1">
-                      {fmt(
-                        excludeAdvances
-                          ? overviewData[overviewIndex]?.totalNetSalary || 0
-                          : overviewData[overviewIndex]?.amountPayable || 0,
-                      )}
-                    </p>
-                  </div>
-                </div>
-              )}
+  return (
+    <section className="rossie-page rossie-reference-page">
+      <header className="rossie-page-header">
+        <div><p className="rossie-eyebrow">Settlement center</p><h1 className="rossie-display">Payroll</h1><p className="rossie-muted">Calculate, review and export labour payments</p></div>
+        <div className="rossie-icon-button"><BarChart3 size={18}/></div>
+      </header>
 
-              {overviewMode === "multiSelect" && (
-                <div className="flex flex-col h-full">
-                  {/* Deselect All */}
-                  <div className="shrink-0 px-4 py-3">
-                    <button
-                      type="button"
-                      onClick={() => setSelectedOverviewLabours(new Set())}
-                      className="rounded-full border border-orange-500 text-orange-400 text-sm px-4 py-1 hover:bg-orange-500/10 transition-colors"
-                      data-ocid="payments.overview.deselect_all"
-                    >
-                      Deselect All
-                    </button>
-                  </div>
-
-                  {/* Scrollable labour list */}
-                  <div className="flex-1 overflow-y-auto min-h-0">
-                    <div className="space-y-0">
-                      {overviewData.map((row: any) => (
-                        <label
-                          key={row.labour.id.toString()}
-                          className="flex items-center gap-3 py-2 px-4 cursor-pointer hover:bg-white/5 transition-colors"
-                        >
-                          <div
-                            className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${selectedOverviewLabours.has(row.labour.id.toString()) ? "bg-orange-500 border-orange-500" : "border-orange-500"}`}
-                          >
-                            {selectedOverviewLabours.has(
-                              row.labour.id.toString(),
-                            ) && (
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                width="14"
-                                height="14"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="white"
-                                strokeWidth="3"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                aria-hidden="true"
-                              >
-                                <polyline points="20 6 9 17 4 12" />
-                              </svg>
-                            )}
-                          </div>
-                          <input
-                            type="checkbox"
-                            checked={selectedOverviewLabours.has(
-                              row.labour.id.toString(),
-                            )}
-                            onChange={() => {
-                              setSelectedOverviewLabours((prev) => {
-                                const next = new Set(prev);
-                                if (next.has(row.labour.id.toString()))
-                                  next.delete(row.labour.id.toString());
-                                else next.add(row.labour.id.toString());
-                                return next;
-                              });
-                            }}
-                            className="sr-only"
-                          />
-                          <span className="flex-1 text-white text-sm">
-                            {row.labour.name}
-                          </span>
-                          <span className="text-cyan-400 font-semibold text-sm">
-                            {fmt(row.amountPayable)}
-                          </span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Bottom Section */}
-            <div className="shrink-0 border-t border-white/10">
-              {overviewMode === "oneByOne" && (
-                /* Prev / Next buttons pinned to bottom */
-                <div className="grid grid-cols-2 gap-3 p-4">
-                  <button
-                    type="button"
-                    onClick={() => setOverviewIndex((i) => Math.max(0, i - 1))}
-                    disabled={overviewIndex === 0}
-                    className="bg-white/10 text-white rounded-xl py-3 font-semibold hover:bg-white/20 transition-colors disabled:opacity-30"
-                    data-ocid="payments.overview.prev_button"
-                  >
-                    Prev
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setOverviewIndex((i) =>
-                        Math.min(overviewData.length - 1, i + 1),
-                      )
-                    }
-                    disabled={overviewIndex === overviewData.length - 1}
-                    className="bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-xl py-3 font-semibold disabled:opacity-40"
-                    data-ocid="payments.overview.next_button"
-                  >
-                    Next
-                  </button>
-                </div>
-              )}
-
-              {overviewMode === "multiSelect" && (
-                /* Bottom summary section — fixed at bottom */
-                <div className="shrink-0 p-4 border-t border-white/10">
-                  <p className="text-xs font-bold text-orange-400 uppercase tracking-wider mb-2">
-                    Selected: {selectedOverviewLabours.size} labours
-                  </p>
-                  {!excludeAdvances && (
-                    <div className="flex justify-between text-sm">
-                      <span className="text-white/60">Total Advances</span>
-                      <span className="text-cyan-400 font-semibold">
-                        {fmt(overviewTotals.advances)}
-                      </span>
-                    </div>
-                  )}
-                  <div className="mt-3 mb-1">
-                    <p className="text-xs font-bold text-orange-400 uppercase tracking-wider">
-                      Combined Net Pay
-                    </p>
-                    <p className="text-5xl font-black text-orange-400">
-                      {fmt(
-                        excludeAdvances
-                          ? overviewTotals.netSalary
-                          : overviewTotals.payable,
-                      )}
-                    </p>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
+      <section className="rossie-hero-card">
+        <div className="rossie-orb rossie-orb-pink"/>
+        <div className="relative z-10">
+          <p className="rossie-kicker">Net payable</p>
+          <p className="rossie-hero-value">{fmt(totalPayable)}</p>
+          <div className="mt-4 flex gap-2 flex-wrap"><span className="rossie-status-pill">{visiblePaymentData.length} workers</span><span className="rounded-full bg-white/[0.06] px-3 py-1.5 text-[9px] font-bold text-white/45">{selectedContracts.length} contracts</span></div>
         </div>
-      )}
-    {showPaymentPdfPreview && (
-  <div className="fixed inset-0 z-[9999] bg-black/80 flex items-center justify-center p-4">
-    <div className="bg-white w-full h-full max-w-4xl max-h-full overflow-hidden flex flex-col">
-      
-      <div className="flex-1 overflow-auto p-2">
-        <div
-          dangerouslySetInnerHTML={{
-            __html: `<style>${REPORT_CSS}</style>${paymentPreviewHTML}`,
-          }}
-        />
+      </section>
+
+      <section className="rossie-glass-section">
+        <div className="rossie-section-heading"><div><p className="rossie-kicker">Select portfolio</p><h2>Contracts</h2></div><button type="button" onClick={()=>setSelectedContractIds(allContractsSelected?new Set():new Set(unsettledContracts.map((c:any)=>c.id.toString())))} className="rossie-text-button">{allContractsSelected?"Clear all":"Select all"}</button></div>
+        <div className="mt-3 space-y-2">
+          {filteredDropdownContracts.map((c:any)=><button key={String(c.id)} type="button" onClick={()=>toggleContractSelection(c.id.toString())} className={`flex w-full items-center gap-3 rounded-2xl border p-3 text-left ${selectedContractIds.has(c.id.toString())?"border-pink-400/35 bg-pink-500/[0.08]":"border-white/[0.08] bg-white/[0.025]"}`}>
+            <span className={`grid h-9 w-9 place-items-center rounded-xl ${selectedContractIds.has(c.id.toString())?"bg-gradient-to-br from-[#a94cff] to-[#ee2d93]":"bg-white/[0.05]"}`}><FileText size={16}/></span>
+            <span className="min-w-0 flex-1"><b className="block truncate text-[11px]">{c.name}</b><small className="mt-1 block text-[9px] text-white/35">{c.workColumns?.length||0} columns · {fmt(Number(c.contractAmount||0))}</small></span>
+            <span className={`h-5 w-5 rounded-full border ${selectedContractIds.has(c.id.toString())?"border-pink-300 bg-pink-400":"border-white/20"}`}>{selectedContractIds.has(c.id.toString())&&<CheckCheck size={14} className="text-white"/>}</span>
+          </button>)}
+          {unsettledContracts.length===0&&<div className="rossie-empty-card">No active contracts available.</div>}
+        </div>
+      </section>
+
+      <div className="flex items-center justify-between gap-2">
+        <label className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.035] px-3 py-3 text-[10px] font-semibold text-white/60"><input type="checkbox" checked={excludeAdvances} onChange={e=>setExcludeAdvances(e.target.checked)} className="h-4 w-4 accent-pink-500"/> Ignore advances</label>
+        <button type="button" disabled={!selectedContracts.length||contractsLoading||laboursLoading} onClick={calculatePayments} className="rossie-primary flex items-center gap-2 rounded-2xl px-4 py-3 text-[10px] font-bold disabled:opacity-35"><Calculator size={15}/> Calculate</button>
       </div>
 
-      <div className="flex gap-3 p-4 border-t bg-white">
-        <button
-          type="button"
-          onClick={() => setShowPaymentPdfPreview(false)}
-          className="flex-1 rounded-lg bg-gray-500 px-4 py-3 font-semibold text-white"
-        >
-          Close
-        </button>
+      {paymentData && <section>
+        <div className="rossie-section-heading"><div><p className="rossie-kicker">Transparent settlement</p><h2>Payment summary</h2></div><span className="text-[10px] font-bold text-emerald-300">{visiblePaymentData.length} rows</span></div>
+        <div className="mt-3 grid grid-cols-3 gap-2">
+          <div className="rossie-metric-card metric-cyan !min-h-0 !p-3"><span>Net salary</span><strong className="!text-base">{fmt(totalNet)}</strong></div>
+          <div className="rossie-metric-card metric-pink !min-h-0 !p-3"><span>Advances</span><strong className="!text-base">{fmt(totalAdv)}</strong></div>
+          <div className="rossie-metric-card metric-orange !min-h-0 !p-3"><span>Payable</span><strong className="!text-base">{fmt(totalPayable)}</strong></div>
+        </div>
+        <div className="rossie-list-stack mt-3">
+          {visiblePaymentData.map((row:any)=><article key={String(row.labour.id)} className="rossie-reference-row">
+            <span className="row-icon"><Users size={16}/></span>
+            <span className="min-w-0 flex-1"><b>{row.labour.name}</b><small>{fmt(Number(row.totalNetSalary||0))} earned · {fmt(Number(row.totalAdvances||0))} advances</small></span>
+            <span className="row-value">{fmt(Number(row.amountPayable||0))}</span>
+          </article>)}
+          {visiblePaymentData.length===0&&<div className="rossie-empty-card">No payable rows for the selected contracts.</div>}
+        </div>
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          <button type="button" onClick={downloadPaymentPDF} className="rounded-2xl border border-white/10 bg-white/[0.04] py-3 text-[10px] font-bold text-white/70"><FileDown size={14} className="mr-1 inline"/> Payment PDF</button>
+          <button type="button" onClick={downloadAttendancePDF} className="rounded-2xl border border-white/10 bg-white/[0.04] py-3 text-[10px] font-bold text-white/70"><FileText size={14} className="mr-1 inline"/> Attendance PDF</button>
+        </div>
+      </section>}
 
-        <button
-          type="button"
-          onClick={async () => {
-  await openPrintWindow(paymentPreviewTitle, paymentPreviewHTML);
-  setShowPaymentPdfPreview(false);
-}}
-          className="flex-1 rounded-lg bg-orange-500 px-4 py-3 font-semibold text-white"
-        >
-          Save PDF
-        </button>
-      </div>
-
-    </div>
-  </div>
-)}    
-    </div>
+      {showPaymentPdfPreview && <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 p-3 backdrop-blur-md"><div className="flex h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-[28px] bg-white"><div className="flex-1 overflow-auto p-2"><div dangerouslySetInnerHTML={{__html:`<style>${REPORT_CSS}</style>${paymentPreviewHTML}`}}/></div><div className="flex gap-2 border-t p-3"><button type="button" onClick={()=>setShowPaymentPdfPreview(false)} className="flex-1 rounded-xl bg-gray-500 py-3 text-sm font-semibold text-white">Close</button><button type="button" onClick={async()=>{await openPrintWindow(paymentPreviewTitle,paymentPreviewHTML);setShowPaymentPdfPreview(false)}} className="flex-1 rounded-xl bg-orange-500 py-3 text-sm font-bold text-white">Save PDF</button></div></div></div>}
+    </section>
   );
+}
 }
