@@ -16,6 +16,7 @@ import {
   FileDown,
   FileText,
   Search,
+  Users,
   X,
 } from "lucide-react";
 import LoadingSpinner from "../components/LoadingSpinner";
@@ -1186,7 +1187,8 @@ export default function PaymentsPage({
                               const contract = contracts.find(
                                 (c: any) => c.id === a.contractId,
                               );
-                              const totalNet = visiblePaymentData.reduce((s:number,r:any)=>s+Number(r.totalNetSalary||0),0);
+                              const fmt = (n:number) => `₹${n.toLocaleString("en-IN",{maximumFractionDigits:0})}`;
+  const totalNet = visiblePaymentData.reduce((s:number,r:any)=>s+Number(r.totalNetSalary||0),0);
   const totalAdv = visiblePaymentData.reduce((s:number,r:any)=>s+Number(r.totalAdvances||0),0);
   const totalPayable = visiblePaymentData.reduce((s:number,r:any)=>s+Number(r.amountPayable||0),0);
 
