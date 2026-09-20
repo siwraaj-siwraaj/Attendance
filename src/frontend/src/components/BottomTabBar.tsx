@@ -9,15 +9,15 @@ export default function BottomTabBar({activeTab,onTabChange}:Props){
   const {allowedTabs,isAdmin}=useAuth();
   const [moreOpen,setMoreOpen]=useState(false);
   const primary: {key:Tab;label:string;icon:any}[]=[
-    {key:"dashboard",label:"Home",icon:Home},
-    {key:"contracts",label:"Contracts",icon:FileText},
-    {key:"attendance",label:"Attendance",icon:CalendarCheck},
-    {key:"payments",label:"Payments",icon:CreditCard},
+    {key:"dashboard",label:"Dashboard",icon:Home},
+    {key:"labours",label:"Workforce",icon:Users},
+    {key:"payments",label:"Payroll",icon:CreditCard},
+    {key:"settled",label:"Analytics",icon:BarChart3},
   ];
   const more: {key:Tab;label:string;icon:any}[]=[
+    {key:"contracts",label:"Contracts",icon:FileText},
+    {key:"attendance",label:"Attendance",icon:CalendarCheck},
     {key:"advances",label:"Advances",icon:Wallet},
-    {key:"labours",label:"Labours",icon:Users},
-    {key:"settled",label:"Settled",icon:CheckCircle2},
     ...(isAdmin?[{key:"admin" as Tab,label:"Admin Panel",icon:ShieldCheck}]:[]),
   ];
   return <>

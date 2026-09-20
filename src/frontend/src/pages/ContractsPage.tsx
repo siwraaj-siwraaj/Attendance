@@ -86,790 +86,99 @@ function ContractsPage({
     if (showForm) {
       // Small timeout lets the dialog render before focusing
       const t = setTimeout(() => nameRef.current?.focus(), 50);
-      return () => clearTimeout(t);
-    }
-  }, [showForm]);
-
-  const updateMultiplier = (val: string) => {
-    const m = Number.parseFloat(val) || 1;
-    const bed = getBedBase() * m;
-    const paper = getPaperBase() * m;
-    const contractAmount = Number.parseFloat(form.contractAmount) || 0;
-    const machineExpenses = Number.parseFloat(form.machineExpenses) || 0;
-    const mesh = contractAmount - (bed + paper + machineExpenses);
-    setForm((prev) => ({
-      ...prev,
-      multiplier: val,
-      bedAmount: bed.toString(),
-      paperAmount: paper.toString(),
-      meshAmount: mesh.toString(),
-    }));
-  };
-
-  // Closes the dialog and clears all form state.
-  const closeForm = useCallback(() => {
-    setShowForm(false);
-  }, []);
-
-  const openEdit = useCallback((c: any) => {
-    setForm({
-      name: c.name,
-      multiplier: c.multiplier.toString(),
-      contractAmount: c.contractAmount.toString(),
-      machineExpenses: c.machineExpenses.toString(),
-      bedAmount: c.bedAmount.toString(),
-      paperAmount: c.paperAmount.toString(),
-      meshAmount: (c.meshAmount ?? 0).toString(),
-    });
-    setIsEditing(true);
-    setSelectedContract(c);
-    setShowForm(true);
-  }, []);
-
-  const isSaving = addContract.isPending || updateContract.isPending;
-
-  const handleSave = useCallback(() => {
-    if (isEditing && selectedContract) {
-      updateContract.mutate({
-        id: selectedContract.id,
-        name: form.name.trim(),
-        multiplier: Number.parseFloat(form.multiplier),
-        contractAmount: Number.parseFloat(form.contractAmount),
-        machineExpenses: Number.parseFloat(form.machineExpenses),
-        bedAmount: Number.parseFloat(form.bedAmount),
-        paperAmount: Number.parseFloat(form.paperAmount),
-        meshAmount: Number.parseFloat(form.meshAmount),
-      });
-      setShowForm(false);
-    } else {
-      addContract.mutate({
-        name: form.name.trim(),
-        multiplier: Number.parseFloat(form.multiplier),
-        contractAmount: Number.parseFloat(form.contractAmount),
-        machineExpenses: Number.parseFloat(form.machineExpenses),
-        bedAmount: Number.parseFloat(form.bedAmount),
-        paperAmount: Number.parseFloat(form.paperAmount),
-        meshAmount: Number.parseFloat(form.meshAmount),
-      });
-      // Close immediately — the optimistic update in useBackend.ts already
-      // reflects the new contract in the list, so the save runs in the
-      // background and the user can keep working without a confirmation.
-      setShowForm(false);
-    }
-  }, [isEditing, selectedContract, form, updateContract, addContract]);
-
-  const fmt = useCallback(
-    (n: number) =>
-      `₹${n.toLocaleString("en-IN", { maximumFractionDigits: 0 })}`,
-    [],
-  );
-
-  const fmtDate = (d: bigint | number | undefined) => {
-    if (d === undefined || d === null) return "—";
-    const ms = typeof d === "bigint" ? Number(d) / 1_000_000 : Number(d);
-    if (!ms || Number.isNaN(ms)) return "—";
-    return format(new Date(ms), "MMM d, yyyy");
-  };
-
-  const activeContracts = useMemo(
-    () => contracts.filter((c: any) => !c.settled),
-    [contracts],
-  );
-
-  const filteredContracts = useMemo(() => {
-    const source =
-      statusFilter === "all"
-        ? contracts
-        : statusFilter === "completed"
-          ? contracts.filter((c: any) => Boolean(c.settled))
-          : activeContracts;
-    return source
-      .slice()
-      .sort((a: any, b: any) => (b.id > a.id ? 1 : b.id < a.id ? -1 : 0))
-      .filter((c: any) => {
-        if (!searchQuery.trim()) return true;
-        return c.name.toLowerCase().includes(searchQuery.toLowerCase());
-      });
-  }, [contracts, activeContracts, statusFilter, searchQuery]);
-
-  if (isLoading)
-    return (
-      <div
-        className="flex flex-col h-full px-4 pt-4"
-        data-ocid="contracts.loading_state"
-      >
-        <SkeletonCardList count={4} />
-      </div>
-    );
-
-  return (
-    <div className="flex flex-col h-full bg-[#0a0f1e] text-white font-['Figtree',sans-serif]">
-      {/* FROZEN top section: heading + search */}
-      <div className="shrink-0 space-y-2.5 px-4 pt-2.5 pb-2 bg-[#0a0f1e] sticky top-0 z-10">
-        <div className="flex items-center justify-between px-1">
-          <h1 className="text-xl font-bold text-white flex items-center gap-2">
-            <FileText className="w-5 h-5 text-orange-400" />
-            Contracts
-          </h1>
-          <div className="flex items-center gap-2" />
+      return (
+    <section className="rossie-page rossie-reference-page">
+      <header className="rossie-page-header">
+        <div>
+          <p className="rossie-eyebrow">Operations</p>
+          <h1 className="rossie-display">Contract portfolio</h1>
+          <p className="rossie-muted">{activeContracts.length} active · {contracts.length} total</p>
         </div>
+        {isAdmin && <button type="button" onClick={()=>setShowCombinedFlow(true)} className="rossie-icon-button" aria-label="Create contract">+</button>}
+      </header>
 
-        <div className="flex items-center gap-2">
-          <div className="relative flex-1">
-            <svg
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30 pointer-events-none"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <title>Search</title>
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z"
-              />
-            </svg>
-            <input
-              type="text"
-              placeholder="Search contracts..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full rounded-full bg-[#1a2035] border border-white/15 px-4 py-2 pl-10 text-white/80 placeholder-white/30 focus:outline-none focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/30 transition-all text-sm"
-              data-ocid="contracts.search_input"
-            />
+      <section className="rossie-hero-card">
+        <div className="rossie-orb rossie-orb-pink"/>
+        <div className="relative z-10">
+          <p className="rossie-kicker">Active contract value</p>
+          <p className="rossie-hero-value">{fmt(activeContracts.reduce((s:number,c:any)=>s+Number(c.contractAmount||0),0))}</p>
+          <div className="mt-4 flex gap-2">
+            <span className="rossie-status-pill">{activeContracts.length} active</span>
+            <span className="rounded-full bg-white/[0.06] px-3 py-1.5 text-[9px] font-bold text-white/55">{contracts.filter((c:any)=>c.settled).length} settled</span>
           </div>
-          <button
-            type="button"
-            onClick={() => setViewMode(viewMode === "list" ? "card" : "list")}
-            className="p-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-colors shrink-0"
-            aria-label={
-              viewMode === "list"
-                ? "Switch to card view"
-                : "Switch to list view"
-            }
-            data-ocid="contracts.view_toggle"
-          >
-            {viewMode === "list" ? (
-              <LayoutGrid className="w-4 h-4 text-white/60" />
-            ) : (
-              <List className="w-4 h-4 text-white/60" />
-            )}
-          </button>
         </div>
+      </section>
 
-        <div className="flex gap-2 overflow-x-auto pb-0.5" role="tablist" aria-label="Contract status">
-          {([
-            ["active", `Active (${activeContracts.length})`],
-            ["all", `All (${contracts.length})`],
-            ["completed", `Completed (${contracts.filter((c: any) => Boolean(c.settled)).length})`],
-          ] as const).map(([key, label]) => (
-            <button
-              key={key}
-              type="button"
-              role="tab"
-              aria-selected={statusFilter === key}
-              onClick={() => setStatusFilter(key)}
-              className={`shrink-0 rounded-full border px-3 py-1 text-[11px] font-semibold transition-colors ${statusFilter === key ? "border-orange-500/60 bg-orange-500/15 text-orange-300" : "border-white/10 bg-white/[0.03] text-white/45"}`}
-              data-ocid={`contracts.filter.${key}`}
-            >
-              {label}
+      <div className="relative">
+        <input value={searchQuery} onChange={e=>setSearchQuery(e.target.value)} placeholder="Search contracts" className="w-full pl-4 pr-4" data-ocid="contracts.search_input"/>
+      </div>
+
+      <div className="flex gap-2 overflow-x-auto" role="tablist" aria-label="Contract status">
+        {([
+          ["active",`Active ${activeContracts.length}`],
+          ["all",`All ${contracts.length}`],
+          ["completed",`Completed ${contracts.filter((c:any)=>Boolean(c.settled)).length}`],
+        ] as const).map(([key,label])=><button key={key} type="button" onClick={()=>setStatusFilter(key)} className={`shrink-0 rounded-full px-4 py-2 text-[10px] font-bold ${statusFilter===key?"bg-gradient-to-r from-[#a94cff] to-[#ee2d93] text-white":"bg-white/[0.05] text-white/45 border border-white/10"}`} data-ocid={`contracts.filter.${key}`}>{label}</button>)}
+      </div>
+
+      <div className="rossie-list-stack">
+        {filteredContracts.length===0 ? <div className="rossie-empty-card">No contracts match this view.</div> : filteredContracts.map((c:any)=>{
+          const id=String(c.id); const open=expandedContractId===id;
+          return <article key={id} className="rossie-reference-row !block overflow-hidden p-0" data-ocid="contract.card">
+            <button type="button" onClick={()=>setExpandedContractId(open?null:id)} className="flex w-full items-center gap-3 p-3 text-left">
+              <span className="row-icon"><FileText size={17}/></span>
+              <span className="min-w-0 flex-1"><b className="truncate">{c.name}</b><small>{fmtDate(c.createdAt)} · {c.workColumns?.length||0} columns</small></span>
+              <span className="row-value"><span>{fmt(Number(c.contractAmount||0))}</span><span className={`rounded-full px-2 py-1 text-[8px] ${c.settled?"bg-white/7 text-white/40":"bg-emerald-400/10 text-emerald-300"}`}>{c.settled?"Settled":"Active"}</span></span>
             </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Scrollable contract list */}
-      <div
-        className="flex-1 overflow-y-auto px-4 pb-24"
-        style={{
-          height: "calc(100vh - 200px)",
-          maxHeight: "calc(100vh - 200px)",
-        }}
-      >
-        {!isLoading && filteredContracts.length === 0 ? (
-          <div className="glass-card rounded-2xl p-8 text-center text-gray-400 mt-2">
-            No {statusFilter === "completed" ? "completed" : statusFilter === "active" ? "active" : ""} contracts. {canEdit && 'Tap "+" to add a contract.'}
-          </div>
-        ) : viewMode === "card" ? (
-          /* CARD VIEW — vertical cards */
-          <div className="space-y-3 mt-1">
-            {filteredContracts.map((c: any) => {
-              const isExpanded = expandedContractId === c.id.toString();
-              return (
-                <button
-                  key={c.id.toString()}
-                  type="button"
-                  className="glass-card rounded-2xl p-4 cursor-pointer transition-smooth w-full text-left border border-orange-500/20 hover:border-orange-500/60 active:scale-[0.98]"
-                  onClick={() =>
-                    setExpandedContractId(isExpanded ? null : c.id.toString())
-                  }
-                  aria-label="Toggle contract details"
-                  data-ocid="contract.card"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 flex-1 min-w-0">
-                      <FileText className="w-4 h-4 text-orange-400 shrink-0" />
-                      <p className="text-white font-semibold text-base truncate">
-                        {c.name}
-                      </p>
-                    </div>
-                    <svg
-                      className={`w-4 h-4 text-gray-400 transition-transform duration-200 shrink-0 ml-2 ${
-                        isExpanded ? "rotate-180" : ""
-                      }`}
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <title>Expand</title>
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 9l-7 7-7-7"
-                      />
-                    </svg>
-                  </div>
-                  <div className="flex items-center gap-3 mt-2">
-                    <span className="text-orange-400 font-bold text-lg">
-                      {fmt(c.contractAmount)}
-                    </span>
-                    <span className="text-gray-400 text-xs flex items-center gap-1">
-                      <Calendar className="w-3 h-3" />
-                      {fmtDate(c.createdAt)}
-                    </span>
-                  </div>
-                  {isExpanded && (
-                    <div
-                      className="mt-3 pt-3 border-t border-white/10 space-y-3"
-                      onClick={(e) => e.stopPropagation()}
-                      onKeyDown={(e) => e.stopPropagation()}
-                      role="presentation"
-                    >
-                      <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-                        <div>
-                          <p className="text-gray-400 text-xs">Multiplier</p>
-                          <p className="text-orange-400 font-medium">
-                            {c.multiplier}x
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-gray-400 text-xs">Bed Amount</p>
-                          <p className="text-white font-medium">
-                            {fmt(c.bedAmount)}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-gray-400 text-xs">Paper Amount</p>
-                          <p className="text-white font-medium">
-                            {fmt(c.paperAmount)}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-gray-400 text-xs">Mesh Amount</p>
-                          <p className="text-white font-medium">
-                            {fmt(c.meshAmount ?? 0)}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-gray-400 text-xs flex items-center gap-1">
-                            <Wrench className="w-3 h-3" />
-                            Machine Expenses
-                          </p>
-                          <p className="text-white font-medium">
-                            {fmt(c.machineExpenses)}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-gray-400 text-xs">Columns</p>
-                          <p className="text-white font-medium">
-                            {c.workColumns?.length ?? 0}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex flex-wrap gap-2 pt-1">
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onViewAttendance?.(c.id);
-                          }}
-                          className="btn-orange text-sm px-3 py-1.5 rounded-lg"
-                          data-ocid="contract.view_attendance_button"
-                        >
-                          View Attendance →
-                        </button>
-                        {canEdit && (
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              openEdit(c);
-                            }}
-                            className="bg-white/5 border border-white/10 text-gray-300 hover:bg-white/10 text-sm px-3 py-1.5 rounded-lg transition-colors"
-                            data-ocid="contract.edit_button"
-                          >
-                            Edit
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        ) : (
-          /* LIST VIEW — true single-line compact rows */
-          <div className="mt-1 rounded-xl overflow-hidden border border-white/10">
-            {filteredContracts.map((c: any, idx: number) => {
-              const isExpanded = expandedContractId === c.id.toString();
-              return (
-                <div key={c.id.toString()}>
-                  {/* Single-line row */}
-                  <button
-                    type="button"
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 hover:bg-white/[0.05] active:bg-white/[0.08] transition-colors cursor-pointer ${
-                      idx > 0 ? "border-t border-white/10" : ""
-                    }`}
-                    onClick={() =>
-                      setExpandedContractId(isExpanded ? null : c.id.toString())
-                    }
-                    aria-label="Toggle contract details"
-                    data-ocid={`contract.item.${idx + 1}`}
-                  >
-                    <FileText className="w-3.5 h-3.5 text-orange-400 shrink-0" />
-                    <span className="flex-1 min-w-0 text-left">
-                      <span className="block truncate text-sm font-semibold text-white">{c.name}</span>
-                      <span className="mt-0.5 block truncate text-[10px] text-white/35">
-                        {fmtDate(c.createdAt)} · {c.workColumns?.length ?? 0} columns
-                      </span>
-                    </span>
-                    <span className="shrink-0 text-right">
-                      <span className="block text-sm font-bold text-orange-400">{fmt(c.contractAmount)}</span>
-                      <span className={`mt-0.5 inline-block rounded-full px-1.5 py-0.5 text-[9px] font-semibold ${c.settled ? "bg-white/10 text-white/45" : "bg-emerald-500/10 text-emerald-300"}`}>
-                        {c.settled ? "Completed" : "Active"}
-                      </span>
-                    </span>
-                    <svg
-                      className={`w-4 h-4 text-white/30 shrink-0 transition-transform duration-200 ${
-                        isExpanded ? "rotate-180" : ""
-                      }`}
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <title>{isExpanded ? "Collapse" : "Expand"}</title>
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 5l7 7-7 7"
-                      />
-                    </svg>
-                  </button>
-
-                  {/* Expanded detail panel */}
-                  {isExpanded && (
-                    <div className="bg-white/[0.03] border-t border-white/10 px-4 py-3 space-y-3">
-                      <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-                        <div>
-                          <p className="text-white/40 text-xs">Multiplier</p>
-                          <p className="text-orange-400 font-medium">
-                            {c.multiplier}x
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-white/40 text-xs">Created</p>
-                          <p className="text-white/80 font-medium">
-                            {fmtDate(c.createdAt)}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-white/40 text-xs">Bed Amount</p>
-                          <p className="text-white font-medium">
-                            {fmt(c.bedAmount)}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-white/40 text-xs">Paper Amount</p>
-                          <p className="text-white font-medium">
-                            {fmt(c.paperAmount)}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-white/40 text-xs">Mesh Amount</p>
-                          <p className="text-white font-medium">
-                            {fmt(c.meshAmount ?? 0)}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-white/40 text-xs flex items-center gap-1">
-                            <Wrench className="w-3 h-3" /> Machine Exp.
-                          </p>
-                          <p className="text-white font-medium">
-                            {fmt(c.machineExpenses)}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex flex-wrap gap-2 pt-1">
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onViewAttendance?.(c.id);
-                          }}
-                          className="btn-orange text-xs px-3 py-1.5 rounded-lg"
-                          data-ocid="contract.view_attendance_button"
-                        >
-                          View Attendance →
-                        </button>
-                        {canEdit && (
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              openEdit(c);
-                            }}
-                            className="bg-white/5 border border-white/10 text-white/60 hover:text-white hover:bg-white/10 text-xs px-3 py-1.5 rounded-lg transition-colors"
-                            data-ocid="contract.edit_button"
-                          >
-                            Edit
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
-      {/* Floating Action Button — the combined contract+attendance flow calls
-          setAttendance, which the backend gates to the attendanceOnly role, so
-          it is only offered to the admin role (which can both create contracts
-          AND mark attendance). Other roles use the separate flows. */}
-      {isAdmin && (
-        <button
-          type="button"
-          onClick={() => setShowCombinedFlow(true)}
-          className="fixed right-4 w-14 h-14 rounded-full flex items-center justify-center shadow-lg z-30 bg-gradient-to-br from-orange-500 to-orange-600 text-white" style={{ bottom: "calc(6.5rem + env(safe-area-inset-bottom, 0px))" }}
-          aria-label="Add Contract"
-          data-ocid="contract.add_button"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={2.5}
-            stroke="currentColor"
-            className="w-6 h-6"
-          >
-            <title>Add Contract</title>
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M12 4.5v15m7.5-7.5h-15"
-            />
-          </svg>
-        </button>
-      )}
-
-      {/* Combined contract creation + attendance flow */}
-      {showCombinedFlow && (
-        <CombinedFlow onClose={() => setShowCombinedFlow(false)} />
-      )}
-
-      {/* Add/Edit Contract Dialog */}
-      {showForm && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) closeForm();
-          }}
-          onKeyDown={(e) => {
-            if (e.key === "Escape") closeForm();
-          }}
-          role="presentation"
-          tabIndex={-1}
-        >
-          <div className="glass-dialog rounded-2xl w-full max-w-md max-h-[82vh] flex flex-col">
-            <>
-              <div className="p-4 pb-3 flex items-center justify-between">
-                <h2 className="text-xl font-bold text-white">
-                  {isEditing ? "Edit Contract" : "Add Contract"}
-                </h2>
-                <button
-                  type="button"
-                  onClick={closeForm}
-                  className="text-gray-400 hover:text-white p-1"
-                  aria-label="Close"
-                  data-ocid="contract.close_button"
-                >
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    role="img"
-                    aria-label="Close dialog"
-                  >
-                    <title>Close dialog</title>
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
-                </button>
-              </div>
-              <div className="flex-1 overflow-y-auto px-4 pb-2 space-y-3">
-                {/* Contract Name — autofocused */}
-                <div>
-                  <label
-                    htmlFor="contract-name"
-                    className="text-gray-400 text-xs mb-1 block"
-                  >
-                    Contract Name
-                  </label>
-                  <input
-                    ref={nameRef}
-                    id="contract-name"
-                    type="text"
-                    value={form.name}
-                    onChange={(e) =>
-                      setForm((prev) => ({ ...prev, name: e.target.value }))
-                    }
-                    className="w-full bg-white/5 border border-orange-500/30 focus:border-orange-500 rounded-lg px-3 py-2 text-white outline-none"
-                    placeholder="Contract name"
-                  />
-                </div>
+            {open && <div className="border-t border-white/[0.08] p-3">
+              <div className="grid grid-cols-2 gap-2">
                 {[
-                  {
-                    label: "Multiplier",
-                    key: "multiplier",
-                    type: "number",
-                    step: "0.1",
-                  },
-                  {
-                    label: "Contract Amount (₹)",
-                    key: "contractAmount",
-                    type: "number",
-                  },
-                  {
-                    label: "Machine Expenses (₹)",
-                    key: "machineExpenses",
-                    type: "number",
-                  },
-                ].map(({ label, key, type, step }) => (
-                  <div key={key}>
-                    <label
-                      htmlFor={`contract-${key}`}
-                      className="text-gray-400 text-xs mb-1 block"
-                    >
-                      {label}
-                    </label>
-                    <input
-                      id={`contract-${key}`}
-                      type={type}
-                      step={step}
-                      value={form[key as keyof ContractFormData]}
-                      onChange={(e) => {
-                        if (key === "multiplier") {
-                          updateMultiplier(e.target.value);
-                        } else {
-                          setForm((prev) => {
-                            const next = { ...prev, [key]: e.target.value };
-                            if (
-                              key === "contractAmount" ||
-                              key === "machineExpenses"
-                            ) {
-                              const contractAmount =
-                                Number.parseFloat(
-                                  key === "contractAmount"
-                                    ? e.target.value
-                                    : next.contractAmount,
-                                ) || 0;
-                              const bedAmount =
-                                Number.parseFloat(next.bedAmount) || 0;
-                              const paperAmount =
-                                Number.parseFloat(next.paperAmount) || 0;
-                              const machineExpenses =
-                                Number.parseFloat(
-                                  key === "machineExpenses"
-                                    ? e.target.value
-                                    : next.machineExpenses,
-                                ) || 0;
-                              next.meshAmount = (
-                                contractAmount -
-                                (bedAmount + paperAmount + machineExpenses)
-                              ).toString();
-                            }
-                            return next;
-                          });
-                        }
-                      }}
-                      className="w-full bg-white/5 border border-orange-500/30 focus:border-orange-500 rounded-lg px-3 py-2 text-white outline-none"
-                    />
-                  </div>
-                ))}
-                {/* Bed and Paper side by side */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label
-                      htmlFor="contract-bedAmount"
-                      className="text-gray-400 text-xs mb-1 block"
-                    >
-                      Bed Amount (₹)
-                    </label>
-                    <input
-                      id="contract-bedAmount"
-                      type="number"
-                      value={form.bedAmount}
-                      onChange={(e) =>
-                        setForm((prev) => {
-                          const next = { ...prev, bedAmount: e.target.value };
-                          const ca =
-                            Number.parseFloat(next.contractAmount) || 0;
-                          const ba = Number.parseFloat(e.target.value) || 0;
-                          const pa = Number.parseFloat(next.paperAmount) || 0;
-                          const me =
-                            Number.parseFloat(next.machineExpenses) || 0;
-                          next.meshAmount = (ca - (ba + pa + me)).toString();
-                          return next;
-                        })
-                      }
-                      className="w-full bg-white/5 border border-orange-500/30 focus:border-orange-500 rounded-lg px-3 py-2 text-white outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label
-                      htmlFor="contract-paperAmount"
-                      className="text-gray-400 text-xs mb-1 block"
-                    >
-                      Paper Amount (₹)
-                    </label>
-                    <input
-                      id="contract-paperAmount"
-                      type="number"
-                      value={form.paperAmount}
-                      onChange={(e) =>
-                        setForm((prev) => {
-                          const next = {
-                            ...prev,
-                            paperAmount: e.target.value,
-                          };
-                          const ca =
-                            Number.parseFloat(next.contractAmount) || 0;
-                          const ba = Number.parseFloat(next.bedAmount) || 0;
-                          const pa = Number.parseFloat(e.target.value) || 0;
-                          const me =
-                            Number.parseFloat(next.machineExpenses) || 0;
-                          next.meshAmount = (ca - (ba + pa + me)).toString();
-                          return next;
-                        })
-                      }
-                      className="w-full bg-white/5 border border-orange-500/30 focus:border-orange-500 rounded-lg px-3 py-2 text-white outline-none"
-                    />
-                  </div>
-                </div>
-                {/* Mesh Amount on its own row */}
-                <div>
-                  <label
-                    htmlFor="contract-meshAmount"
-                    className="text-gray-400 text-xs mb-1 block"
-                  >
-                    Mesh Amount (₹)
-                  </label>
-                  <input
-                    id="contract-meshAmount"
-                    type="number"
-                    value={form.meshAmount}
-                    onChange={(e) =>
-                      setForm((prev) => ({
-                        ...prev,
-                        meshAmount: e.target.value,
-                      }))
-                    }
-                    className="w-full bg-white/5 border border-orange-500/30 focus:border-orange-500 rounded-lg px-3 py-2 text-white outline-none"
-                  />
-                </div>
-                {isSaving && (
-                  <p className="text-orange-400 text-xs flex items-center gap-2">
-                    <svg
-                      className="animate-spin w-3.5 h-3.5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      aria-hidden="true"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      />
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-                      />
-                    </svg>
-                    Saving contract...
-                  </p>
-                )}
+                  ["Multiplier",`${c.multiplier}×`],
+                  ["Bed",fmt(Number(c.bedAmount||0))],
+                  ["Paper",fmt(Number(c.paperAmount||0))],
+                  ["Mesh",fmt(Number(c.meshAmount||0))],
+                  ["Machine",fmt(Number(c.machineExpenses||0))],
+                  ["Columns",String(c.workColumns?.length||0)],
+                ].map(([label,value])=><div key={label} className="rounded-2xl bg-white/[0.035] p-3"><p className="text-[9px] uppercase tracking-wider text-white/30">{label}</p><p className="mt-1 text-sm font-bold">{value}</p></div>)}
               </div>
-              <div className="p-4 pt-3 border-t border-white/10 flex gap-3 pb-safe">
-                <button
-                  type="button"
-                  onClick={closeForm}
-                  className="flex-1 py-2.5 rounded-xl font-semibold border border-white/20 text-gray-300 hover:text-white hover:border-white/40 transition-colors"
-                  data-ocid="contract.cancel_button"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={handleSave}
-                  disabled={isSaving || !form.name.trim()}
-                  className="btn-orange flex-1 py-2.5 rounded-xl font-semibold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                  data-ocid="contract.save_button"
-                >
-                  {isSaving && (
-                    <svg
-                      className="animate-spin w-4 h-4"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      aria-hidden="true"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      />
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-                      />
-                    </svg>
-                  )}
-                  {isSaving ? "Saving..." : "Save"}
-                </button>
+              <div className="mt-3 flex gap-2">
+                <button type="button" onClick={()=>onViewAttendance?.(c.id)} className="rossie-primary flex-1 rounded-xl py-2.5 text-[10px] font-bold" data-ocid="contract.view_attendance_button">Open attendance</button>
+                {canEdit && <button type="button" onClick={()=>openEdit(c)} className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2.5 text-[10px] font-bold text-white/65" data-ocid="contract.edit_button">Edit</button>}
               </div>
-            </>
+            </div>}
+          </article>;
+        })}
+      </div>
+
+      {isAdmin && <button type="button" onClick={()=>setShowCombinedFlow(true)} className="rossie-fab z-40 flex items-center justify-center text-2xl font-light" aria-label="Add Contract" data-ocid="contract.add_button">+</button>}
+
+      {showCombinedFlow && <CombinedFlow onClose={()=>setShowCombinedFlow(false)}/>}
+
+      {showForm && <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4 backdrop-blur-md" onClick={e=>{if(e.target===e.currentTarget)closeForm()}}>
+        <div className="w-full max-w-md overflow-hidden rounded-[28px] border border-white/10 bg-[#0b1727]/95 shadow-2xl">
+          <div className="flex items-center justify-between border-b border-white/[0.08] p-5">
+            <div><p className="rossie-eyebrow">Portfolio</p><h2 className="mt-1 text-xl font-bold">{isEditing?"Edit contract":"Add contract"}</h2></div>
+            <button type="button" onClick={closeForm} className="rounded-xl bg-white/[0.05] px-3 py-2 text-white/50">×</button>
+          </div>
+          <div className="max-h-[65vh] space-y-3 overflow-y-auto p-5">
+            {[
+              ["Contract name","name","text"],
+              ["Multiplier","multiplier","number"],
+              ["Contract amount","contractAmount","number"],
+              ["Machine expenses","machineExpenses","number"],
+              ["Bed amount","bedAmount","number"],
+              ["Paper amount","paperAmount","number"],
+              ["Mesh amount","meshAmount","number"],
+            ].map(([label,key,type])=><label key={key} className="block"><span className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-white/40">{label}</span><input ref={key==="name"?nameRef:undefined} type={type} value={form[key as keyof ContractFormData]} onChange={e=>key==="multiplier"?updateMultiplier(e.target.value):setForm(prev=>({...prev,[key]:e.target.value}))} className="w-full" /></label>)}
+            {isSaving && <p className="text-xs text-pink-300">Saving contract…</p>}
+          </div>
+          <div className="flex gap-2 border-t border-white/[0.08] p-5">
+            <button type="button" onClick={closeForm} className="flex-1 rounded-xl border border-white/10 py-3 text-sm font-semibold text-white/55">Cancel</button>
+            <button type="button" disabled={isSaving||!form.name.trim()} onClick={handleSave} className="rossie-primary flex-1 rounded-xl py-3 text-sm font-bold" data-ocid="contract.save_button">{isSaving?"Saving…":"Save contract"}</button>
           </div>
         </div>
-      )}
-    </div>
+      </div>}
+    </section>
   );
 }
 
