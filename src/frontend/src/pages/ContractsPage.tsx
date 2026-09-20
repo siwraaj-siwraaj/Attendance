@@ -64,6 +64,7 @@ function ContractsPage({
   );
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<"list" | "card">("list");
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "completed">("active");
 
   const getBedBase = () =>
     Number(localStorage.getItem("rossie_bed_base") || "11000") || 11000;
@@ -175,17 +176,21 @@ function ContractsPage({
     [contracts],
   );
 
-  const filteredContracts = useMemo(
-    () =>
-      activeContracts
-        .slice()
-        .sort((a: any, b: any) => (b.id > a.id ? 1 : b.id < a.id ? -1 : 0))
-        .filter((c: any) => {
-          if (!searchQuery.trim()) return true;
-          return c.name.toLowerCase().includes(searchQuery.toLowerCase());
-        }),
-    [activeContracts, searchQuery],
-  );
+  const filteredContracts = useMemo(() => {
+    const source =
+      statusFilter === "all"
+        ? contracts
+        : statusFilter === "completed"
+          ? contracts.filter((c: any) => Boolean(c.settled))
+          : activeContracts;
+    return source
+      .slice()
+      .sort((a: any, b: any) => (b.id > a.id ? 1 : b.id < a.id ? -1 : 0))
+      .filter((c: any) => {
+        if (!searchQuery.trim()) return true;
+        return c.name.toLowerCase().includes(searchQuery.toLowerCase());
+      });
+  }, [contracts, activeContracts, statusFilter, searchQuery]);
 
   if (isLoading)
     return (
@@ -200,7 +205,7 @@ function ContractsPage({
   return (
     <div className="flex flex-col h-full bg-[#0a0f1e] text-white font-['Figtree',sans-serif]">
       {/* FROZEN top section: heading + search */}
-      <div className="shrink-0 space-y-3 px-4 pt-4 pb-3 bg-[#0a0f1e] sticky top-0 z-10">
+      <div className="shrink-0 space-y-2.5 px-4 pt-2.5 pb-2 bg-[#0a0f1e] sticky top-0 z-10">
         <div className="flex items-center justify-between px-1">
           <h1 className="text-xl font-bold text-white flex items-center gap-2">
             <FileText className="w-5 h-5 text-orange-400" />
@@ -252,6 +257,26 @@ function ContractsPage({
             )}
           </button>
         </div>
+
+        <div className="flex gap-2 overflow-x-auto pb-0.5" role="tablist" aria-label="Contract status">
+          {([
+            ["active", `Active (${activeContracts.length})`],
+            ["all", `All (${contracts.length})`],
+            ["completed", `Completed (${contracts.filter((c: any) => Boolean(c.settled)).length})`],
+          ] as const).map(([key, label]) => (
+            <button
+              key={key}
+              type="button"
+              role="tab"
+              aria-selected={statusFilter === key}
+              onClick={() => setStatusFilter(key)}
+              className={`shrink-0 rounded-full border px-3 py-1 text-[11px] font-semibold transition-colors ${statusFilter === key ? "border-orange-500/60 bg-orange-500/15 text-orange-300" : "border-white/10 bg-white/[0.03] text-white/45"}`}
+              data-ocid={`contracts.filter.${key}`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Scrollable contract list */}
@@ -264,7 +289,7 @@ function ContractsPage({
       >
         {!isLoading && filteredContracts.length === 0 ? (
           <div className="glass-card rounded-2xl p-8 text-center text-gray-400 mt-2">
-            No active contracts. {canEdit && 'Tap "+" to add a contract.'}
+            No {statusFilter === "completed" ? "completed" : statusFilter === "active" ? "active" : ""} contracts. {canEdit && 'Tap "+" to add a contract.'}
           </div>
         ) : viewMode === "card" ? (
           /* CARD VIEW — vertical cards */
@@ -415,11 +440,17 @@ function ContractsPage({
                     data-ocid={`contract.item.${idx + 1}`}
                   >
                     <FileText className="w-3.5 h-3.5 text-orange-400 shrink-0" />
-                    <span className="flex-1 min-w-0 text-sm font-medium text-white truncate text-left">
-                      {c.name}
+                    <span className="flex-1 min-w-0 text-left">
+                      <span className="block truncate text-sm font-semibold text-white">{c.name}</span>
+                      <span className="mt-0.5 block truncate text-[10px] text-white/35">
+                        {fmtDate(c.createdAt)} · {c.workColumns?.length ?? 0} columns
+                      </span>
                     </span>
-                    <span className="text-orange-400 font-semibold text-sm shrink-0">
-                      {fmt(c.contractAmount)}
+                    <span className="shrink-0 text-right">
+                      <span className="block text-sm font-bold text-orange-400">{fmt(c.contractAmount)}</span>
+                      <span className={`mt-0.5 inline-block rounded-full px-1.5 py-0.5 text-[9px] font-semibold ${c.settled ? "bg-white/10 text-white/45" : "bg-emerald-500/10 text-emerald-300"}`}>
+                        {c.settled ? "Completed" : "Active"}
+                      </span>
                     </span>
                     <svg
                       className={`w-4 h-4 text-white/30 shrink-0 transition-transform duration-200 ${
@@ -525,7 +556,7 @@ function ContractsPage({
         <button
           type="button"
           onClick={() => setShowCombinedFlow(true)}
-          className="fixed bottom-24 right-4 w-14 h-14 rounded-full flex items-center justify-center shadow-lg z-30 bg-gradient-to-br from-orange-500 to-orange-600 text-white"
+          className="fixed right-4 w-14 h-14" style={{ bottom: "calc(6.5rem + env(safe-area-inset-bottom, 0px))" }} rounded-full flex items-center justify-center shadow-lg z-30 bg-gradient-to-br from-orange-500 to-orange-600 text-white"
           aria-label="Add Contract"
           data-ocid="contract.add_button"
         >
