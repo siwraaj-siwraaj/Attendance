@@ -56,7 +56,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [roles, setRoles] = useState<Role[]>([]);
   const [loginNotice, setLoginNotice] = useState<{ type: "pending"; name: string; phone: string; message: string; requestToken?: string } | null>(null);
   const [isInitializing, setIsInitializing] = useState(true);
-  const [activeTab, setActiveTabState] = useState<Tab>("contracts");
+  const [activeTab, setActiveTabState] = useState<Tab>("dashboard");
   const [attendanceContractId, setAttendanceContractId] = useState<bigint | null>(null);
 
   const isAuthenticated = username !== null;

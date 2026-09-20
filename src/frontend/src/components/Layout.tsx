@@ -194,11 +194,11 @@ export default function Layout({ children }: LayoutProps) {
   const profileInitial = profileName.charAt(0).toUpperCase();
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#0a0f1e]">
+    <div className="rossie-app min-h-screen flex flex-col">
       <BackButtonGuard enabled={mode !== null} returnToContractsOnly={activeTab === "admin"} onReturnToSelection={() => setActiveTab("contracts")} />
 
       <header
-        className={`${activeTab === "admin" ? "hidden" : ""} sticky top-0 z-40 overflow-hidden border-b`}
+        className={`rossie-header ${activeTab === "admin" ? "hidden" : ""} sticky top-0 z-40 overflow-hidden`}
         style={{
           background: "linear-gradient(135deg, #040913 0%, #071321 45%, #0a1726 70%, #12100e 100%)",
           borderColor: "rgba(116,143,181,0.22)",
@@ -373,7 +373,7 @@ export default function Layout({ children }: LayoutProps) {
             });
           }, 180);
         }}
-        className="flex-1 min-h-0 overflow-hidden flex flex-col"
+        className="rossie-main flex-1 min-h-0 overflow-hidden flex flex-col"
         style={{ touchAction: "pan-y" }}
       >
         <div ref={swipeContentRef} className="flex-1 min-h-0 min-w-0 flex flex-col" style={{ width: "100%", willChange: "transform" }}>
