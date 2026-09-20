@@ -208,16 +208,16 @@ export default function Layout({ children }: LayoutProps) {
       >
         <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full" style={{ background: "radial-gradient(circle, rgba(249,115,22,0.34) 0%, rgba(249,115,22,0.10) 42%, transparent 72%)" }} />
         <div className="pointer-events-none absolute right-0 bottom-0 h-14 w-64" style={{ background: "linear-gradient(120deg, transparent 0%, rgba(249,115,22,0.08) 45%, rgba(249,115,22,0.38) 100%)", borderTopLeftRadius: "100%" }} />
-        <div className="relative flex min-h-[72px] items-center justify-between gap-3 px-4 py-2.5 sm:px-6">
+        <div className="relative flex min-h-[64px] items-center justify-between gap-3 px-4 py-2 sm:px-6">
           <div className="flex min-w-0 items-center gap-3">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[15px]" style={{ background: "linear-gradient(145deg, rgba(14,22,36,0.96), rgba(18,19,24,0.96))", border: "1.5px solid rgba(249,115,22,0.72)", boxShadow: "0 0 0 1px rgba(249,115,22,0.08), 0 6px 18px rgba(0,0,0,0.30)" }}>
-              <span className="text-2xl font-black" style={{ color: "#f59e0b", textShadow: "0 0 14px rgba(245,158,11,0.30)" }}>R</span>
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[14px]" style={{ background: "linear-gradient(145deg, rgba(14,22,36,0.96), rgba(18,19,24,0.96))", border: "1.5px solid rgba(249,115,22,0.72)", boxShadow: "0 0 0 1px rgba(249,115,22,0.08), 0 6px 18px rgba(0,0,0,0.30)" }}>
+              <span className="text-xl font-black" style={{ color: "#f59e0b", textShadow: "0 0 14px rgba(245,158,11,0.30)" }}>R</span>
             </div>
-            <h1 className="truncate text-[24px] font-extrabold leading-none tracking-tight text-white">Rossie</h1>
+            <h1 className="truncate text-[22px] font-extrabold leading-none tracking-tight text-white">Rossie</h1>
           </div>
 
-          <button type="button" onClick={() => setMenuOpen(true)} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-white transition-all active:scale-95" style={{ background: "rgba(3,10,19,0.62)", border: "1px solid rgba(130,153,185,0.28)", boxShadow: "0 6px 18px rgba(0,0,0,0.22)" }} aria-label={`Open profile for ${profileName}`} data-ocid="header.profile_button">
-            <span className="flex h-9 w-9 items-center justify-center rounded-full" style={{ background: "linear-gradient(145deg, #17263c, #0c1421)", border: "1px solid rgba(249,115,22,0.58)" }}>
+          <button type="button" onClick={() => setMenuOpen(true)} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-white transition-all active:scale-95" style={{ background: "rgba(3,10,19,0.62)", border: "1px solid rgba(130,153,185,0.28)", boxShadow: "0 6px 18px rgba(0,0,0,0.22)" }} aria-label={`Open profile for ${profileName}`} data-ocid="header.profile_button">
+            <span className="flex h-8 w-8 items-center justify-center rounded-full" style={{ background: "linear-gradient(145deg, #17263c, #0c1421)", border: "1px solid rgba(249,115,22,0.58)" }}>
               <span className="text-sm font-bold text-white">{profileInitial}</span>
             </span>
           </button>
