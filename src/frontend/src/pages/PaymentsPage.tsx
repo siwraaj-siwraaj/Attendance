@@ -1250,4 +1250,3 @@ export default function PaymentsPage({
     </section>
   );
 }
-}
