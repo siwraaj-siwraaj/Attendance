@@ -200,24 +200,24 @@ export default function Layout({ children }: LayoutProps) {
       <header
         className={`rossie-header ${activeTab === "admin" ? "hidden" : ""} sticky top-0 z-40 overflow-hidden`}
         style={{
-          background: "linear-gradient(135deg, #040913 0%, #071321 45%, #0a1726 70%, #12100e 100%)",
+          background: "linear-gradient(135deg, #040b16 0%, #071321 45%, #101a2d 70%, #21122a 100%)",
           borderColor: "rgba(116,143,181,0.22)",
-          boxShadow: "0 8px 26px rgba(0,0,0,0.24), inset 0 -1px 0 rgba(249,115,22,0.14)",
+          boxShadow: "0 8px 26px rgba(0,0,0,0.24), inset 0 -1px 0 rgba(238,45,147,0.14)",
           paddingTop: "env(safe-area-inset-top, 0px)",
         }}
       >
-        <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full" style={{ background: "radial-gradient(circle, rgba(249,115,22,0.34) 0%, rgba(249,115,22,0.10) 42%, transparent 72%)" }} />
-        <div className="pointer-events-none absolute right-0 bottom-0 h-14 w-64" style={{ background: "linear-gradient(120deg, transparent 0%, rgba(249,115,22,0.08) 45%, rgba(249,115,22,0.38) 100%)", borderTopLeftRadius: "100%" }} />
+        <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full" style={{ background: "radial-gradient(circle, rgba(238,45,147,0.34) 0%, rgba(169,76,255,0.10) 42%, transparent 72%)" }} />
+        <div className="pointer-events-none absolute right-0 bottom-0 h-14 w-64" style={{ background: "linear-gradient(120deg, transparent 0%, rgba(169,76,255,0.08) 45%, rgba(255,117,72,0.32) 100%)", borderTopLeftRadius: "100%" }} />
         <div className="relative flex min-h-[64px] items-center justify-between gap-3 px-4 py-2 sm:px-6">
           <div className="flex min-w-0 items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[14px]" style={{ background: "linear-gradient(145deg, rgba(14,22,36,0.96), rgba(18,19,24,0.96))", border: "1.5px solid rgba(249,115,22,0.72)", boxShadow: "0 0 0 1px rgba(249,115,22,0.08), 0 6px 18px rgba(0,0,0,0.30)" }}>
-              <span className="text-xl font-black" style={{ color: "#f59e0b", textShadow: "0 0 14px rgba(245,158,11,0.30)" }}>R</span>
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[14px]" style={{ background: "linear-gradient(145deg, rgba(24,35,56,0.96), rgba(12,19,32,0.96))", border: "1.5px solid rgba(238,45,147,0.72)", boxShadow: "0 0 0 1px rgba(249,115,22,0.08), 0 6px 18px rgba(0,0,0,0.30)" }}>
+              <span className="text-xl font-black" style={{ color: "#ff7db9", textShadow: "0 0 14px rgba(238,45,147,0.30)" }}>R</span>
             </div>
             <h1 className="truncate text-[22px] font-extrabold leading-none tracking-tight text-white">Rossie</h1>
           </div>
 
           <button type="button" onClick={() => setMenuOpen(true)} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-white transition-all active:scale-95" style={{ background: "rgba(3,10,19,0.62)", border: "1px solid rgba(130,153,185,0.28)", boxShadow: "0 6px 18px rgba(0,0,0,0.22)" }} aria-label={`Open profile for ${profileName}`} data-ocid="header.profile_button">
-            <span className="flex h-8 w-8 items-center justify-center rounded-full" style={{ background: "linear-gradient(145deg, #17263c, #0c1421)", border: "1px solid rgba(249,115,22,0.58)" }}>
+            <span className="flex h-8 w-8 items-center justify-center rounded-full" style={{ background: "linear-gradient(145deg, #17263c, #0c1421)", border: "1px solid rgba(238,45,147,0.58)" }}>
               <span className="text-sm font-bold text-white">{profileInitial}</span>
             </span>
           </button>
@@ -236,7 +236,7 @@ export default function Layout({ children }: LayoutProps) {
                 </div>
                 <div className="min-w-0">
                   <p className="truncate text-base font-bold text-white">{profileName}</p>
-                  {role && <p className="mt-0.5 text-xs text-orange-300/80">{roleLabel(role)}</p>}
+                  {role && <p className="mt-0.5 text-xs text-pink-200/80">{roleLabel(role)}</p>}
                 </div>
               </div>
               <button type="button" onClick={() => setMenuOpen(false)} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-slate-300 transition-colors hover:bg-white/5" aria-label="Close sidebar" data-ocid="sidebar.close_button"><X size={21} /></button>
@@ -256,14 +256,14 @@ export default function Layout({ children }: LayoutProps) {
                   <p className="mt-1 text-sm font-semibold text-white">Not set</p>
                 </div>
                 <button type="button" onClick={() => { setPasswordMessage(null); setChangePasswordOpen(v => !v); }} className="flex w-full items-center gap-3 rounded-xl border border-white/8 bg-white/[0.025] px-3 py-3 text-left text-sm font-semibold text-white hover:bg-white/5" data-ocid="sidebar.change_password">
-                  <KeyRound size={18} className="text-orange-400" />
+                  <KeyRound size={18} className="text-pink-300" />
                   <span>Change password</span>
                 </button>
                 {changePasswordOpen && (
                   <div className="rounded-xl border border-orange-400/15 bg-orange-500/[0.04] p-3 space-y-2">
                     <input type="password" value={newPassword} onChange={e=>setNewPassword(e.target.value)} placeholder="New password" className="w-full rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-sm text-white outline-none focus:border-orange-500/50" autoComplete="new-password" />
                     <input type="password" value={confirmNewPassword} onChange={e=>setConfirmNewPassword(e.target.value)} placeholder="Confirm password" className="w-full rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-sm text-white outline-none focus:border-orange-500/50" autoComplete="new-password" />
-                    {passwordMessage && <p className="text-[11px] text-orange-200">{passwordMessage}</p>}
+                    {passwordMessage && <p className="text-[11px] text-pink-100">{passwordMessage}</p>}
                     <button type="button" onClick={handleChangePassword} disabled={changePasswordMutation.isPending} className="w-full rounded-lg bg-orange-500 py-2 text-xs font-bold text-white disabled:opacity-50">
                       {changePasswordMutation.isPending ? "Changing…" : "Save password"}
                     </button>
