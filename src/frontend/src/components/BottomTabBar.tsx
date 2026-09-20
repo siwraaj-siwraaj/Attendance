@@ -18,10 +18,10 @@ interface LayoutProps {
 
 const ALL_TAB_DEFS: { key: Tab; label: string; icon: React.ReactNode }[] = [
   { key: "contracts", label: "Contracts", icon: <FileText size={22} strokeWidth={1.9} /> },
-  { key: "attendance", label: "Attendance", icon: <ClipboardList size={22} strokeWidth={1.9} /> },
-  { key: "advances", label: "Advances", icon: <Wallet size={22} strokeWidth={1.9} /> },
-  { key: "payments", label: "Payments", icon: <CreditCard size={22} strokeWidth={1.9} /> },
-  { key: "labours", label: "Labours", icon: <Users size={22} strokeWidth={1.9} /> },
+  { key: "attendance", label: "Attend.", icon: <ClipboardList size={22} strokeWidth={1.9} /> },
+  { key: "advances", label: "Advance", icon: <Wallet size={22} strokeWidth={1.9} /> },
+  { key: "payments", label: "Payment", icon: <CreditCard size={22} strokeWidth={1.9} /> },
+  { key: "labours", label: "Labour", icon: <Users size={22} strokeWidth={1.9} /> },
   { key: "settled", label: "Settled", icon: <CheckSquare size={22} strokeWidth={1.9} /> },
 ];
 
@@ -44,7 +44,7 @@ export default function BottomTabBar({ activeTab, onTabChange }: LayoutProps) {
         <div
           className="relative overflow-hidden rounded-[25px] border"
           style={{
-            height: 76,
+            height: 68,
             background:
               "linear-gradient(135deg, rgba(13,24,42,0.985) 0%, rgba(8,15,28,0.99) 62%, rgba(18,17,20,0.985) 100%)",
             borderColor: "rgba(126,151,188,0.25)",
@@ -66,7 +66,7 @@ export default function BottomTabBar({ activeTab, onTabChange }: LayoutProps) {
             style={{ background: "radial-gradient(circle, rgba(249,115,22,0.16) 0%, transparent 70%)" }}
           />
 
-          <div className="relative flex h-full items-stretch gap-0.5 px-1.5 py-1.5">
+          <div className="relative flex h-full items-stretch gap-0 px-1 py-1">
             {tabs.map((tab) => {
               const isActive = activeTab === tab.key;
 
@@ -75,7 +75,7 @@ export default function BottomTabBar({ activeTab, onTabChange }: LayoutProps) {
                   key={tab.key}
                   type="button"
                   onClick={() => onTabChange(tab.key)}
-                  className="group relative z-10 flex min-w-0 flex-1 flex-col items-center justify-center rounded-[20px] px-0.5"
+                  className="group relative z-10 flex min-w-0 flex-1 flex-col items-center justify-center rounded-[18px] px-0"
                   style={{
                     touchAction: "manipulation",
                     WebkitTapHighlightColor: "transparent",
@@ -108,7 +108,7 @@ export default function BottomTabBar({ activeTab, onTabChange }: LayoutProps) {
                   )}
 
                   <span
-                    className="relative z-10 flex h-8 w-10 items-center justify-center"
+                    className="relative z-10 flex h-7 w-9 items-center justify-center"
                     style={{
                       color: isActive ? "#fb923c" : "#8792a7",
                       transform: isActive ? "translateY(-1px) scale(1.05)" : "translateY(1px)",
@@ -120,7 +120,7 @@ export default function BottomTabBar({ activeTab, onTabChange }: LayoutProps) {
                   </span>
 
                   <span
-                    className="relative z-10 mt-0.5 max-w-full truncate px-0.5 text-[9px] font-extrabold leading-none tracking-[0.01em]"
+                    className="relative z-10 mt-0.5 whitespace-nowrap px-0 text-[8px] font-extrabold leading-none tracking-[0.01em]"
                     style={{
                       color: isActive ? "#f8fafc" : "#727d91",
                       transition: "color 180ms ease",
