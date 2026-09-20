@@ -775,7 +775,7 @@ export default function AttendancePage({
 
   return (
     <div
-      className="flex flex-col h-full overflow-hidden"
+      className="flex flex-col h-full overflow-hidden rossie-attendance-page"
       data-ocid="attendance.page"
     >
       {/* Frozen Header Banner */}
@@ -788,7 +788,7 @@ export default function AttendancePage({
           className="relative overflow-hidden"
           style={{
             background:
-              "linear-gradient(135deg, #0a0f1e 0%, #1a0f00 50%, #0a1a10 100%)",
+              "linear-gradient(135deg, #071321 0%, #21132c 52%, #0b2730 100%)",
             minHeight: "80px",
           }}
         >
@@ -797,7 +797,7 @@ export default function AttendancePage({
             className="absolute inset-0"
             style={{
               background:
-                "linear-gradient(135deg, rgba(10,15,30,0.85) 0%, rgba(249,115,22,0.15) 60%, rgba(10,15,30,0.9) 100%)",
+                "linear-gradient(135deg, rgba(10,15,30,0.85) 0%, rgba(238,45,147,0.15) 60%, rgba(10,15,30,0.9) 100%)",
             }}
           />
           <div className="relative z-10 px-4 pt-3 pb-2 flex items-center justify-between">
@@ -805,8 +805,8 @@ export default function AttendancePage({
               <div
                 className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
                 style={{
-                  background: "linear-gradient(135deg, #f97316, #ea580c)",
-                  boxShadow: "0 4px 16px rgba(249,115,22,0.5)",
+                  background: "linear-gradient(135deg, #a94cff, #ee2d93)",
+                  boxShadow: "0 4px 16px rgba(238,45,147,0.35)",
                 }}
               >
                 <svg
