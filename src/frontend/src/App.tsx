@@ -12,6 +12,7 @@ import PaymentsPage from "./pages/PaymentsPage";
 import LaboursPage from "./pages/LaboursPage";
 import SettledPage from "./pages/SettledPage";
 import AdminPanel from "./pages/AdminPanel";
+import DashboardPage from "./pages/DashboardPage";
 
 // Keep stalled mobile/WebView requests from blocking the app indefinitely.
 const FETCH_TIMEOUT_MS = 8_000;
@@ -61,8 +62,8 @@ function AppContent() {
   if (isInitializing) return <OpeningRossie />;
   if (!isAuthenticated) return <div className="fixed inset-0 flex items-center justify-center" style={{ background: "#0d1220" }}><div className="ambient-glow-1" aria-hidden="true" /><div className="ambient-glow-2" aria-hidden="true" /><LoginPage /></div>;
   if (status !== "approved") return <PendingApproval />;
-  return <Layout><div className="flex flex-col h-full"><ErrorBoundary tabName={activeTab} key={activeTab}>
-    {activeTab === "admin" && <AdminPanel key="admin" />}
+  return <Layout><div className="rossie-app flex flex-col h-full"><ErrorBoundary tabName={activeTab} key={activeTab}>
+    {activeTab === "dashboard" && <DashboardPage key="dashboard" />}\n    {activeTab === "admin" && <AdminPanel key="admin" />}
     {mode === "view" && activeTab === "attendance" && <AttendancePage key="attendance" selectedContractId={selectedContractId ?? attendanceContractId} openColumnPickerFor={openColumnPickerFor} onContractChange={setAttendanceContractId} onColumnPickerOpened={() => setOpenColumnPickerFor(null)} />}
     {mode === "view" && activeTab === "contracts" && <ContractsPage key="contracts-view" onViewAttendance={handleViewAttendance} />}
     {mode === "edit" && activeTab === "contracts" && <ContractsPage key="contracts-edit" onViewAttendance={handleViewAttendance} />}
