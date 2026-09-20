@@ -556,7 +556,7 @@ function ContractsPage({
         <button
           type="button"
           onClick={() => setShowCombinedFlow(true)}
-          className="fixed right-4 w-14 h-14" style={{ bottom: "calc(6.5rem + env(safe-area-inset-bottom, 0px))" }} rounded-full flex items-center justify-center shadow-lg z-30 bg-gradient-to-br from-orange-500 to-orange-600 text-white"
+          className="fixed right-4 w-14 h-14 rounded-full flex items-center justify-center shadow-lg z-30 bg-gradient-to-br from-orange-500 to-orange-600 text-white" style={{ bottom: "calc(6.5rem + env(safe-area-inset-bottom, 0px))" }}
           aria-label="Add Contract"
           data-ocid="contract.add_button"
         >
