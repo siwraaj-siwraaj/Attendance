@@ -8,7 +8,7 @@ import { safeParse, safeStringify } from "../lib/bigintJson";
 import { roleLabel } from "../types";
 import { BackButtonGuard } from "./BackButtonGuard";
 import BottomTabBar from "./BottomTabBar";
-import SettingsPanel from "./SettingsPanel";
+import SettingsPage from "./SettingsPage";
 
 interface LayoutProps {
   children: ReactNode;
@@ -27,6 +27,7 @@ export default function Layout({ children }: LayoutProps) {
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
   const [passwordMessage, setPasswordMessage] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const touchStartX = useRef<number | null>(null);
   const touchStartY = useRef<number | null>(null);
   const swipeBlocked = useRef(false);
@@ -180,12 +181,15 @@ export default function Layout({ children }: LayoutProps) {
     });
   };
 
+  const handleOpenSettings = () => { setMenuOpen(false); setSettingsOpen(true); };
+
   const handleLogout = () => {
     setMenuOpen(false);
     logout();
   };
 
   const handleAdminPanel = () => {
+    setSettingsOpen(false);
     setActiveTab(activeTab === "admin" ? "contracts" : "admin");
     setMenuOpen(false);
   };
@@ -216,7 +220,7 @@ export default function Layout({ children }: LayoutProps) {
             <h1 className="truncate text-[24px] font-extrabold leading-none tracking-tight text-white">Rossie</h1>
           </div>
 
-          <button type="button" onClick={() => setMenuOpen(true)} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-white transition-all active:scale-95" style={{ background: "rgba(3,10,19,0.62)", border: "1px solid rgba(130,153,185,0.28)", boxShadow: "0 6px 18px rgba(0,0,0,0.22)" }} aria-label={`Open profile for ${profileName}`} data-ocid="header.profile_button">
+          <button type="button" onClick={handleOpenSettings} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-white transition-all active:scale-95" style={{ background: "rgba(3,10,19,0.62)", border: "1px solid rgba(130,153,185,0.28)", boxShadow: "0 6px 18px rgba(0,0,0,0.22)" }} aria-label={`Open profile for ${profileName}`} data-ocid="header.profile_button">
             <span className="flex h-9 w-9 items-center justify-center rounded-full" style={{ background: "linear-gradient(145deg, #17263c, #0c1421)", border: "1px solid rgba(249,115,22,0.58)" }}>
               <span className="text-sm font-bold text-white">{profileInitial}</span>
             </span>
@@ -224,85 +228,13 @@ export default function Layout({ children }: LayoutProps) {
         </div>
       </header>
 
-      {menuOpen && <>
-        <div className="fixed inset-0 z-[60] bg-black/55 backdrop-blur-[2px]" onClick={() => setMenuOpen(false)} aria-hidden="true" />
-        <aside className="fixed right-0 top-0 z-[70] flex h-[100dvh] w-[min(78vw,320px)] flex-col overflow-hidden border-l" style={{ background: "linear-gradient(180deg, #08111f 0%, #0a1422 45%, #080e18 100%)", borderColor: "rgba(249,115,22,0.28)", boxShadow: "-18px 0 45px rgba(0,0,0,0.42)" }} aria-label="Settings and navigation sidebar">
-          <div className="relative overflow-hidden border-b px-4 pb-4 pt-[max(16px,env(safe-area-inset-top))]" style={{ borderColor: "rgba(116,143,181,0.18)" }}>
-            <div className="pointer-events-none absolute -right-12 -top-20 h-44 w-44 rounded-full" style={{ background: "radial-gradient(circle, rgba(249,115,22,0.26) 0%, transparent 68%)" }} />
-            <div className="relative flex items-center justify-between gap-3">
-              <div className="flex min-w-0 items-center gap-3">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full" style={{ background: "linear-gradient(145deg, #17263c, #0d1522)", border: "1px solid rgba(249,115,22,0.60)" }}>
-                  <span className="text-base font-bold text-white">{profileInitial}</span>
-                </div>
-                <div className="min-w-0">
-                  <p className="truncate text-base font-bold text-white">{profileName}</p>
-                  {role && <p className="mt-0.5 text-xs text-orange-300/80">{roleLabel(role)}</p>}
-                </div>
-              </div>
-              <button type="button" onClick={() => setMenuOpen(false)} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-slate-300 transition-colors hover:bg-white/5" aria-label="Close sidebar" data-ocid="sidebar.close_button"><X size={21} /></button>
-            </div>
-          </div>
-
-          <div className="flex-1 overflow-y-auto px-2.5 py-3">
-            <p className="px-2.5 pb-2 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">Account</p>
-            {mode === "view" ? (
-              <div className="space-y-2">
-                <div className="rounded-xl border border-white/8 bg-white/[0.025] px-3 py-3">
-                  <p className="text-[10px] uppercase tracking-wider text-slate-500">Mobile number</p>
-                  <p className="mt-1 text-sm font-semibold text-white">{username || "Not available"}</p>
-                </div>
-                <div className="rounded-xl border border-white/8 bg-white/[0.025] px-3 py-3">
-                  <p className="text-[10px] uppercase tracking-wider text-slate-500">Gender</p>
-                  <p className="mt-1 text-sm font-semibold text-white">Not set</p>
-                </div>
-                <button type="button" onClick={() => { setPasswordMessage(null); setChangePasswordOpen(v => !v); }} className="flex w-full items-center gap-3 rounded-xl border border-white/8 bg-white/[0.025] px-3 py-3 text-left text-sm font-semibold text-white hover:bg-white/5" data-ocid="sidebar.change_password">
-                  <KeyRound size={18} className="text-orange-400" />
-                  <span>Change password</span>
-                </button>
-                {changePasswordOpen && (
-                  <div className="rounded-xl border border-orange-400/15 bg-orange-500/[0.04] p-3 space-y-2">
-                    <input type="password" value={newPassword} onChange={e=>setNewPassword(e.target.value)} placeholder="New password" className="w-full rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-sm text-white outline-none focus:border-orange-500/50" autoComplete="new-password" />
-                    <input type="password" value={confirmNewPassword} onChange={e=>setConfirmNewPassword(e.target.value)} placeholder="Confirm password" className="w-full rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-sm text-white outline-none focus:border-orange-500/50" autoComplete="new-password" />
-                    {passwordMessage && <p className="text-[11px] text-orange-200">{passwordMessage}</p>}
-                    <button type="button" onClick={handleChangePassword} disabled={changePasswordMutation.isPending} className="w-full rounded-lg bg-orange-500 py-2 text-xs font-bold text-white disabled:opacity-50">
-                      {changePasswordMutation.isPending ? "Changing…" : "Save password"}
-                    </button>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <>
-                <p className="px-2.5 pb-2 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">Account & settings</p>
-                <div className="space-y-1">
-                  <button type="button" onClick={handleAdminPanel} className={`flex w-full items-center gap-3 rounded-xl px-2.5 py-2.5 text-left text-sm font-medium transition-colors ${activeTab === "admin" ? "bg-orange-500/10 text-orange-200" : "text-white hover:bg-white/5"}`} data-ocid="sidebar.admin_panel">
-                    <ShieldCheck size={18} className="text-orange-400" />
-                    <span>{activeTab === "admin" ? "Close Admin Panel" : "Admin Panel"}</span>
-                  </button>
-                  <button type="button" onClick={handleExportCSV} className="flex w-full items-center gap-3 rounded-xl px-2.5 py-2.5 text-left text-sm font-medium text-white transition-colors hover:bg-white/5" data-ocid="sidebar.export_csv"><FileText size={18} className="text-slate-300" /><span>Export CSV</span></button>
-                  <button type="button" onClick={handleExportExcel} className="flex w-full items-center gap-3 rounded-xl px-2.5 py-2.5 text-left text-sm font-medium text-white transition-colors hover:bg-white/5" data-ocid="sidebar.export_excel"><FileText size={18} className="text-slate-300" /><span>Export Excel</span></button>
-                  <button type="button" onClick={() => { setMenuOpen(false); csvInputRef.current?.click(); }} className="flex w-full items-center gap-3 rounded-xl px-2.5 py-2.5 text-left text-sm font-medium text-white transition-colors hover:bg-white/5" data-ocid="sidebar.import_csv"><Upload size={18} className="text-slate-300" /><span>Import CSV</span></button>
-                </div>
-                <div className="my-3 border-t border-white/10" />
-                <div className="flex items-center gap-2 px-2.5 pb-2"><Settings size={15} className="text-orange-400" /><p className="text-[10px] font-bold uppercase tracking-[0.18em] text-orange-300/80">Settings</p></div>
-                <SettingsPanel onClose={() => setMenuOpen(false)} />
-              </>
-            )}
-          </div>
-
-          <div className="border-t p-2.5 pb-[max(10px,env(safe-area-inset-bottom))]" style={{ borderColor: "rgba(116,143,181,0.18)" }}>
-            <button type="button" onClick={handleLogout} className="flex w-full items-center gap-3 rounded-xl px-2.5 py-2.5 text-left text-sm font-semibold text-red-300 transition-colors hover:bg-red-500/10" data-ocid="sidebar.logout">
-              <LogOut size={18} />
-              <span>Logout</span>
-            </button>
-          </div>
-        </aside>
-      </>}
+      {settingsOpen && <div className="flex-1 min-h-0 overflow-hidden"><SettingsPage onBack={() => setSettingsOpen(false)} /></div>}
 
       <main
         ref={mainRef}
         onTouchStart={(e) => {
           const target = e.target as HTMLElement | null;
-          swipeBlocked.current = !!target?.closest('table, [role="dialog"], [data-pdf-preview], [data-ocid="admin_panel"], input, textarea, select, button, [data-no-tab-swipe]');
+          swipeBlocked.current = settingsOpen || !!target?.closest('table, [role="dialog"], [data-pdf-preview], [data-ocid="admin_panel"], input, textarea, select, button, [data-no-tab-swipe]');
           swipeIntent.current = false;
           touchStartX.current = e.touches[0]?.clientX ?? null;
           touchStartY.current = e.touches[0]?.clientY ?? null;
@@ -377,11 +309,11 @@ export default function Layout({ children }: LayoutProps) {
         style={{ touchAction: "pan-y" }}
       >
         <div ref={swipeContentRef} className="flex-1 min-h-0 min-w-0 flex flex-col" style={{ width: "100%", willChange: "transform" }}>
-          {children}
+          {settingsOpen ? null : children}
         </div>
       </main>
 
-      {mode && activeTab !== "admin" && <BottomTabBar activeTab={activeTab} onTabChange={onTabChange} />}
+      {mode && !settingsOpen && activeTab !== "admin" && <BottomTabBar activeTab={activeTab} onTabChange={onTabChange} />}
       <input ref={csvInputRef} type="file" accept=".csv" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) handleImportCSV(file); e.target.value = ""; }} />
     </div>
   );
