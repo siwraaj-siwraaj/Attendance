@@ -1,11 +1,8 @@
 import { type ReactNode, useRef, useState } from "react";
-import * as XLSX from "xlsx";
-import { FileText, KeyRound, LogOut, Settings, ShieldCheck, Upload, UserCircle, X } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import { markBackupDownloaded, useAutoBackupReminder } from "../hooks/useAutoBackupReminder";
-import { useChangeOwnPassword, useExportData, useImportData } from "../hooks/useBackend";
-import { safeParse, safeStringify } from "../lib/bigintJson";
-import { roleLabel } from "../types";
+
+
 import { BackButtonGuard } from "./BackButtonGuard";
 import BottomTabBar from "./BottomTabBar";
 import SettingsPage from "./SettingsPage";
@@ -15,28 +12,8 @@ interface LayoutProps {
 }
 
 export default function Layout({ children }: LayoutProps) {
-  const { mode, activeTab, setActiveTab, logout, role, username, name, allowedTabs } = useAuth();
-  const exportDataMutation = useExportData();
-  const importDataMutation = useImportData();
-  const exportData = exportDataMutation.mutateAsync;
-  const importData = importDataMutation.mutateAsync;
-  const changePasswordMutation = useChangeOwnPassword();
+  const { mode, activeTab, setActiveTab, username, name, allowedTabs } = useAuth();
   const onTabChange = setActiveTab;
-  const [changePasswordOpen, setChangePasswordOpen] = useState(false);
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmNewPassword, setConfirmNewPassword] = useState("");
-  const [passwordMessage, setPasswordMessage] = useState<string | null>(null);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [settingsOpen, setSettingsOpen] = useState(false);
-  const touchStartX = useRef<number | null>(null);
-  const touchStartY = useRef<number | null>(null);
-  const swipeBlocked = useRef(false);
-  const swipeIntent = useRef(false);
-  const swipeTabs = allowedTabs;
-  const swipeContentRef = useRef<HTMLDivElement | null>(null);
-  const mainRef = useRef<HTMLElement | null>(null);
-  const csvInputRef = useRef<HTMLInputElement>(null);
-
   useAutoBackupReminder(mode === "edit");
 
   const handleExportCSV = async () => {
@@ -181,19 +158,6 @@ export default function Layout({ children }: LayoutProps) {
     });
   };
 
-  const handleOpenSettings = () => { setMenuOpen(false); setSettingsOpen(true); };
-
-  const handleLogout = () => {
-    setMenuOpen(false);
-    logout();
-  };
-
-  const handleAdminPanel = () => {
-    setSettingsOpen(false);
-    setActiveTab(activeTab === "admin" ? "contracts" : "admin");
-    setMenuOpen(false);
-  };
-
   const profileName = name?.trim() || username?.trim() || "User";
   const profileInitial = profileName.charAt(0).toUpperCase();
 
@@ -220,7 +184,7 @@ export default function Layout({ children }: LayoutProps) {
             <h1 className="truncate text-[24px] font-extrabold leading-none tracking-tight text-white">Rossie</h1>
           </div>
 
-          <button type="button" onClick={handleOpenSettings} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-white transition-all active:scale-95" style={{ background: "rgba(3,10,19,0.62)", border: "1px solid rgba(130,153,185,0.28)", boxShadow: "0 6px 18px rgba(0,0,0,0.22)" }} aria-label={`Open profile for ${profileName}`} data-ocid="header.profile_button">
+          <button type="button" onClick={() => setSettingsOpen(true)} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-white transition-all active:scale-95" style={{ background: "rgba(3,10,19,0.62)", border: "1px solid rgba(130,153,185,0.28)", boxShadow: "0 6px 18px rgba(0,0,0,0.22)" }} aria-label={`Open profile for ${profileName}`} data-ocid="header.profile_button">
             <span className="flex h-9 w-9 items-center justify-center rounded-full" style={{ background: "linear-gradient(145deg, #17263c, #0c1421)", border: "1px solid rgba(249,115,22,0.58)" }}>
               <span className="text-sm font-bold text-white">{profileInitial}</span>
             </span>
@@ -314,7 +278,6 @@ export default function Layout({ children }: LayoutProps) {
       </main>
 
       {mode && !settingsOpen && activeTab !== "admin" && <BottomTabBar activeTab={activeTab} onTabChange={onTabChange} />}
-      <input ref={csvInputRef} type="file" accept=".csv" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) handleImportCSV(file); e.target.value = ""; }} />
     </div>
   );
 }
