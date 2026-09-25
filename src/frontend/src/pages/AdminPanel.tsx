@@ -300,7 +300,45 @@ function ProgressRow({label,value,total,accent}:{label:string;value:number;total
 function CompactUser({user,index,action}:{user:UserInfo;index:number;action:ReactNode}){return <div className="flex items-center gap-3 rounded-2xl p-3" style={{background:"rgba(0,0,0,.13)",border:"1px solid rgba(255,255,255,.05)"}}><div className="w-9 h-9 rounded-xl flex items-center justify-center text-xs font-bold text-[#fb923c]" style={{background:"rgba(249,115,22,.1)"}}>{user.username.slice(0,1).toUpperCase()}</div><div className="min-w-0 flex-1"><div className="text-xs font-bold text-white truncate">{user.username}</div><div className="text-[10px] mt-0.5" style={{color:"#7f8a9e"}}>{user.name ? `${user.name} • ` : ""}Login request</div></div>{action}</div>}
 
 function UserGroup({title,count,icon,users,renderExtra}:{title:string;count:number;icon:ReactNode;users:UserInfo[];renderExtra:(user:UserInfo,index:number)=>ReactNode}){
-  return <section data-ocid={`admin_panel.${title.toLowerCase().replaceAll(" ","_")}_section`}><div className="flex items-center gap-2 mb-2.5"><span className="text-[#fb923c]">{icon}</span><h2 className="font-display text-sm font-bold text-white">{title}</h2><span className="rounded-full px-2 py-0.5 text-[9px] font-bold text-[#fb923c]" style={{background:"rgba(249,115,22,.12)",border:"1px solid rgba(249,115,22,.2)"}}>{count}</span></div><div className="space-y-2">{users.map((u,i)=><div key={u.username} className="rounded-2xl p-3.5" style={{background:"linear-gradient(145deg,rgba(255,255,255,.045),rgba(255,255,255,.018))",border:"1px solid rgba(255,255,255,.065)"}}><div className="flex items-center gap-3 mb-3"><div className="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold text-[#fb923c]" style={{background:"rgba(249,115,22,.1)",border:"1px solid rgba(249,115,22,.16)"}}>{u.username.slice(0,1).toUpperCase()}</div><div className="min-w-0 flex-1"><div className="flex items-center gap-2"><div className="min-w-0"><div className="text-sm font-bold text-white truncate">{u.name || "Labour"}</div><div className="text-[11px] text-white/45 truncate">{u.username}</div></div><span className={`rounded-full px-2 py-0.5 text-[9px] font-bold ${u.status===UserStatus.pending||u.status===UserStatus.revoked?"role-pending":roleBadgeClass(u.role)}`}>{u.status===UserStatus.approved?roleLabel(u.role):statusLabel(u.status)}</span></div><div className="text-[10px] mt-1" style={{color:"#7f8a9e"}}>{u.status===UserStatus.pending?"Login request sent":u.status===UserStatus.revoked?"Access revoked":"Active account"}</div></div></div><div className="rounded-xl p-2.5 space-y-2.5" style={{background:"rgba(0,0,0,.13)",border:"1px solid rgba(255,255,255,.045)"}}>{renderExtra(u,i)}</div></div>)}</div></section>;
+  const isActiveGroup = title === "Active accounts";
+  return (
+    <section data-ocid={`admin_panel.${title.toLowerCase().replaceAll(" ","_")}_section`}>
+      <div className="mb-3 flex items-center gap-2.5">
+        <span className="flex h-8 w-8 items-center justify-center rounded-xl text-[#fb923c]" style={{background:"rgba(249,115,22,.11)",border:"1px solid rgba(249,115,22,.18)"}}>{icon}</span>
+        <h2 className="font-display text-sm font-bold text-white">{title}</h2>
+        <span className="rounded-full px-2.5 py-1 text-[10px] font-bold text-[#fb923c]" style={{background:"rgba(249,115,22,.12)",border:"1px solid rgba(249,115,22,.2)"}}>{count}</span>
+      </div>
+      <div className="space-y-3">
+        {users.map((u,i) => (
+          <article key={u.username} className={isActiveGroup ? "relative overflow-hidden rounded-[26px] p-4 sm:p-5" : "rounded-2xl p-3.5"} style={isActiveGroup ? {background:"radial-gradient(ellipse at 100% 0%,rgba(249,115,22,.13),transparent 42%),linear-gradient(145deg,#151d30,#0d1423 75%)",border:"1px solid rgba(249,115,22,.19)",boxShadow:"0 14px 34px rgba(0,0,0,.18)"} : {background:"linear-gradient(145deg,rgba(255,255,255,.045),rgba(255,255,255,.018))",border:"1px solid rgba(255,255,255,.065)"}}>
+            {isActiveGroup && <div className="absolute -right-10 -top-12 h-32 w-32 rounded-full border border-orange-300/[0.08] pointer-events-none" />}
+            <div className={isActiveGroup ? "relative mb-4 flex items-center gap-3.5" : "flex items-center gap-3 mb-3"}>
+              <div className={isActiveGroup ? "flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-lg font-extrabold text-[#ffad60] shadow-inner" : "w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold text-[#fb923c]"} style={isActiveGroup ? {background:"linear-gradient(145deg,rgba(249,115,22,.22),rgba(249,115,22,.07))",border:"1px solid rgba(249,115,22,.28)",boxShadow:"inset 0 1px 0 rgba(255,255,255,.06)"} : {background:"rgba(249,115,22,.1)",border:"1px solid rgba(249,115,22,.16)"}}>{u.username.slice(0,1).toUpperCase()}</div>
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="min-w-0">
+                    <div className={isActiveGroup ? "text-base font-bold tracking-tight text-white truncate" : "text-sm font-bold text-white truncate"}>{u.name || "Labour"}</div>
+                    <div className="text-xs text-white/45 truncate">@{u.username}</div>
+                  </div>
+                  {isActiveGroup ? (
+                    <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-bold text-emerald-300" style={{background:"rgba(16,185,129,.1)",border:"1px solid rgba(52,211,153,.2)"}}><span className="h-1.5 w-1.5 rounded-full bg-emerald-400"/>Active</span>
+                  ) : (
+                    <span className={`rounded-full px-2 py-0.5 text-[9px] font-bold ${u.status===UserStatus.pending||u.status===UserStatus.revoked?"role-pending":roleBadgeClass(u.role)}`}>{u.status===UserStatus.approved?roleLabel(u.role):statusLabel(u.status)}</span>
+                  )}
+                </div>
+                {!isActiveGroup && <div className="text-[10px] mt-1" style={{color:"#7f8a9e"}}>{u.status===UserStatus.pending?"Login request sent":u.status===UserStatus.revoked?"Access revoked":"Active account"}</div>}
+                {isActiveGroup && <div className="mt-1.5 text-[11px] text-white/45">Account access · {roleLabel(u.role)} role</div>}
+              </div>
+            </div>
+            <div className={isActiveGroup ? "relative rounded-2xl p-3 sm:p-4" : "rounded-xl p-2.5 space-y-2.5"} style={isActiveGroup ? {background:"rgba(5,10,20,.52)",border:"1px solid rgba(255,255,255,.065)"} : {background:"rgba(0,0,0,.13)",border:"1px solid rgba(255,255,255,.045)"}}>
+              {isActiveGroup && <div className="mb-3 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[.14em] text-white/40"><ShieldCheck size={13} className="text-[#fb923c]"/>Permissions & account controls</div>}
+              {renderExtra(u,i)}
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
 }
 
 function Field({label,children}:{label:string;children:ReactNode}){return <div><label className="login-label">{label}</label>{children}</div>}
