@@ -301,15 +301,24 @@ function CompactUser({user,index,action}:{user:UserInfo;index:number;action:Reac
 
 function UserGroup({title,count,icon,users,renderExtra}:{title:string;count:number;icon:ReactNode;users:UserInfo[];renderExtra:(user:UserInfo,index:number)=>ReactNode}){
   const active = title === "Active accounts";
+  const subtitle = title === "Active accounts" ? "Approved users with access to Rossie" : title === "Pending approval" ? "New access requests waiting for review" : "Accounts whose access has been revoked";
   return <section data-ocid={`admin_panel.${title.toLowerCase().replaceAll(" ","_")}_section`}>
-    <div className="mb-3 flex items-center gap-2"><span className="text-[#fb923c]">{icon}</span><h2 className="font-display text-sm font-bold text-white">{title}</h2><span className="rounded-full border border-orange-400/20 bg-orange-500/10 px-2 py-0.5 text-[9px] font-bold text-orange-300">{count}</span></div>
+    <div className="mb-3 flex items-end justify-between gap-3">
+      <div className="flex min-w-0 items-center gap-2">
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-orange-500/10 text-[#fb923c]">{icon}</span>
+        <div className="min-w-0"><div className="flex items-center gap-2"><h2 className="font-display text-sm font-bold text-white">{title}</h2><span className="rounded-full border border-orange-400/20 bg-orange-500/10 px-2 py-0.5 text-[9px] font-bold text-orange-300">{count}</span></div><p className="mt-0.5 truncate text-[10px] text-white/30">{subtitle}</p></div>
+      </div>
+    </div>
     <div className={active ? "grid gap-3 md:grid-cols-2" : "space-y-2"}>
-      {users.map((u,i)=><article key={u.username} className="overflow-hidden rounded-[22px] border border-white/[0.07] bg-gradient-to-br from-[#151f34] to-[#10182a] shadow-lg shadow-black/10">
-        <div className="flex items-start gap-3 p-4">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-orange-500/10 text-sm font-extrabold text-orange-300 ring-1 ring-orange-400/15">{u.username.slice(0,1).toUpperCase()}</div>
-          <div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><p className="truncate text-sm font-bold text-white">{u.name || "User account"}</p><span className={`rounded-full px-2 py-0.5 text-[9px] font-bold ${u.status===UserStatus.pending||u.status===UserStatus.revoked?"role-pending":roleBadgeClass(u.role)}`}>{u.status===UserStatus.approved?roleLabel(u.role):statusLabel(u.status)}</span></div><p className="mt-1 truncate text-[11px] text-white/40">{u.username}</p><p className="mt-1 text-[10px] text-white/25">{u.status===UserStatus.pending?"Waiting for approval":u.status===UserStatus.revoked?"Access is revoked":"Account is active"}</p></div>
+      {users.map((u,i)=><article key={u.username} className="group overflow-hidden rounded-[24px] border border-white/[0.07] bg-[#111a2d] transition-colors hover:border-orange-400/20">
+        <div className="flex items-center gap-3 p-4">
+          <div className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-orange-500/20 to-orange-500/5 text-base font-extrabold text-orange-300 ring-1 ring-orange-400/15">{u.username.slice(0,1).toUpperCase()}<span className={`absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-[#111a2d] ${u.status===UserStatus.approved?"bg-emerald-400":u.status===UserStatus.pending?"bg-orange-400":"bg-white/25"}`}/></div>
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2"><p className="truncate text-sm font-bold text-white">{u.name || "User account"}</p><span className={`rounded-full px-2 py-0.5 text-[9px] font-bold ${u.status===UserStatus.pending||u.status===UserStatus.revoked?"role-pending":roleBadgeClass(u.role)}`}>{u.status===UserStatus.approved?roleLabel(u.role):statusLabel(u.status)}</span></div>
+            <p className="mt-1 truncate text-[11px] text-white/40">{u.username}</p>
+          </div>
         </div>
-        <div className="border-t border-white/[0.06] bg-black/10 p-3 space-y-2">{renderExtra(u,i)}</div>
+        <div className="border-t border-white/[0.06] bg-black/10 px-3 py-3 space-y-2">{renderExtra(u,i)}</div>
       </article>)}
     </div>
   </section>;
