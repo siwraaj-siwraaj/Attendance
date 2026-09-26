@@ -273,12 +273,13 @@ export default function Layout({ children }: LayoutProps) {
 
       <main
         ref={mainRef}
-        onTouchStart={(e) => {
+        onPointerDown={(e) => {
+          if (e.pointerType !== "touch") return;
           const target = e.target as HTMLElement | null;
           swipeBlocked.current = !!target?.closest('table, [role="dialog"], [data-pdf-preview], [data-ocid="admin_panel"], input, textarea, select, button, [data-no-tab-swipe]');
           swipeIntent.current = false;
-          touchStartX.current = e.touches[0]?.clientX ?? null;
-          touchStartY.current = e.touches[0]?.clientY ?? null;
+          touchStartX.current = e.clientX;
+          touchStartY.current = e.clientY;
           if (!swipeBlocked.current) {
             const content = swipeContentRef.current;
             if (content) {
@@ -287,28 +288,35 @@ export default function Layout({ children }: LayoutProps) {
             }
           }
         }}
-        onTouchMove={(e) => {
-          if (swipeBlocked.current) return;
+        onPointerMove={(e) => {
+          if (e.pointerType !== "touch" || swipeBlocked.current) return;
           const startX = touchStartX.current;
           const startY = touchStartY.current;
-          const touch = e.touches[0];
-          if (startX === null || startY === null || !touch) return;
-          const dx = touch.clientX - startX;
-          const dy = touch.clientY - startY;
+          if (startX === null || startY === null) return;
+          const dx = e.clientX - startX;
+          const dy = e.clientY - startY;
           if (!swipeIntent.current) {
             if (Math.abs(dx) < 12 && Math.abs(dy) < 12) return;
-            // Require a clearly horizontal gesture before taking over the touch stream.
-            if (Math.abs(dx) <= Math.abs(dy) * 1.35) return;
+            // Vertical gestures stay completely native so Android can scroll.
+            if (Math.abs(dx) <= Math.abs(dy) * 1.35) {
+              swipeIntent.current = false;
+              return;
+            }
             swipeIntent.current = true;
+            try {
+              e.currentTarget.setPointerCapture(e.pointerId);
+            } catch {
+              // Pointer capture is optional.
+            }
           }
-          if (!swipeIntent.current) return;
           const index = swipeTabs.indexOf(activeTab);
           const atEdge = (dx > 0 && index <= 0) || (dx < 0 && index >= swipeTabs.length - 1);
           const dampedDx = atEdge ? dx * 0.28 : dx * 0.92;
           const content = swipeContentRef.current;
           if (content) content.style.transform = `translate3d(${dampedDx}px, 0, 0)`;
         }}
-        onTouchEnd={(e) => {
+        onPointerUp={(e) => {
+          if (e.pointerType !== "touch") return;
           const startX = touchStartX.current;
           const startY = touchStartY.current;
           const blocked = swipeBlocked.current;
@@ -318,8 +326,8 @@ export default function Layout({ children }: LayoutProps) {
           swipeBlocked.current = false;
           swipeIntent.current = false;
           if (blocked || !horizontal || startX === null || startY === null || swipeTabs.length < 2) return;
-          const dx = (e.changedTouches[0]?.clientX ?? startX) - startX;
-          const dy = (e.changedTouches[0]?.clientY ?? startY) - startY;
+          const dx = e.clientX - startX;
+          const dy = e.clientY - startY;
           const index = swipeTabs.indexOf(activeTab);
           const nextIndex = dx < 0 ? index + 1 : index - 1;
           const valid = Math.abs(dx) >= 55 && Math.abs(dx) > Math.abs(dy) * 1.35 && nextIndex >= 0 && nextIndex < swipeTabs.length;
@@ -346,6 +354,17 @@ export default function Layout({ children }: LayoutProps) {
             });
           }, 180);
         }}
+        onPointerCancel={() => {
+          touchStartX.current = null;
+          touchStartY.current = null;
+          swipeBlocked.current = false;
+          swipeIntent.current = false;
+          const content = swipeContentRef.current;
+          if (content) {
+            content.style.transition = "none";
+            content.style.transform = "translate3d(0, 0, 0)";
+          }
+        }}
         className="flex-1 min-h-0 overflow-hidden flex flex-col"
         style={{ touchAction: "pan-y" }}
       >
@@ -353,7 +372,6 @@ export default function Layout({ children }: LayoutProps) {
           {children}
         </div>
       </main>
-
       {mode && activeTab !== "admin" && activeTab !== "attendance" && <BottomTabBar activeTab={activeTab} onTabChange={onTabChange} />}
       <input ref={csvInputRef} type="file" accept=".csv" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) handleImportCSV(file); e.target.value = ""; }} />
     </div>
