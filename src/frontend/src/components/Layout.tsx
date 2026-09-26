@@ -296,12 +296,12 @@ export default function Layout({ children }: LayoutProps) {
           const dx = touch.clientX - startX;
           const dy = touch.clientY - startY;
           if (!swipeIntent.current) {
-            if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
-            if (Math.abs(dx) <= Math.abs(dy) * 1.15) return;
+            if (Math.abs(dx) < 12 && Math.abs(dy) < 12) return;
+            // Require a clearly horizontal gesture before taking over the touch stream.
+            if (Math.abs(dx) <= Math.abs(dy) * 1.35) return;
             swipeIntent.current = true;
           }
           if (!swipeIntent.current) return;
-          if (Math.abs(dx) > 0) e.preventDefault();
           const index = swipeTabs.indexOf(activeTab);
           const atEdge = (dx > 0 && index <= 0) || (dx < 0 && index >= swipeTabs.length - 1);
           const dampedDx = atEdge ? dx * 0.28 : dx * 0.92;
@@ -322,7 +322,7 @@ export default function Layout({ children }: LayoutProps) {
           const dy = (e.changedTouches[0]?.clientY ?? startY) - startY;
           const index = swipeTabs.indexOf(activeTab);
           const nextIndex = dx < 0 ? index + 1 : index - 1;
-          const valid = Math.abs(dx) >= 55 && Math.abs(dx) > Math.abs(dy) * 1.15 && nextIndex >= 0 && nextIndex < swipeTabs.length;
+          const valid = Math.abs(dx) >= 55 && Math.abs(dx) > Math.abs(dy) * 1.35 && nextIndex >= 0 && nextIndex < swipeTabs.length;
           const content = swipeContentRef.current;
           if (!content) return;
           content.style.transition = "transform 180ms cubic-bezier(0.22, 1, 0.36, 1)";
