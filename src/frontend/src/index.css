@@ -234,9 +234,9 @@
     background: #0a0f1e;
   }
 
-  .badge-present { background-color: #10b981; color: #ffffff; border: 1px solid #059669; font-weight: 700; }
-  .badge-absent { background-color: #e11d48; color: #ffffff; border: 1px solid #be123c; font-weight: 700; }
-  .badge-partial { background-color: #f59e0b; color: #000000; border: 1px solid #d97706; font-weight: 700; }
+  .badge-present { background-color: rgba(16,185,129,0.12); color: #6ee7b7; border: 1px solid rgba(52,211,153,0.28); font-weight: 600; }
+  .badge-absent { background-color: rgba(244,63,94,0.12); color: #fda4af; border: 1px solid rgba(251,113,133,0.28); font-weight: 600; }
+  .badge-partial { background-color: rgba(245,158,11,0.12); color: #fcd34d; border: 1px solid rgba(251,191,36,0.28); font-weight: 600; }
   .role-admin { background: oklch(var(--primary) / 0.18); color: oklch(var(--primary)); border: 1px solid oklch(var(--primary) / 0.35); }
   .role-attendance { background: oklch(var(--success) / 0.16); color: oklch(var(--success)); border: 1px solid oklch(var(--success) / 0.35); }
   .role-contract { background: oklch(var(--warning) / 0.16); color: oklch(var(--warning)); border: 1px solid oklch(var(--warning) / 0.35); }
