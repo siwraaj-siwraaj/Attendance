@@ -22,19 +22,8 @@ import {
 import { format } from "date-fns";
 import { Calendar, FileText, LayoutGrid, List, Wrench } from "lucide-react";
 import SkeletonLoader, { SkeletonCardList } from "../components/SkeletonLoader";
-import type {
-  AttendanceRecord,
-  AttendanceValue,
-  Contract,
-  Labour,
-  WorkColumn,
-} from "../types";
-import {
-  PARTIAL_VALUES,
-  getAttendanceDisplay,
-  sortWorkColumns,
-} from "../types";
-import { AttendanceTable } from "./AttendancePage";
+import type { Contract, Labour, WorkColumn } from "../types";
+import { sortWorkColumns } from "../types";
 
 interface ContractFormData {
   name: string;
@@ -57,7 +46,6 @@ function ContractsPage({
   const updateContract = useUpdateContract();
   const [selectedContract, setSelectedContract] = useState<any | null>(null);
   const [showForm, setShowForm] = useState(false);
-  const [showCombinedFlow, setShowCombinedFlow] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [expandedContractId, setExpandedContractId] = useState<string | null>(
     null,
@@ -128,34 +116,32 @@ function ContractsPage({
   const isSaving = addContract.isPending || updateContract.isPending;
 
   const handleSave = useCallback(() => {
+    if (isSaving || !form.name.trim()) return;
+
+    const payload = {
+      name: form.name.trim(),
+      multiplier: Number.parseFloat(form.multiplier),
+      contractAmount: Number.parseFloat(form.contractAmount),
+      machineExpenses: Number.parseFloat(form.machineExpenses),
+      bedAmount: Number.parseFloat(form.bedAmount),
+      paperAmount: Number.parseFloat(form.paperAmount),
+      meshAmount: Number.parseFloat(form.meshAmount),
+    };
+
     if (isEditing && selectedContract) {
-      updateContract.mutate({
-        id: selectedContract.id,
-        name: form.name.trim(),
-        multiplier: Number.parseFloat(form.multiplier),
-        contractAmount: Number.parseFloat(form.contractAmount),
-        machineExpenses: Number.parseFloat(form.machineExpenses),
-        bedAmount: Number.parseFloat(form.bedAmount),
-        paperAmount: Number.parseFloat(form.paperAmount),
-        meshAmount: Number.parseFloat(form.meshAmount),
-      });
-      setShowForm(false);
-    } else {
-      addContract.mutate({
-        name: form.name.trim(),
-        multiplier: Number.parseFloat(form.multiplier),
-        contractAmount: Number.parseFloat(form.contractAmount),
-        machineExpenses: Number.parseFloat(form.machineExpenses),
-        bedAmount: Number.parseFloat(form.bedAmount),
-        paperAmount: Number.parseFloat(form.paperAmount),
-        meshAmount: Number.parseFloat(form.meshAmount),
-      });
-      // Close immediately — the optimistic update in useBackend.ts already
-      // reflects the new contract in the list, so the save runs in the
-      // background and the user can keep working without a confirmation.
-      setShowForm(false);
+      updateContract.mutate(
+        { id: selectedContract.id, ...payload },
+        { onSuccess: () => setShowForm(false) },
+      );
+      return;
     }
-  }, [isEditing, selectedContract, form, updateContract, addContract]);
+
+    // Creation can take a noticeable amount of time. Keep the dialog open
+    // until the backend confirms the insert.
+    addContract.mutate(payload, {
+      onSuccess: () => setShowForm(false),
+    });
+  }, [isEditing, selectedContract, form, updateContract, addContract, isSaving]);
 
   const fmt = useCallback(
     (n: number) =>
@@ -517,14 +503,24 @@ function ContractsPage({
         )}
       </div>
 
-      {/* Floating Action Button — the combined contract+attendance flow calls
-          setAttendance, which the backend gates to the attendanceOnly role, so
-          it is only offered to the admin role (which can both create contracts
-          AND mark attendance). Other roles use the separate flows. */}
+      {/* Create contract only */}
       {isAdmin && (
         <button
           type="button"
-          onClick={() => setShowCombinedFlow(true)}
+          onClick={() => {
+            setIsEditing(false);
+            setSelectedContract(null);
+            setForm({
+              name: "",
+              multiplier: "1",
+              contractAmount: "0",
+              machineExpenses: "0",
+              bedAmount: getBedBase().toString(),
+              paperAmount: getPaperBase().toString(),
+              meshAmount: "0",
+            });
+            setShowForm(true);
+          }}
           className="fixed bottom-24 right-4 w-14 h-14 rounded-full flex items-center justify-center shadow-lg z-30 bg-gradient-to-br from-orange-500 to-orange-600 text-white"
           aria-label="Add Contract"
           data-ocid="contract.add_button"
@@ -838,626 +834,6 @@ function ContractsPage({
           </div>
         </div>
       )}
-    </div>
-  );
-}
-
-/**
- * Combined contract creation + attendance flow. A 1-2-3 stepped wizard:
- *   Step 1 — enter contract details (name, multiplier, amounts) and create the
- *            contract, then add its work columns.
- *   Step 2 — mark attendance for the newly created contract using the shared
- *            AttendanceTable.
- *   Step 3 — confirm the summary and save the attendance.
- */
-function CombinedFlow({ onClose }: { onClose: () => void }) {
-  const { canEdit } = useAuth();
-  const addContract = useAddContract();
-  const addWorkColumn = useAddWorkColumn();
-  const setAttendance = useSetAttendance();
-  const { data: allLabours = [] } = useLabours();
-  const { data: activeLabours = [] } = useGetActiveLabours();
-
-  const getBedBase = () =>
-    Number(localStorage.getItem("rossie_bed_base") || "11000") || 11000;
-  const getPaperBase = () =>
-    Number(localStorage.getItem("rossie_paper_base") || "7000") || 7000;
-
-  const blankForm = (): ContractFormData => ({
-    name: "",
-    multiplier: "1",
-    contractAmount: "0",
-    machineExpenses: "0",
-    bedAmount: getBedBase().toString(),
-    paperAmount: getPaperBase().toString(),
-    meshAmount: "0",
-  });
-
-  const [step, setStep] = useState(1);
-  const [form, setForm] = useState<ContractFormData>(blankForm);
-  const [createdContract, setCreatedContract] = useState<Contract | null>(null);
-  const [creating, setCreating] = useState(false);
-  const [instantAddLoading, setInstantAddLoading] = useState<string | null>(
-    null,
-  );
-  const [attendanceOverrides, setAttendanceOverrides] = useState<
-    Record<string, AttendanceValue>
-  >({});
-  const [saving, setSaving] = useState(false);
-
-  const updateMultiplier = (val: string) => {
-    const m = Number.parseFloat(val) || 1;
-    const bed = getBedBase() * m;
-    const paper = getPaperBase() * m;
-    const contractAmount = Number.parseFloat(form.contractAmount) || 0;
-    const machineExpenses = Number.parseFloat(form.machineExpenses) || 0;
-    const mesh = contractAmount - (bed + paper + machineExpenses);
-    setForm((prev) => ({
-      ...prev,
-      multiplier: val,
-      bedAmount: bed.toString(),
-      paperAmount: paper.toString(),
-      meshAmount: mesh.toString(),
-    }));
-  };
-
-  const handleCreateContract = () => {
-    if (!form.name.trim() || creating) return;
-    setCreating(true);
-    addContract.mutate(
-      {
-        name: form.name.trim(),
-        multiplier: Number.parseFloat(form.multiplier),
-        contractAmount: Number.parseFloat(form.contractAmount),
-        machineExpenses: Number.parseFloat(form.machineExpenses),
-        bedAmount: Number.parseFloat(form.bedAmount),
-        paperAmount: Number.parseFloat(form.paperAmount),
-        meshAmount: Number.parseFloat(form.meshAmount),
-      },
-      {
-        onSuccess: (created) => {
-          setCreatedContract(created as unknown as Contract);
-          setCreating(false);
-        },
-        onError: () => setCreating(false),
-      },
-    );
-  };
-
-  const handleAddColumn = (workType: string) => {
-    if (!createdContract) return;
-
-    const baseName =
-      workType === "bed"
-        ? "Bed"
-        : workType === "paper"
-          ? "Paper"
-          : workType === "mesh"
-            ? "Mesh"
-            : workType;
-
-    const sameTypeCount = createdContract.workColumns.filter(
-      (column) => column.workType === workType,
-    ).length;
-
-    const columnName =
-      sameTypeCount === 0 ? baseName : `${baseName} ${sameTypeCount + 1}`;
-
-    setInstantAddLoading(workType);
-    addWorkColumn.mutate(
-      {
-        contractId: createdContract.id,
-        name: columnName,
-        workType,
-      },
-      {
-        // The mutation returns the full updated contract (with the new work
-        // column appended). Replace the local createdContract snapshot with it
-        // so sortedWorkColumns re-derives and step 2's AttendanceTable shows
-        // the newly added columns. The react-query cache is updated separately
-        // inside useAddWorkColumn; this keeps the local snapshot in sync.
-        onSuccess: (updatedContract) => {
-          if (updatedContract) {
-            setCreatedContract(updatedContract as unknown as Contract);
-          }
-        },
-        onSettled: () => setInstantAddLoading(null),
-        onError: () => setInstantAddLoading(null),
-      },
-    );
-  };
-
-  const handleAttendanceChange = (
-    labourId: bigint,
-    columnId: string,
-    value: AttendanceValue,
-  ) => {
-    setAttendanceOverrides((prev) => ({
-      ...prev,
-      [`${String(labourId)}|${columnId}`]: value,
-    }));
-  };
-
-  const sortedWorkColumns: WorkColumn[] = useMemo(
-    () => (createdContract ? sortWorkColumns(createdContract.workColumns) : []),
-    [createdContract],
-  );
-
-  const labours: Labour[] = useMemo(() => {
-    const activeIds = new Set(activeLabours.map((l) => String(l.id)));
-    return allLabours.filter((l) => activeIds.has(String(l.id)));
-  }, [allLabours, activeLabours]);
-
-  const attendanceRecords: AttendanceRecord[] = useMemo(() => {
-    if (!createdContract) return [];
-    return Object.entries(attendanceOverrides).map(([key, value]) => {
-      const [labourIdStr, columnId] = key.split("|");
-      return {
-        contractId: createdContract.id,
-        labourId: BigInt(labourIdStr),
-        columnId,
-        value,
-      };
-    });
-  }, [attendanceOverrides, createdContract]);
-
-  const presentCount = useMemo(
-    () =>
-      attendanceRecords.filter((r) => getAttendanceDisplay(r.value) > 0).length,
-    [attendanceRecords],
-  );
-
-  const handleSave = () => {
-    if (!createdContract || saving) return;
-    setSaving(true);
-    for (const record of attendanceRecords) {
-      setAttendance.mutate({
-        contractId: createdContract.id,
-        labourId: record.labourId,
-        columnId: record.columnId,
-        value: record.value,
-      });
-    }
-    // Give the mutations a moment to flush before closing.
-    setTimeout(() => {
-      setSaving(false);
-      onClose();
-    }, 400);
-  };
-
-  const stepLabels = ["Contract", "Attendance", "Confirm"];
-
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-      onKeyDown={(e) => {
-        if (e.key === "Escape") onClose();
-      }}
-      role="presentation"
-      tabIndex={-1}
-      data-ocid="combined_flow.dialog"
-    >
-      <div className="glass-dialog rounded-2xl w-full max-w-3xl max-h-[90vh] flex flex-col">
-        {/* Header */}
-        <div className="p-4 pb-3 flex items-center justify-between border-b border-white/10">
-          <h2 className="text-xl font-bold text-white">
-            New Contract + Attendance
-          </h2>
-          <button
-            type="button"
-            onClick={onClose}
-            className="text-gray-400 hover:text-white p-1"
-            aria-label="Close"
-            data-ocid="combined_flow.close_button"
-          >
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              role="img"
-              aria-label="Close dialog"
-            >
-              <title>Close dialog</title>
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </button>
-        </div>
-
-        {/* Step indicator */}
-        <div className="px-4 pt-4 flex items-center">
-          {stepLabels.map((label, i) => {
-            const stepNum = i + 1;
-            const isActive = step === stepNum;
-            const isDone = step > stepNum;
-            return (
-              <div
-                key={label}
-                className="flex items-center flex-1 last:flex-none"
-              >
-                <div
-                  className={`flow-step ${isActive ? "flow-step-active" : ""} ${
-                    isDone ? "flow-step-done" : ""
-                  }`}
-                >
-                  <div className="flow-step-dot">{isDone ? "✓" : stepNum}</div>
-                  <span className="flow-step-label">{label}</span>
-                </div>
-                {stepNum < stepLabels.length && (
-                  <div
-                    className={`flow-connector ${
-                      step > stepNum ? "flow-connector-done" : ""
-                    }`}
-                  />
-                )}
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Body */}
-        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
-          {step === 1 && (
-            <>
-              <div>
-                <label
-                  htmlFor="combined-name"
-                  className="text-gray-400 text-xs mb-1 block"
-                >
-                  Contract Name
-                </label>
-                <input
-                  id="combined-name"
-                  type="text"
-                  value={form.name}
-                  onChange={(e) =>
-                    setForm((prev) => ({ ...prev, name: e.target.value }))
-                  }
-                  className="w-full bg-white/5 border border-orange-500/30 focus:border-orange-500 rounded-lg px-3 py-2 text-white outline-none"
-                  placeholder="Contract name"
-                  data-ocid="combined_flow.name_input"
-                />
-              </div>
-              {[
-                {
-                  label: "Multiplier",
-                  key: "multiplier",
-                  type: "number",
-                  step: "0.1",
-                },
-                {
-                  label: "Contract Amount (₹)",
-                  key: "contractAmount",
-                  type: "number",
-                },
-                {
-                  label: "Machine Expenses (₹)",
-                  key: "machineExpenses",
-                  type: "number",
-                },
-              ].map(({ label, key, type, step }) => (
-                <div key={key}>
-                  <label
-                    htmlFor={`combined-${key}`}
-                    className="text-gray-400 text-xs mb-1 block"
-                  >
-                    {label}
-                  </label>
-                  <input
-                    id={`combined-${key}`}
-                    type={type}
-                    step={step}
-                    value={form[key as keyof ContractFormData]}
-                    onChange={(e) => {
-                      if (key === "multiplier") {
-                        updateMultiplier(e.target.value);
-                      } else {
-                        setForm((prev) => {
-                          const next = { ...prev, [key]: e.target.value };
-                          if (
-                            key === "contractAmount" ||
-                            key === "machineExpenses"
-                          ) {
-                            const contractAmount =
-                              Number.parseFloat(
-                                key === "contractAmount"
-                                  ? e.target.value
-                                  : next.contractAmount,
-                              ) || 0;
-                            const bedAmount =
-                              Number.parseFloat(next.bedAmount) || 0;
-                            const paperAmount =
-                              Number.parseFloat(next.paperAmount) || 0;
-                            const machineExpenses =
-                              Number.parseFloat(
-                                key === "machineExpenses"
-                                  ? e.target.value
-                                  : next.machineExpenses,
-                              ) || 0;
-                            next.meshAmount = (
-                              contractAmount -
-                              (bedAmount + paperAmount + machineExpenses)
-                            ).toString();
-                          }
-                          return next;
-                        });
-                      }
-                    }}
-                    className="w-full bg-white/5 border border-orange-500/30 focus:border-orange-500 rounded-lg px-3 py-2 text-white outline-none"
-                  />
-                </div>
-              ))}
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label
-                    htmlFor="combined-bedAmount"
-                    className="text-gray-400 text-xs mb-1 block"
-                  >
-                    Bed Amount (₹)
-                  </label>
-                  <input
-                    id="combined-bedAmount"
-                    type="number"
-                    value={form.bedAmount}
-                    onChange={(e) =>
-                      setForm((prev) => {
-                        const next = { ...prev, bedAmount: e.target.value };
-                        const ca = Number.parseFloat(next.contractAmount) || 0;
-                        const ba = Number.parseFloat(e.target.value) || 0;
-                        const pa = Number.parseFloat(next.paperAmount) || 0;
-                        const me = Number.parseFloat(next.machineExpenses) || 0;
-                        next.meshAmount = (ca - (ba + pa + me)).toString();
-                        return next;
-                      })
-                    }
-                    className="w-full bg-white/5 border border-orange-500/30 focus:border-orange-500 rounded-lg px-3 py-2 text-white outline-none"
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="combined-paperAmount"
-                    className="text-gray-400 text-xs mb-1 block"
-                  >
-                    Paper Amount (₹)
-                  </label>
-                  <input
-                    id="combined-paperAmount"
-                    type="number"
-                    value={form.paperAmount}
-                    onChange={(e) =>
-                      setForm((prev) => {
-                        const next = { ...prev, paperAmount: e.target.value };
-                        const ca = Number.parseFloat(next.contractAmount) || 0;
-                        const ba = Number.parseFloat(next.bedAmount) || 0;
-                        const pa = Number.parseFloat(e.target.value) || 0;
-                        const me = Number.parseFloat(next.machineExpenses) || 0;
-                        next.meshAmount = (ca - (ba + pa + me)).toString();
-                        return next;
-                      })
-                    }
-                    className="w-full bg-white/5 border border-orange-500/30 focus:border-orange-500 rounded-lg px-3 py-2 text-white outline-none"
-                  />
-                </div>
-              </div>
-              <div>
-                <label
-                  htmlFor="combined-meshAmount"
-                  className="text-gray-400 text-xs mb-1 block"
-                >
-                  Mesh Amount (₹)
-                </label>
-                <input
-                  id="combined-meshAmount"
-                  type="number"
-                  value={form.meshAmount}
-                  onChange={(e) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      meshAmount: e.target.value,
-                    }))
-                  }
-                  className="w-full bg-white/5 border border-orange-500/30 focus:border-orange-500 rounded-lg px-3 py-2 text-white outline-none"
-                />
-              </div>
-
-              {/* Create contract */}
-              {!createdContract ? (
-                <button
-                  type="button"
-                  onClick={handleCreateContract}
-                  disabled={!form.name.trim() || creating}
-                  className="w-full py-2.5 rounded-xl btn-orange font-semibold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                  data-ocid="combined_flow.create_contract_button"
-                >
-                  {creating ? "Creating..." : "Create Contract"}
-                </button>
-              ) : (
-                <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-semibold text-white">
-                      {createdContract.name}
-                    </p>
-                    <span className="text-xs text-green-400">✓ Created</span>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-400 font-medium uppercase tracking-wider mb-2">
-                      Work Columns
-                    </p>
-                    <div className="flex flex-wrap gap-2 mb-2">
-                      {sortedWorkColumns.map((col) => (
-                        <span
-                          key={col.id}
-                          className="inline-flex items-center gap-1 text-xs font-medium text-orange-300 bg-orange-500/10 border border-orange-500/20 rounded-md px-2 py-1"
-                        >
-                          {col.name}
-                        </span>
-                      ))}
-                      {sortedWorkColumns.length === 0 && (
-                        <span className="text-xs text-white/40">
-                          No columns yet — add one below
-                        </span>
-                      )}
-                    </div>
-                    <div className="grid grid-cols-3 gap-2">
-                      <button
-                        type="button"
-                        onClick={() => handleAddColumn("bed")}
-                        disabled={instantAddLoading === "bed"}
-                        className="py-2 rounded-lg border border-orange-500/40 bg-orange-500/10 text-orange-300 text-xs font-semibold hover:bg-orange-500/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        data-ocid="combined_flow.add_bed_button"
-                      >
-                        {instantAddLoading === "bed" ? "…" : "+ Bed"}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleAddColumn("paper")}
-                        disabled={instantAddLoading === "paper"}
-                        className="py-2 rounded-lg border border-purple-500/40 bg-purple-500/10 text-purple-300 text-xs font-semibold hover:bg-purple-500/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        data-ocid="combined_flow.add_paper_button"
-                      >
-                        {instantAddLoading === "paper" ? "…" : "+ Paper"}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleAddColumn("mesh")}
-                        disabled={instantAddLoading === "mesh"}
-                        className="py-2 rounded-lg border border-teal-500/40 bg-teal-500/10 text-teal-300 text-xs font-semibold hover:bg-teal-500/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        data-ocid="combined_flow.add_mesh_button"
-                      >
-                        {instantAddLoading === "mesh" ? "…" : "+ Mesh"}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </>
-          )}
-
-          {step === 2 && createdContract && (
-            <>
-              <p className="text-sm text-white/60">
-                Mark attendance for{" "}
-                <span className="text-orange-400 font-semibold">
-                  {createdContract.name}
-                </span>
-              </p>
-              {labours.length === 0 ? (
-                <div
-                  className="glass-card rounded-xl p-8 text-center text-gray-400"
-                  data-ocid="combined_flow.attendance_empty_state"
-                >
-                  <p className="text-sm">
-                    No active labours to mark attendance for.
-                  </p>
-                </div>
-              ) : (
-                <AttendanceTable
-                  contract={createdContract}
-                  workColumns={sortedWorkColumns}
-                  labours={labours}
-                  attendance={attendanceRecords}
-                  canEdit={canEdit}
-                  onChange={handleAttendanceChange}
-                />
-              )}
-            </>
-          )}
-
-          {step === 3 && createdContract && (
-            <div className="space-y-3">
-              <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4 space-y-2">
-                <p className="text-sm font-semibold text-white">
-                  {createdContract.name}
-                </p>
-                <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-                  <div>
-                    <p className="text-gray-400 text-xs">Contract Amount</p>
-                    <p className="text-orange-400 font-medium">
-                      ₹
-                      {createdContract.contractAmount.toLocaleString("en-IN", {
-                        maximumFractionDigits: 0,
-                      })}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-gray-400 text-xs">Work Columns</p>
-                    <p className="text-white font-medium">
-                      {sortedWorkColumns.length}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-gray-400 text-xs">Labours Marked</p>
-                    <p className="text-white font-medium">
-                      {attendanceRecords.length}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-gray-400 text-xs">Present</p>
-                    <p className="text-green-400 font-medium">{presentCount}</p>
-                  </div>
-                </div>
-              </div>
-              <p className="text-xs text-white/40">
-                Review the details above. Saving will create the contract and
-                record the attendance you marked.
-              </p>
-            </div>
-          )}
-        </div>
-
-        {/* Footer */}
-        <div className="p-4 pt-3 border-t border-white/10 flex gap-3 pb-safe">
-          {step > 1 ? (
-            <button
-              type="button"
-              onClick={() => setStep((s) => s - 1)}
-              disabled={saving}
-              className="flex-1 py-2.5 rounded-xl font-semibold border border-white/20 text-gray-300 hover:text-white hover:border-white/40 transition-colors disabled:opacity-50"
-              data-ocid="combined_flow.back_button"
-            >
-              Back
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 py-2.5 rounded-xl font-semibold border border-white/20 text-gray-300 hover:text-white hover:border-white/40 transition-colors"
-              data-ocid="combined_flow.cancel_button"
-            >
-              Cancel
-            </button>
-          )}
-          {step < 3 ? (
-            <button
-              type="button"
-              onClick={() => setStep((s) => s + 1)}
-              disabled={step === 1 && !createdContract}
-              className="btn-orange flex-1 py-2.5 rounded-xl font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
-              data-ocid="combined_flow.next_button"
-            >
-              Next →
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={handleSave}
-              disabled={saving}
-              className="btn-orange flex-1 py-2.5 rounded-xl font-semibold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-              data-ocid="combined_flow.save_button"
-            >
-              {saving ? "Saving..." : "Save & Finish"}
-            </button>
-          )}
-        </div>
-      </div>
     </div>
   );
 }
