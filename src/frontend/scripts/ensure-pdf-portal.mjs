@@ -8,6 +8,13 @@ const paymentsPath = path.join(frontendRoot, "src/pages/PaymentsPage.tsx");
 
 let source = fs.readFileSync(paymentsPath, "utf8");
 
+// PaymentsPage has a self-contained PDF preview in the redesigned UI.
+// Keep this legacy migration script non-destructive when that implementation is present.
+if (!source.includes("showPaymentPdfPreview")) {
+  console.log("PaymentsPage uses the current PDF preview implementation; no legacy portal migration needed.");
+  process.exit(0);
+}
+
 if (!source.includes('from "react-dom"')) {
   source = source.replace(
     'import { useEffect, useMemo, useRef, useState } from "react";',
@@ -26,141 +33,23 @@ if (start === -1 || end === -1) {
 const portal = `    {showPaymentPdfPreview &&
       typeof document !== "undefined" &&
       createPortal(
-        <div
-          data-pdf-preview
-          data-pdf-viewer="fullscreen"
-          style={{
-            position: "fixed",
-            inset: 0,
-            zIndex: 2147483647,
-            width: "100vw",
-            height: "100dvh",
-            minHeight: "100dvh",
-            display: "flex",
-            flexDirection: "column",
-            overflow: "hidden",
-            background: "#ffffff",
-            opacity: 1,
-            visibility: "visible",
-            transform: "none",
-            isolation: "isolate",
-            touchAction: "auto",
-            boxSizing: "border-box",
-          }}
-        >
-          {/* The Android activity is edge-to-edge. Reserve the system status-bar
-              area so report content never sits underneath the clock/icons. */}
-          <div
-            data-pdf-status-spacer
-            aria-hidden="true"
-            style={{
-              flex: "0 0 auto",
-              width: "100%",
-              height: "max(24px, env(safe-area-inset-top))",
-              minHeight: "max(24px, env(safe-area-inset-top))",
-              background: "#26384f",
-            }}
-          />
-
+        <div data-pdf-preview data-pdf-viewer="fullscreen">
+          {/* Legacy portal wrapper retained for older PaymentsPage implementations. */}
           <div
             data-pdf-scroll
             style={{
-              flex: "1 1 0%",
-              minHeight: 0,
-              minWidth: 0,
-              width: "100%",
-              height: 0,
+              position: "fixed",
+              inset: 0,
+              zIndex: 2147483647,
+              width: "100vw",
+              height: "100dvh",
               overflow: "auto",
-              WebkitOverflowScrolling: "touch",
-              overscrollBehavior: "contain",
               background: "#ffffff",
               touchAction: "pan-x pan-y",
+              WebkitOverflowScrolling: "touch",
             }}
           >
-            <div
-              className="report"
-              style={{
-                width: 820,
-                minWidth: 820,
-                maxWidth: 820,
-                margin: "0 auto",
-                background: "#ffffff",
-                opacity: 1,
-              }}
-              dangerouslySetInnerHTML={{ __html: paymentPreviewHTML }}
-            />
-          </div>
-
-          <div
-            data-pdf-actions
-            style={{
-              flex: "0 0 auto",
-              width: "100%",
-              minHeight: 64,
-              boxSizing: "border-box",
-              display: "flex",
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "stretch",
-              gap: 10,
-              padding: "10px 12px max(10px, env(safe-area-inset-bottom))",
-              borderTop: "1px solid #e5e7eb",
-              background: "#ffffff",
-              overflow: "hidden",
-              touchAction: "manipulation",
-            }}
-          >
-            <button
-              type="button"
-              onClick={() => setShowPaymentPdfPreview(false)}
-              style={{
-                flex: "1 1 0%",
-                width: 0,
-                minWidth: 0,
-                height: 44,
-                minHeight: 44,
-                maxHeight: 44,
-                margin: 0,
-                border: 0,
-                borderRadius: 10,
-                background: "#6b7280",
-                color: "#ffffff",
-                fontSize: 16,
-                fontWeight: 600,
-              }}
-            >
-              Close
-            </button>
-
-            <button
-              type="button"
-              onClick={async () => {
-                await openPrintWindow(
-                  paymentPreviewHTML.includes("Attendance Report")
-                    ? "Attendance Sheet"
-                    : "Payment Sheet",
-                  paymentPreviewHTML,
-                );
-                setShowPaymentPdfPreview(false);
-              }}
-              style={{
-                flex: "1 1 0%",
-                width: 0,
-                minWidth: 0,
-                height: 44,
-                minHeight: 44,
-                maxHeight: 44,
-                margin: 0,
-                border: 0,
-                borderRadius: 10,
-                background: "#f97316",
-                color: "#ffffff",
-                fontSize: 16,
-                fontWeight: 600,
-              }}
-            >
-              Save PDF
-            </button>
+            <div className="report" dangerouslySetInnerHTML={{ __html: paymentPreviewHTML }} />
           </div>
         </div>,
         document.body,
@@ -168,4 +57,4 @@ const portal = `    {showPaymentPdfPreview &&
 
 source = source.slice(0, start) + portal + source.slice(end + close.length);
 fs.writeFileSync(paymentsPath, source);
-console.log("PDF preview is compiled as an isolated fullscreen React portal with a dedicated status-bar safe area.");
+console.log("PDF preview is compiled as an isolated fullscreen React portal.");
