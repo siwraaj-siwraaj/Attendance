@@ -68,7 +68,7 @@ function LaboursPage() {
   if (isLoading) return <div className="h-full p-4"><SkeletonLoader /></div>;
 
   return (
-    <div className="h-full overflow-hidden bg-[#080d1b] text-white font-['Figtree',sans-serif]">
+    <div className="min-h-full bg-[#080d1b] text-white font-['Figtree',sans-serif]">
       <div className="h-full overflow-y-auto px-4 pt-4 pb-28">
         {/* Hero */}
         <section className="relative overflow-hidden rounded-[26px] border border-orange-400/15 bg-gradient-to-br from-[#172039] via-[#10182b] to-[#0d1323] p-5 shadow-xl">
@@ -100,13 +100,13 @@ function LaboursPage() {
         </div>
 
         {/* List */}
-        <div className="mt-4 space-y-2">
-          {filtered.length === 0 ? <div className="rounded-3xl border border-dashed border-white/10 bg-white/[0.025] p-10 text-center"><Users className="mx-auto h-8 w-8 text-white/15"/><p className="mt-3 text-sm font-semibold text-white/55">No labours found</p><p className="mt-1 text-xs text-white/30">Try another search or filter</p></div> : filtered.map((l: any, index: number) => {
+        <div className="mt-4 space-y-2.5">
+          {filtered.length === 0 ? <div className="rounded-[24px] border border-dashed border-white/10 bg-white/[0.025] p-10 text-center"><Users className="mx-auto h-9 w-9 text-white/15"/><p className="mt-3 text-sm font-semibold text-white/55">No labours found</p><p className="mt-1 text-xs text-white/30">Try another search or filter</p></div> : filtered.map((l: any, index: number) => {
             const isActive = l.isActive !== false;
-            return <button key={String(l.id)} type="button" onClick={() => isAdmin && openEdit(l)} className="group flex w-full items-center gap-3 rounded-2xl border border-white/[0.07] bg-[#10182a] p-3 text-left transition active:scale-[0.99] hover:border-orange-500/25" data-ocid={`labour.item.${index+1}`}>
-              <div className={`relative flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-sm font-bold ${isActive?'bg-orange-500/15 text-orange-400':'bg-white/5 text-white/30'}`}>{String(l.name ?? '?').trim().charAt(0).toUpperCase() || '?' }<span className={`absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-[#10182a] ${isActive?'bg-emerald-400':'bg-white/20'}`}/></div>
-              <div className="min-w-0 flex-1"><div className="flex items-center gap-2"><p className="truncate text-sm font-semibold">{l.name}</p>{isActive && <BadgeCheck className="h-3.5 w-3.5 shrink-0 text-emerald-400"/>}</div><div className="mt-1 flex items-center gap-3 text-[11px] text-white/35">{l.employeeId && <span>ID {l.employeeId}</span>}{l.phoneNumber && <span className="flex items-center gap-1"><Phone className="h-3 w-3"/>{l.phoneNumber}</span>}{l.joinDate && <span className="flex items-center gap-1"><CalendarDays className="h-3 w-3"/>{l.joinDate}</span>}</div></div>
-              <div className="shrink-0 rounded-xl bg-white/5 p-2 text-white/25 group-hover:text-orange-400"><Pencil className="h-4 w-4"/></div>
+            return <button key={String(l.id)} type="button" onClick={() => isAdmin && openEdit(l)} className="group flex w-full items-center gap-3 rounded-[22px] border border-white/[0.07] bg-gradient-to-r from-[#131d31] to-[#0f1728] p-3.5 text-left shadow-sm transition hover:border-orange-500/25 hover:bg-[#162139] active:scale-[0.99]" data-ocid={`labour.item.${index+1}`}>
+              <div className={`relative flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-sm font-extrabold ${isActive?"bg-orange-500/15 text-orange-300 ring-1 ring-orange-400/15":"bg-white/5 text-white/30"}`}>{String(l.name ?? "?").trim().charAt(0).toUpperCase() || "?"}<span className={`absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-[#111b2d] ${isActive?"bg-emerald-400":"bg-white/20"}`}/></div>
+              <div className="min-w-0 flex-1"><div className="flex items-center gap-2"><p className="truncate text-sm font-bold text-white">{l.name}</p>{isActive&&<span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[9px] font-bold text-emerald-300">Active</span>}</div><div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-white/38">{l.employeeId&&<span>ID {l.employeeId}</span>}{l.phoneNumber&&<span className="flex items-center gap-1"><Phone className="h-3 w-3"/>{l.phoneNumber}</span>}{l.joinDate&&<span className="flex items-center gap-1"><CalendarDays className="h-3 w-3"/>{l.joinDate}</span>}</div></div>
+              {isAdmin&&<div className="shrink-0 rounded-xl border border-white/[0.06] bg-white/[0.04] p-2.5 text-white/35 group-hover:border-orange-400/20 group-hover:text-orange-300"><Pencil className="h-4 w-4"/></div>}
             </button>;
           })}
         </div>
