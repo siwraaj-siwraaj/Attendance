@@ -37,6 +37,14 @@ interface AttendancePageProps {
   onBackToContracts?: () => void;
 }
 
+function formatCurrency(value: number): string {
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 2,
+  }).format(Number.isFinite(value) ? value : 0);
+}
+
 function getSelectBgClass(value: AttendanceValue): string {
   if (value.__kind__ === "present")
     return "bg-emerald-500/15 border-emerald-400/40 text-emerald-300";
