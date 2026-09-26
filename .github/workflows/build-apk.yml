@@ -43,6 +43,10 @@ jobs:
           CANISTER_ID_BACKEND: bkyz2-fmaaa-aaaaa-qaaaq-cai
         run: pnpm build
 
+      - name: Typecheck frontend
+        working-directory: src/frontend
+        run: pnpm typecheck
+
       - name: Configure Firebase Android
         env:
           FIREBASE_GOOGLE_SERVICES_JSON: ${{ secrets.FIREBASE_GOOGLE_SERVICES_JSON }}
