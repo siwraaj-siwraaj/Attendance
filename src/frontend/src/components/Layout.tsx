@@ -188,7 +188,7 @@ export default function Layout({ children }: LayoutProps) {
   const profileInitial = profileName.charAt(0).toUpperCase();
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#0a0f1e]">
+    <div className="h-[100dvh] min-h-0 flex flex-col bg-[#0a0f1e]">
       <BackButtonGuard enabled={mode !== null} returnToContractsOnly={activeTab === "admin" || activeTab === "attendance"} onReturnToSelection={() => setActiveTab("contracts")} />
 
       {menuOpen && <>
@@ -267,10 +267,10 @@ export default function Layout({ children }: LayoutProps) {
 
       <main
         ref={mainRef}
-        className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden flex flex-col"
+        className="flex-1 min-h-0 min-w-0 overflow-y-auto overflow-x-hidden flex flex-col overscroll-contain"
       style={{ touchAction: "auto", WebkitOverflowScrolling: "touch" }}
       >
-        <div ref={swipeContentRef} className="min-h-full min-w-0 flex flex-col" style={{ width: "100%" }}>
+        <div ref={swipeContentRef} className="min-h-full min-w-0 flex flex-col" style={{ width: "100%", touchAction: "pan-y" }}>
           {children}
         </div>
       </main>
