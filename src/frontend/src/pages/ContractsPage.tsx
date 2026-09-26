@@ -180,7 +180,7 @@ function ContractsPage({
       <div className="shrink-0 space-y-3 px-4 pt-4 pb-3 bg-[#0a0f1e] sticky top-0 z-10">
         <div className="px-1">
           <p className="text-sm font-medium text-white/45">
-            Hi {name?.trim() || username?.trim() || "there"} +
+            Hi {name?.trim() || username?.trim() || "there"}
           </p>
           <h1 className="mt-0.5 text-2xl font-bold tracking-tight text-white">
             Contracts
