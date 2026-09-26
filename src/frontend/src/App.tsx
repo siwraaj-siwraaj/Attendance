@@ -10,8 +10,8 @@ import AttendancePage from "./pages/AttendancePage";
 import AdvancesPage from "./pages/AdvancesPage";
 import PaymentsPage from "./pages/PaymentsPage";
 import LaboursPage from "./pages/LaboursPage";
-import SettledPage from "./pages/SettledPage";
 import AdminPanel from "./pages/AdminPanel";
+import SettingsPanel from "./components/SettingsPanel";
 
 // Keep stalled mobile/WebView requests from blocking the app indefinitely.
 const FETCH_TIMEOUT_MS = 8_000;
@@ -57,20 +57,36 @@ function AppContent() {
   const [selectedContractIds, setSelectedContractIds] = useState<Set<string>>(() => new Set());
   const [paymentData, setPaymentData] = useState<any[] | null>(null);
   const [openColumnPickerFor, setOpenColumnPickerFor] = useState<bigint | null>(null);
-  const handleViewAttendance = (contractId: bigint) => { setSelectedContractId(contractId); setAttendanceContractId(contractId); setActiveTab("attendance"); };
+  const handleViewAttendance = (contractId: bigint) => {
+    setSelectedContractId(contractId);
+    setAttendanceContractId(contractId);
+    setActiveTab("attendance");
+  };
+  const handleAttendanceBack = () => setActiveTab("contracts");
   if (isInitializing) return <OpeningRossie />;
   if (!isAuthenticated) return <div className="fixed inset-0 flex items-center justify-center" style={{ background: "#0d1220" }}><div className="ambient-glow-1" aria-hidden="true" /><div className="ambient-glow-2" aria-hidden="true" /><LoginPage /></div>;
   if (status !== "approved") return <PendingApproval />;
   return <Layout><div className="flex flex-col h-full"><ErrorBoundary tabName={activeTab} key={activeTab}>
     {activeTab === "admin" && <AdminPanel key="admin" />}
-    {mode === "view" && activeTab === "attendance" && <AttendancePage key="attendance" selectedContractId={selectedContractId ?? attendanceContractId} openColumnPickerFor={openColumnPickerFor} onContractChange={setAttendanceContractId} onColumnPickerOpened={() => setOpenColumnPickerFor(null)} />}
+    {mode === "view" && activeTab === "attendance" && <AttendancePage key="attendance" selectedContractId={selectedContractId ?? attendanceContractId} openColumnPickerFor={openColumnPickerFor} onContractChange={setAttendanceContractId} onColumnPickerOpened={() => setOpenColumnPickerFor(null)} onBackToContracts={handleAttendanceBack} />}
     {mode === "view" && activeTab === "contracts" && <ContractsPage key="contracts-view" onViewAttendance={handleViewAttendance} />}
     {mode === "edit" && activeTab === "contracts" && <ContractsPage key="contracts-edit" onViewAttendance={handleViewAttendance} />}
     {mode === "edit" && activeTab === "attendance" && <AttendancePage key="attendance-edit" selectedContractId={selectedContractId ?? attendanceContractId} onContractChange={setAttendanceContractId} openColumnPickerFor={openColumnPickerFor} onColumnPickerOpened={() => setOpenColumnPickerFor(null)} />}
     {(mode === "edit" || mode === "view") && activeTab === "advances" && <AdvancesPage key="advances" />}
     {(mode === "edit" || mode === "view") && activeTab === "payments" && <PaymentsPage key="payments" selectedContractIds={selectedContractIds} setSelectedContractIds={setSelectedContractIds} paymentData={paymentData} setPaymentData={setPaymentData} />}
     {(mode === "edit" || mode === "view") && activeTab === "labours" && <LaboursPage key="labours" />}
-    {(mode === "edit" || mode === "view") && activeTab === "settled" && <SettledPage key="settled" />}
+    {(mode === "edit" || mode === "view") && activeTab === "more" && (
+      <div className="h-full overflow-y-auto px-4 pt-5 pb-24">
+        <div className="mx-auto w-full max-w-2xl">
+          <h1 className="mb-1 text-2xl font-bold text-white">More</h1>
+          <p className="mb-5 text-sm text-white/45">Settings</p>
+          <div className="rounded-2xl border border-white/10 bg-[#11192b] p-2">
+            <SettingsPanel />
+          </div>
+        </div>
+      </div>
+    )}
+
   </ErrorBoundary></div></Layout>;
 }
 
