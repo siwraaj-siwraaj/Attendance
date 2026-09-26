@@ -543,11 +543,6 @@ function ContractsPage({
         </button>
       )}
 
-      {/* Combined contract creation + attendance flow */}
-      {showCombinedFlow && (
-        <CombinedFlow onClose={() => setShowCombinedFlow(false)} />
-      )}
-
       {/* Add/Edit Contract Dialog */}
       {showForm && (
         <div
