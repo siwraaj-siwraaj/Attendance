@@ -7,6 +7,7 @@ export type Tab =
   | "payments"
   | "labours"
   | "settled"
+  | "more"
   | "admin";
 
 /** The four RBAC roles assigned by an admin. Mirrors the backend Role enum. */
@@ -27,11 +28,10 @@ export interface UserInfo {
 
 export const ALL_TABS: Tab[] = [
   "contracts",
-  "attendance",
   "advances",
   "payments",
   "labours",
-  "settled",
+  "more",
 ];
 
 /** The tabs a given role is allowed to see. */
