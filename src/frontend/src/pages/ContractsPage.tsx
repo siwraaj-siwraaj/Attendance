@@ -269,16 +269,20 @@ function ContractsPage({
             {filteredContracts.map((c: any) => {
               const isExpanded = expandedContractId === c.id.toString();
               return (
-                <button
+                <div
                   key={c.id.toString()}
-                  type="button"
-                  className="glass-card rounded-2xl p-4 cursor-pointer transition-smooth w-full text-left border border-orange-500/20 hover:border-orange-500/60 active:scale-[0.98]"
-                  onClick={() =>
-                    setExpandedContractId(isExpanded ? null : c.id.toString())
-                  }
-                  aria-label="Toggle contract details"
+                  className="glass-card rounded-2xl p-4 transition-smooth w-full text-left border border-orange-500/20 hover:border-orange-500/60"
+                  role="group"
                   data-ocid="contract.card"
                 >
+                  <button
+                    type="button"
+                    className="w-full text-left cursor-pointer active:scale-[0.98]"
+                    onClick={() =>
+                      setExpandedContractId(isExpanded ? null : c.id.toString())
+                    }
+                    aria-label="Toggle contract details"
+                  >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2 flex-1 min-w-0">
                       <FileText className="w-4 h-4 text-orange-400 shrink-0" />
@@ -312,6 +316,7 @@ function ContractsPage({
                       {fmtDate(c.createdAt)}
                     </span>
                   </div>
+                  </button>
                   {isExpanded && (
                     <div
                       className="mt-3 pt-3 border-t border-white/10 space-y-3"
@@ -388,7 +393,7 @@ function ContractsPage({
                       </div>
                     </div>
                   )}
-                </button>
+                </div>
               );
             })}
           </div>
