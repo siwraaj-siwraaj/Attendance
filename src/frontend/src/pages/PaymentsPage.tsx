@@ -252,618 +252,135 @@ export default function PaymentsPage({
       if (e.key === "Escape") setContractDropdownOpen(false);
     }
     document.addEventListener("keydown", handleKey);
-    return () => document.removeEventListener("keydown", handleKey);
-  }, [contractDropdownOpen]);
-
-  // Close the contract dropdown on outside click
-  useEffect(() => {
-    if (!contractDropdownOpen) return;
-    function handleClick(e: MouseEvent) {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(e.target as Node)
-      ) {
-        setContractDropdownOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, [contractDropdownOpen]);
-
-  const selectedContracts = useMemo(
-    () =>
-      contracts.filter((c: any) => selectedContractIds.has(c.id.toString())),
-    [contracts, selectedContractIds],
-  );
-
-  const toggleContractSelection = (id: string) => {
-    setSelectedContractIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  };
-
-  const unsettledContracts = useMemo(
-    () => contracts.filter((c: any) => !c.settled),
-    [contracts],
-  );
-
-  const filteredDropdownContracts = useMemo(() => {
-    const q = contractSearch.trim().toLowerCase();
-    if (!q) return unsettledContracts;
-    return unsettledContracts.filter((c: any) =>
-      c.name.toLowerCase().includes(q),
-    );
-  }, [unsettledContracts, contractSearch]);
-
-  const allContractsSelected =
-    unsettledContracts.length > 0 &&
-    selectedContractIds.size === unsettledContracts.length;
-
-  const calculatePayments = () => {
-    // Advances are counted only for the contracts selected for this payment.
-    const selectedContractIdSet = new Set(
-      selectedContracts.map((c: any) => c.id.toString()),
-    );
-    const data = labours.map((labour: any) => {
-      const contractSalaries: { [key: string]: number } = {};
-      let totalNetSalary = 0;
-      for (const contract of selectedContracts) {
-        const salary = calculateLabourSalary(
-          contract,
-          allAttendance,
-          labour.id,
-        );
-        contractSalaries[contract.id.toString()] = salary;
-        totalNetSalary += salary;
-      }
-      const totalAdvances = advances
-        .filter((a: any) => {
-          if (a.labourId !== labour.id) return false;
-          return selectedContractIdSet.has(a.contractId.toString());
-        })
-        .reduce((sum: number, a: any) => sum + a.amount, 0);
-      return {
-        labour,
-        contractSalaries,
-        totalNetSalary,
-        totalAdvances,
-        amountPayable: excludeAdvances
-          ? totalNetSalary
-          : totalNetSalary - totalAdvances,
-      };
-    });
-    setPaymentData(data);
-  };
-
-  // Omit rows that are entirely blank (all zero values) from the payment
-  // table and the payment PDF.
-  const visiblePaymentData = useMemo(
-    () =>
-      (paymentData || []).filter(
-        (row: any) => row.totalNetSalary !== 0 || row.totalAdvances !== 0,
-      ),
-    [paymentData],
-  );
-
-  const downloadPaymentPDF = () => {
-    if (!paymentData) return;
-    const fmt = (n: number) =>
-      `₹${n.toLocaleString("en-IN", { maximumFractionDigits: 0 })}`;
-    const rows = visiblePaymentData.map((row: any) => [
-      row.labour.name,
-      ...selectedContracts.map((c: any) =>
-        fmt(row.contractSalaries[c.id.toString()] || 0),
-      ),
-      fmt(row.totalNetSalary),
-      fmt(row.totalAdvances),
-      fmt(row.amountPayable),
-    ]);
-    const totalRow = [
-      "TOTAL",
-      ...selectedContracts.map((c: any) =>
-        fmt(
-          visiblePaymentData.reduce(
-            (s: number, r: any) =>
-              s + (r.contractSalaries[c.id.toString()] || 0),
-            0,
-          ),
-        ),
-      ),
-      fmt(
-        visiblePaymentData.reduce(
-          (s: number, r: any) => s + r.totalNetSalary,
-          0,
-        ),
-      ),
-      fmt(
-        visiblePaymentData.reduce(
-          (s: number, r: any) => s + r.totalAdvances,
-          0,
-        ),
-      ),
-      fmt(
-        visiblePaymentData.reduce(
-          (s: number, r: any) => s + r.amountPayable,
-          0,
-        ),
-      ),
-    ];
-
-    const generated = new Date().toLocaleDateString("en-IN", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    });
-    const contractNames =
-      selectedContracts.length > 0
-        ? selectedContracts.map((c: any) => c.name).join(", ")
-        : "—";
-
-    const headerHTML = `
-      <div class="report-header">
-        <div>
-          <h1 class="report-title">Payment Report</h1>
-          <div class="report-subtitle">Labour payment summary across selected contracts</div>
-        </div>
-        <div class="report-brand">Rossie</div>
-      </div>
-      <div class="report-meta">
-        <div><div class="report-meta-label">Contracts</div><div class="report-meta-value">${contractNames}</div></div>
-        <div><div class="report-meta-label">Labours</div><div class="report-meta-value">${visiblePaymentData.length}</div></div>
-        <div><div class="report-meta-label">Generated</div><div class="report-meta-value">${generated}</div></div>
-        <div><div class="report-meta-label">Total Payable</div><div class="report-meta-value">${fmt(visiblePaymentData.reduce((s: number, r: any) => s + r.amountPayable, 0))}</div></div>
-      </div>`;
-
-    const thead = `<tr><th>Labour</th>${selectedContracts
-      .map((c: any, index: number) => {
-        const boundary = index === 0
-          ? "contract-boundary-left contract-boundary-right"
-          : "contract-boundary-left contract-boundary-right";
-        return `<th class="num ${boundary}">${c.name}</th>`;
-      })
-      .join("")}<th class="num">Net Salary</th><th class="num">Advances</th><th class="num">Payable</th></tr>`;
-
-    const bodyRows = rows
-      .map(
-        (r: string[]) =>
-          `<tr>${r
-            .map(
-              (c: string, i: number) =>
-                `<td class="${i === 0 ? "" : "num"}">${c}</td>`,
-            )
-            .join("")}</tr>`,
-      )
-      .join("");
-
-    const totalCells = totalRow
-      .map(
-        (c: string, i: number) =>
-          `<td class="${i === 0 ? "report-total-label" : "num"}">${c}</td>`,
-      )
-      .join("");
-
-    const summaryHTML = `
-      <div class="report-summary">
-        <div class="report-summary-item"><div class="report-summary-label">Total Net Salary</div><div class="report-summary-value">${fmt(visiblePaymentData.reduce((s: number, r: any) => s + r.totalNetSalary, 0))}</div></div>
-        <div class="report-summary-item"><div class="report-summary-label">Total Advances</div><div class="report-summary-value">${fmt(visiblePaymentData.reduce((s: number, r: any) => s + r.totalAdvances, 0))}</div></div>
-        <div class="report-summary-item"><div class="report-summary-label">Total Payable</div><div class="report-summary-value">${fmt(visiblePaymentData.reduce((s: number, r: any) => s + r.amountPayable, 0))}</div></div>
-      </div>`;
-
-    const footerHTML = `
-      <div class="report-footer">
-        <span>Rossie — Construction Labour Management</span>
-        <span>Generated ${generated}</span>
-      </div>`;
-
-    const bodyHTML = `
-      <div class="report">
-        ${headerHTML}
-        <div class="report-body">
-          <h2 class="report-section">Payment Details</h2>
-          <table class="report-table">
-            <thead>${thead}</thead>
-            <tbody>${bodyRows}<tr class="report-total-row">${totalCells}</tr></tbody>
-          </table>
-          ${summaryHTML}
-        </div>
-        ${footerHTML}
-      </div>`;
-
-    setPaymentPreviewTitle("Payment Sheet");
-    setPaymentPreviewHTML(bodyHTML);
-    setShowPaymentPdfPreview(true);
-  };
-
-  const downloadAttendancePDF = () => {
-    if (!paymentData || selectedContracts.length === 0) return;
-
-    // A column value is "present" if there is a record whose value is
-    // present or partial (getAttendanceDisplay > 0). Absent means no
-    // record, or __kind__ === "absent" (display === 0).
-    const isValuePresent = (v: AttendanceValue | undefined): boolean =>
-      !!v && getAttendanceDisplay(v) > 0;
-
-    // For each contract, pre-compute the subset of work columns that have
-    // at least one present value across all labours. All-absent columns
-    // are omitted from both the header and every body row.
-    const contractVisibleCols = selectedContracts.map((contract: any) => {
-      const cols = contract.workColumns || [];
-      const visible = cols.filter((col: any) =>
-        paymentData.some((row: any) =>
-          isValuePresent(
-            allAttendance.find(
-              (r: any) =>
-                r.contractId === contract.id &&
-                r.labourId === row.labour.id &&
-                r.columnId === col.id,
-            )?.value,
-          ),
-        ),
-      );
-      return { contract, visible };
-    });
-
-    // Omit rows that are entirely blank (all absent) from the attendance
-    // table and PDF.
-    const visibleRows = paymentData.filter((row: any) =>
-      contractVisibleCols.some(({ contract, visible }: any) =>
-        visible.some((col: any) =>
-          isValuePresent(
-            allAttendance.find(
-              (r: any) =>
-                r.contractId === contract.id &&
-                r.labourId === row.labour.id &&
-                r.columnId === col.id,
-            )?.value,
-          ),
-        ),
-      ),
-    );
-
-    const generated = new Date().toLocaleDateString("en-IN", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    });
-    const contractNames = selectedContracts.map((c: any) => c.name).join(", ");
-
-    const headerHTML = `
-      <div class="report-header">
-        <div>
-          <h1 class="report-title">Attendance Report</h1>
-          <div class="report-subtitle">Daily attendance across selected contracts</div>
-        </div>
-        <div class="report-brand">Rossie</div>
-      </div>
-      <div class="report-meta">
-        <div><div class="report-meta-label">Contracts</div><div class="report-meta-value">${contractNames}</div></div>
-        <div><div class="report-meta-label">Labours</div><div class="report-meta-value">${visibleRows.length}</div></div>
-        <div><div class="report-meta-label">Generated</div><div class="report-meta-value">${generated}</div></div>
-      </div>`;
-
-    // Header rows — only visible columns are emitted. A contract whose
-    // visible column count is 0 still gets a single placeholder cell so
-    // its header remains visible.
-    let tableHeaderHTML = "";
-    let subHeaderHTML = "";
-    for (let contractIndex = 0; contractIndex < contractVisibleCols.length; contractIndex++) {
-      const { contract, visible } = contractVisibleCols[contractIndex];
-      const colCount = Math.max(visible.length, 1);
-      const groupClass = "contract-boundary-left contract-boundary-right";
-      tableHeaderHTML += `<th class="center ${groupClass}" colspan="${colCount}">${contract.name}</th>`;
-      if (visible.length === 0) {
-        subHeaderHTML += `<th class="center ${groupClass}">—</th>`;
-      } else {
-        for (let colIndex = 0; colIndex < visible.length; colIndex++) {
-          const col = visible[colIndex];
-          const boundaryClass = colIndex === 0
-            ? "contract-boundary-left"
-            : colIndex === visible.length - 1
-              ? "contract-boundary-right"
-              : "";
-          subHeaderHTML += `<th class="center ${boundaryClass}">${col.name}</th>`;
-        }
-      }
-    }
-
-    // Data rows — only visible columns get cells.
-    let bodyRows = "";
-    for (const row of visibleRows) {
-      let cells = "";
-      for (let contractIndex = 0; contractIndex < contractVisibleCols.length; contractIndex++) {
-        const { contract, visible } = contractVisibleCols[contractIndex];
-        if (visible.length === 0) {
-          cells += '<td class="center contract-boundary-left contract-boundary-right">—</td>';
-        } else {
-          for (let colIndex = 0; colIndex < visible.length; colIndex++) {
-            const col = visible[colIndex];
-            const rec = allAttendance.find(
-              (r: any) =>
-                r.contractId === contract.id &&
-                r.labourId === row.labour.id &&
-                r.columnId === col.id,
-            );
-            const v = rec?.value;
-            const display = !v
-              ? "A"
-              : v.__kind__ === "present"
-                ? "P"
-                : v.__kind__ === "partial"
-                  ? String(v.partial)
-                  : "A";
-            const boundaryClass = colIndex === 0
-              ? "contract-boundary-left"
-              : colIndex === visible.length - 1
-                ? "contract-boundary-right"
-                : "";
-            cells += `<td class="center ${boundaryClass}">${display}</td>`;
-          }
-        }
-      }
-      bodyRows += `<tr><td>${row.labour.name}</td>${cells}</tr>`;
-    }
-
-    const footerHTML = `
-      <div class="report-footer">
-        <span>Rossie — Construction Labour Management</span>
-        <span>P = Present &nbsp;·&nbsp; A = Absent &nbsp;·&nbsp; value = Partial</span>
-      </div>`;
-
-    const bodyHTML = `
-      <div class="report">
-        ${headerHTML}
-        <div class="report-body">
-          <h2 class="report-section">Attendance Details</h2>
-          <table class="report-table">
-            <thead><tr><th rowspan="2">Labour</th>${tableHeaderHTML}</tr><tr>${subHeaderHTML}</tr></thead>
-            <tbody>${bodyRows}</tbody>
-          </table>
-        </div>
-        ${footerHTML}
-      </div>`;
-
-    setPaymentPreviewTitle("Attendance Sheet");
-    setPaymentPreviewHTML(bodyHTML);
-    setShowPaymentPdfPreview(true);
-  };
-
-  const overviewData = paymentData || [];
-
-  const overviewTotals = useMemo(() => {
-    const selected = overviewData.filter((r: any) =>
-      selectedOverviewLabours.has(r.labour.id.toString()),
-    );
-    return {
-      netSalary: selected.reduce(
-        (s: number, r: any) => s + r.totalNetSalary,
-        0,
-      ),
-      advances: selected.reduce((s: number, r: any) => s + r.totalAdvances, 0),
-      payable: selected.reduce((s: number, r: any) => s + r.amountPayable, 0),
-    };
-  }, [overviewData, selectedOverviewLabours]);
-
-  const fmt = (n: number) =>
-    `₹${n.toLocaleString("en-IN", { maximumFractionDigits: 0 })}`;
-
-  if (contractsLoading || laboursLoading)
     return (
-      <div className="flex justify-center pt-20">
-        <LoadingSpinner size="lg" />
-      </div>
-    );
-
-  return (
-    <div className="flex flex-col h-full overflow-hidden">
-      {/* Frozen top controls */}
-      <div className="shrink-0 sticky top-0 z-[100] bg-[#0a0f1e] px-4 pt-4 pb-3 border-b border-white/10">
-        <div className="flex items-center justify-between mb-3">
-          <h1 className="text-xl font-bold text-white">Payments</h1>
-          {/* Calculate Payments — top right */}
+    <div className="flex h-full min-h-0 flex-col bg-[#080d18] text-white">
+      {/* Payment header */}
+      <div className="shrink-0 border-b border-white/10 bg-[#0b1220] px-4 pb-4 pt-4">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-orange-400">
+              Payroll
+            </p>
+            <h1 className="mt-0.5 text-2xl font-black tracking-tight">Payments</h1>
+            <p className="mt-1 text-xs text-white/45">
+              Select contracts, calculate wages and review what is payable.
+            </p>
+          </div>
           <button
             type="button"
             onClick={calculatePayments}
             disabled={selectedContractIds.size === 0}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl font-bold text-sm transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
-            style={{
-              background:
-                selectedContractIds.size > 0
-                  ? "linear-gradient(135deg, #f97316, #ea580c)"
-                  : "rgba(255,255,255,0.06)",
-              color:
-                selectedContractIds.size > 0 ? "#fff" : "rgba(255,255,255,0.4)",
-              boxShadow:
-                selectedContractIds.size > 0
-                  ? "0 4px 20px rgba(249,115,22,0.35)"
-                  : "none",
-            }}
+            className="flex shrink-0 items-center gap-2 rounded-2xl bg-gradient-to-br from-orange-500 to-orange-600 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-orange-500/20 transition active:scale-95 disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-white/30 disabled:shadow-none"
             data-ocid="payments.calculate_button"
           >
-            <Calculator size={14} />
+            <Calculator size={17} />
             Calculate
           </button>
         </div>
 
-        {/* Contract selection — dropdown instead of a modal dialog */}
-        <div className="relative mb-3" ref={dropdownRef}>
-          {/* Trigger button with selected-count chip */}
+        {/* Contract picker */}
+        <div className="relative mt-4" ref={dropdownRef}>
           <button
             type="button"
             onClick={() => setContractDropdownOpen((o) => !o)}
+            className="flex w-full items-center justify-between gap-3 rounded-2xl border border-white/10 bg-[#111a2b] px-4 py-3.5 text-left transition hover:border-orange-500/50"
             data-ocid="payments.contract_select_trigger"
-            className="group w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl border text-sm font-medium transition-all duration-200 bg-[#0d1220] border-white/15 text-white/85 hover:border-orange-500/60 hover:bg-[#101630]"
           >
-            <span className="flex items-center gap-2.5 min-w-0">
-              <span className="shrink-0 w-7 h-7 rounded-lg flex items-center justify-center transition-colors bg-white/8 text-orange-400 group-hover:bg-orange-500/20">
-                <CheckCheck size={15} />
-              </span>
-              <span className="truncate">
-                {selectedContractIds.size === 0
-                  ? "Select Contracts"
-                  : `${selectedContractIds.size} contract${selectedContractIds.size === 1 ? "" : "s"} selected`}
-              </span>
-            </span>
-            <span className="flex items-center gap-2 shrink-0">
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-orange-500/15 text-orange-400">
+                <CheckCheck size={18} />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-white/35">
+                  Contracts
+                </p>
+                <p className="truncate text-sm font-semibold text-white/90">
+                  {selectedContractIds.size === 0
+                    ? "Choose contracts for payroll"
+                    : `${selectedContractIds.size} contract${selectedContractIds.size === 1 ? "" : "s"} selected`}
+                </p>
+              </div>
+            </div>
+            <div className="flex shrink-0 items-center gap-2">
               {selectedContractIds.size > 0 && (
-                <span
-                  className="inline-flex items-center justify-center min-w-[1.5rem] h-6 px-1.5 rounded-full text-xs font-bold text-white"
-                  style={{
-                    background: "linear-gradient(135deg, #f97316, #ea580c)",
-                    boxShadow: "0 2px 8px rgba(249,115,22,0.4)",
-                  }}
-                >
+                <span className="flex h-7 min-w-7 items-center justify-center rounded-full bg-orange-500 px-2 text-xs font-black">
                   {selectedContractIds.size}
                 </span>
               )}
               <ChevronDown
-                size={16}
-                className={`text-orange-400 transition-transform duration-200 ${
-                  contractDropdownOpen ? "rotate-180" : ""
-                }`}
+                size={18}
+                className={`text-white/45 transition-transform ${contractDropdownOpen ? "rotate-180" : ""}`}
               />
-            </span>
+            </div>
           </button>
 
-          {/* Dropdown panel */}
           {contractDropdownOpen && (
             <div
-              className="relative w-full mt-2 z-[200] max-h-[60vh] flex flex-col overflow-hidden rounded-2xl border border-white/10 shadow-2xl"
-              style={{ background: "rgba(5,10,20,0.98)" }}
+              className="absolute left-0 right-0 top-full z-[300] mt-2 flex max-h-[55vh] flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0d1525] shadow-2xl shadow-black/50"
               data-ocid="payments.contract_select_dropdown"
             >
               {unsettledContracts.length === 0 ? (
-                <p className="text-white/30 text-sm text-center py-10">
-                  No active contracts
-                </p>
+                <p className="py-10 text-center text-sm text-white/35">No active contracts</p>
               ) : (
                 <>
-                  {/* Search input */}
-                  <div className="relative p-2.5 border-b border-white/10 shrink-0">
-                    <Search
-                      size={15}
-                      className="absolute left-5 top-1/2 -translate-y-1/2 text-white/30 pointer-events-none"
-                    />
+                  <div className="relative border-b border-white/10 p-3">
+                    <Search size={16} className="absolute left-6 top-1/2 -translate-y-1/2 text-white/30" />
                     <input
-                      type="text"
                       value={contractSearch}
                       onChange={(e) => setContractSearch(e.target.value)}
-                      placeholder="Search contracts by name…"
-                      className="w-full pl-9 pr-3 py-2 rounded-lg bg-[#0a0f1e] border border-white/10 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-orange-500/60 focus:ring-2 focus:ring-orange-500/20 transition-colors"
+                      placeholder="Search contracts..."
+                      className="w-full rounded-xl border border-white/10 bg-[#080d18] py-2.5 pl-10 pr-3 text-sm text-white outline-none placeholder:text-white/25 focus:border-orange-500/60"
                       data-ocid="payments.contract_search_input"
                     />
                   </div>
-
-                  {/* Select All / Clear All controls */}
-                  <div className="flex items-center justify-between px-3 py-2 border-b border-white/10 bg-white/[0.02] shrink-0">
+                  <div className="flex items-center justify-between border-b border-white/10 px-4 py-2.5">
                     <button
                       type="button"
-                      onClick={() => {
-                        if (allContractsSelected) {
-                          setSelectedContractIds(new Set());
-                        } else {
-                          setSelectedContractIds(
-                            new Set(
-                              unsettledContracts.map((c: any) =>
-                                c.id.toString(),
-                              ),
-                            ),
-                          );
-                        }
-                      }}
-                      className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-orange-300 hover:bg-orange-500/10 transition-colors"
+                      onClick={() =>
+                        allContractsSelected
+                          ? setSelectedContractIds(new Set())
+                          : setSelectedContractIds(
+                              new Set(unsettledContracts.map((c: any) => c.id.toString())),
+                            )
+                      }
+                      className="text-xs font-bold text-orange-400"
                       data-ocid="payments.contract_select_all"
                     >
-                      <div
-                        className={`w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 transition-colors ${
-                          allContractsSelected
-                            ? "bg-orange-500 border-orange-500"
-                            : "border-orange-500/60"
-                        }`}
-                      >
-                        {allContractsSelected && (
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="10"
-                            height="10"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="white"
-                            strokeWidth="3.5"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            aria-hidden="true"
-                          >
-                            <polyline points="20 6 9 17 4 12" />
-                          </svg>
-                        )}
-                      </div>
-                      {allContractsSelected ? "Clear All" : "Select All"}
+                      {allContractsSelected ? "Clear all" : "Select all"}
                     </button>
-                    <span className="text-xs text-white/40">
-                      {filteredDropdownContracts.length} of{" "}
-                      {unsettledContracts.length}
+                    <span className="text-[11px] text-white/30">
+                      {filteredDropdownContracts.length} of {unsettledContracts.length}
                     </span>
                   </div>
-
-                  {/* Contract rows */}
-                  <div className="flex-1 overflow-y-auto min-h-0">
+                  <div className="min-h-0 flex-1 overflow-y-auto">
                     {filteredDropdownContracts.length === 0 ? (
-                      <p className="text-white/30 text-sm text-center py-10">
+                      <p className="py-10 text-center text-sm text-white/30">
                         No contracts match “{contractSearch}”
                       </p>
                     ) : (
                       filteredDropdownContracts.map((c: any, idx: number) => {
                         const id = c.id.toString();
-                        const isSelected = selectedContractIds.has(id);
+                        const checked = selectedContractIds.has(id);
                         return (
                           <label
                             key={id}
-                            className={`flex items-center gap-3 px-4 py-2.5 cursor-pointer border-b border-white/5 last:border-0 transition-colors ${
-                              isSelected
-                                ? "bg-orange-500/10 hover:bg-orange-500/15"
-                                : "hover:bg-white/5"
-                            }`}
+                            className={`flex cursor-pointer items-center gap-3 border-b border-white/5 px-4 py-3 transition ${checked ? "bg-orange-500/10" : "hover:bg-white/[0.03]"}`}
                             data-ocid={`payments.contract_option.${idx + 1}`}
                           >
-                            <div
-                              className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-all duration-150 ${
-                                isSelected
-                                  ? "bg-orange-500 border-orange-500 scale-100"
-                                  : "border-white/25 scale-95"
-                              }`}
-                            >
-                              {isSelected && (
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  width="12"
-                                  height="12"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="white"
-                                  strokeWidth="3"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  aria-hidden="true"
-                                >
-                                  <polyline points="20 6 9 17 4 12" />
-                                </svg>
-                              )}
-                            </div>
                             <input
                               type="checkbox"
                               className="sr-only"
-                              checked={isSelected}
+                              checked={checked}
                               onChange={() => toggleContractSelection(id)}
                             />
-                            <span className="flex-1 text-sm text-white truncate min-w-0">
+                            <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-2 ${checked ? "border-orange-500 bg-orange-500" : "border-white/20"}`}>
+                              {checked && <CheckCheck size={13} />}
+                            </span>
+                            <span className="min-w-0 flex-1 truncate text-sm font-medium text-white/85">
                               {c.name}
                             </span>
-                            <span className="text-xs font-medium text-orange-400/80 shrink-0 tabular-nums">
-                              ₹
-                              {c.contractAmount?.toLocaleString("en-IN") ?? "—"}
+                            <span className="shrink-0 text-xs font-semibold text-white/35">
+                              ₹{c.contractAmount?.toLocaleString("en-IN") ?? "—"}
                             </span>
                           </label>
                         );
@@ -877,30 +394,66 @@ export default function PaymentsPage({
         </div>
       </div>
 
-      {/* Scrollable content area */}
-      <div className="flex-1 overflow-y-auto px-4 pt-4 pb-24">
-        {/* Payment Table */}
-        {paymentData && (
-          <>
-            {/* Action buttons above the payment table */}
-            <div className="flex gap-2 mb-3">
+      {/* Main content */}
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-28 pt-4">
+        {!paymentData ? (
+          <div className="flex min-h-[55vh] items-center justify-center">
+            <div className="w-full max-w-sm rounded-3xl border border-white/10 bg-[#0d1525] p-7 text-center shadow-xl">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-orange-500/10 text-orange-400">
+                <Calculator size={30} />
+              </div>
+              <h2 className="mt-5 text-xl font-black">Ready for payroll</h2>
+              <p className="mt-2 text-sm leading-6 text-white/45">
+                Select one or more active contracts above, then calculate to build the payment sheet.
+              </p>
               <button
                 type="button"
-                onClick={downloadPaymentPDF}
-                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 border border-orange-500/50 text-orange-300 hover:bg-orange-500/10 hover:border-orange-500"
-                data-ocid="payments.download_payment_sheet"
+                onClick={calculatePayments}
+                disabled={selectedContractIds.size === 0}
+                className="mt-6 w-full rounded-2xl bg-orange-500 px-4 py-3.5 text-sm font-bold text-white disabled:opacity-30"
               >
-                <FileText size={14} />
-                Payment
+                Select contracts & calculate
               </button>
-              <button
-                type="button"
-                onClick={downloadAttendancePDF}
-                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 border border-white/20 text-white/60 hover:bg-white/5 hover:border-white/30"
-                data-ocid="payments.download_attendance_sheet"
-              >
-                <FileDown size={14} />
-                Attendance
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* Summary cards */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="rounded-2xl border border-white/10 bg-[#0d1525] p-4">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-white/35">Gross salary</p>
+                <p className="mt-2 text-xl font-black text-cyan-300">
+                  {fmt(visiblePaymentData.reduce((s: number, r: any) => s + r.totalNetSalary, 0))}
+                </p>
+              </div>
+              <div className="rounded-2xl border border-red-500/15 bg-red-500/[0.05] p-4">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-red-300/60">Advances</p>
+                <p className="mt-2 text-xl font-black text-red-300">
+                  {fmt(visiblePaymentData.reduce((s: number, r: any) => s + r.totalAdvances, 0))}
+                </p>
+              </div>
+              <div className="col-span-2 rounded-2xl border border-orange-500/30 bg-gradient-to-br from-orange-500/15 to-orange-500/5 p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-orange-300/70">Total payable</p>
+                    <p className="mt-1 text-3xl font-black text-orange-300">
+                      {fmt(visiblePaymentData.reduce((s: number, r: any) => s + r.amountPayable, 0))}
+                    </p>
+                  </div>
+                  <div className="rounded-xl bg-orange-500/15 p-3 text-orange-300">
+                    <BarChart3 size={22} />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="mt-4 grid grid-cols-3 gap-2">
+              <button type="button" onClick={downloadPaymentPDF} className="flex flex-col items-center gap-1.5 rounded-2xl border border-orange-500/30 bg-orange-500/5 px-2 py-3 text-[11px] font-bold text-orange-300 active:scale-95" data-ocid="payments.download_payment_sheet">
+                <FileText size={17} /> Payment
+              </button>
+              <button type="button" onClick={downloadAttendancePDF} className="flex flex-col items-center gap-1.5 rounded-2xl border border-white/10 bg-white/[0.03] px-2 py-3 text-[11px] font-bold text-white/60 active:scale-95" data-ocid="payments.download_attendance_sheet">
+                <FileDown size={17} /> Attendance
               </button>
               <button
                 type="button"
@@ -909,506 +462,195 @@ export default function PaymentsPage({
                   setOverviewIndex(0);
                   setSelectedOverviewLabours(new Set());
                 }}
-                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 border border-orange-500/40 text-orange-400 hover:bg-orange-500/10"
+                className="flex flex-col items-center gap-1.5 rounded-2xl border border-cyan-400/20 bg-cyan-400/5 px-2 py-3 text-[11px] font-bold text-cyan-300 active:scale-95"
                 data-ocid="payments.overview_button"
               >
-                <BarChart3 size={14} />
-                Overview
+                <BarChart3 size={17} /> Overview
               </button>
             </div>
 
-            <div
-              ref={paymentsScrollRef}
-              className="swipeable-table-wrapper mt-0"
-            >
-              <table className="min-w-max text-sm">
-                <thead>
-                  <tr className="border-b border-orange-500/20">
-                    <th className="text-left text-gray-400 py-2 pr-4 whitespace-nowrap">
-                      Labour
-                    </th>
-                    {selectedContracts.map((c: any) => (
-                      <th
-                        key={c.id.toString()}
-                        className="text-right text-gray-400 py-2 px-2 whitespace-nowrap"
-                      >
-                        {c.name}
-                      </th>
-                    ))}
-                    <th className="text-right text-gray-400 py-2 px-2 whitespace-nowrap">
-                      Net Salary
-                    </th>
-                    <th className="text-right text-gray-400 py-2 px-2 whitespace-nowrap">
-                      Advances
-                    </th>
-                    <th className="text-right text-orange-400 py-2 pl-2 whitespace-nowrap">
-                      Payable
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
+            {/* Labour payment cards */}
+            <div className="mt-5">
+              <div className="mb-3 flex items-center justify-between">
+                <div>
+                  <h2 className="text-lg font-black">Labour payments</h2>
+                  <p className="text-xs text-white/35">{visiblePaymentData.length} labours with calculated amounts</p>
+                </div>
+                <span className="rounded-full bg-white/5 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white/35">
+                  {selectedContracts.length} contract{selectedContracts.length === 1 ? "" : "s"}
+                </span>
+              </div>
+
+              {visiblePaymentData.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-white/10 p-8 text-center text-sm text-white/35">
+                  No payable labour records for the selected contracts.
+                </div>
+              ) : (
+                <div className="space-y-3">
                   {visiblePaymentData.map((row: any) => (
-                    <tr
-                      key={row.labour.id.toString()}
-                      className="border-b border-white/5"
-                    >
-                      <td className="text-white py-2 pr-4 whitespace-nowrap">
-                        {row.labour.name}
-                      </td>
-                      {selectedContracts.map((c: any) => (
-                        <td
-                          key={c.id.toString()}
-                          className="text-right text-gray-300 py-2 px-2 whitespace-nowrap"
-                        >
-                          {fmt(row.contractSalaries[c.id.toString()] || 0)}
-                        </td>
-                      ))}
-                      <td className="text-right text-white py-2 px-2 whitespace-nowrap">
-                        {fmt(row.totalNetSalary)}
-                      </td>
-                      <td className="text-right text-red-400 py-2 px-2 whitespace-nowrap">
-                        {fmt(row.totalAdvances)}
-                      </td>
-                      <td className="text-right text-orange-400 font-semibold py-2 pl-2 whitespace-nowrap">
-                        {fmt(row.amountPayable)}
-                      </td>
-                    </tr>
+                    <div key={row.labour.id.toString()} className="rounded-2xl border border-white/10 bg-[#0d1525] p-4 shadow-sm">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex min-w-0 items-center gap-3">
+                          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-orange-500/15 text-sm font-black text-orange-300">
+                            {(row.labour.name || "?").trim().split(/\s+/).map((x: string) => x[0]).join("").slice(0, 2).toUpperCase()}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="truncate text-base font-bold text-white">{row.labour.name}</p>
+                            <p className="text-[11px] text-white/35">Labour payment summary</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-orange-300/60">Payable</p>
+                          <p className="text-xl font-black text-orange-300">{fmt(row.amountPayable)}</p>
+                        </div>
+                      </div>
+
+                      <div className="mt-4 grid grid-cols-2 gap-2">
+                        {selectedContracts.map((c: any) => (
+                          <div key={c.id.toString()} className="rounded-xl bg-white/[0.035] px-3 py-2.5">
+                            <p className="truncate text-[10px] font-bold uppercase tracking-wider text-white/30">{c.name}</p>
+                            <p className="mt-1 text-sm font-bold text-white/80">{fmt(row.contractSalaries[c.id.toString()] || 0)}</p>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="mt-3 flex items-center justify-between border-t border-white/10 pt-3 text-xs">
+                        <span className="text-white/40">Gross salary</span>
+                        <span className="font-bold text-cyan-300">{fmt(row.totalNetSalary)}</span>
+                      </div>
+                      <div className="mt-2 flex items-center justify-between text-xs">
+                        <span className="text-white/40">Advances</span>
+                        <span className="font-bold text-red-300">− {fmt(row.totalAdvances)}</span>
+                      </div>
+                    </div>
                   ))}
-                  {/* Totals row */}
-                  <tr className="border-t-2 border-orange-500/30 bg-white/5">
-                    <td className="text-gray-400 font-bold py-2 pr-4 whitespace-nowrap">
-                      TOTAL
-                    </td>
-                    {selectedContracts.map((c: any) => (
-                      <td
-                        key={c.id.toString()}
-                        className="text-right text-gray-300 font-bold py-2 px-2 whitespace-nowrap"
-                      >
-                        {fmt(
-                          visiblePaymentData.reduce(
-                            (s: number, r: any) =>
-                              s + (r.contractSalaries[c.id.toString()] || 0),
-                            0,
-                          ),
-                        )}
-                      </td>
-                    ))}
-                    <td className="text-right text-white font-bold py-2 px-2 whitespace-nowrap">
-                      {fmt(
-                        visiblePaymentData.reduce(
-                          (s: number, r: any) => s + r.totalNetSalary,
-                          0,
-                        ),
-                      )}
-                    </td>
-                    <td className="text-right text-red-400 font-bold py-2 px-2 whitespace-nowrap">
-                      {fmt(
-                        visiblePaymentData.reduce(
-                          (s: number, r: any) => s + r.totalAdvances,
-                          0,
-                        ),
-                      )}
-                    </td>
-                    <td className="text-right text-orange-400 font-bold py-2 pl-2 whitespace-nowrap">
-                      {fmt(
-                        visiblePaymentData.reduce(
-                          (s: number, r: any) => s + r.amountPayable,
-                          0,
-                        ),
-                      )}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+                </div>
+              )}
             </div>
           </>
         )}
       </div>
 
-      {/* Labour Payment Overview Dialog */}
+      {/* Payment overview */}
       {showOverview && (
-        <div
-          className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-4"
-          data-ocid="payments.overview.dialog"
-        >
-          <div
-            className="w-full max-w-md mx-auto max-h-[88vh] flex flex-col overflow-hidden rounded-2xl border border-white/10"
-            style={{ background: "rgba(5,10,20,0.97)" }}
-          >
-            {/* Orange Gradient Header */}
-            <div className="shrink-0 bg-gradient-to-r from-orange-500 to-orange-600 p-4 rounded-t-2xl flex items-start justify-between">
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/80 p-3">
+          <div className="flex max-h-[92vh] w-full max-w-md flex-col overflow-hidden rounded-3xl border border-white/10 bg-[#0c1423] shadow-2xl">
+            <div className="flex shrink-0 items-start justify-between bg-gradient-to-r from-orange-500 to-orange-600 p-5">
               <div>
-                <h2 className="text-xl font-bold text-white">
-                  Payment Overview
-                </h2>
-                <p className="text-sm text-white/70 mt-0.5">
+                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/65">Payroll</p>
+                <h2 className="mt-1 text-2xl font-black text-white">Payment Overview</h2>
+                <p className="mt-1 text-xs text-white/70">
                   {overviewMode === "oneByOne"
-                    ? `${overviewIndex + 1} / ${overviewData.length}`
-                    : `${selectedOverviewLabours.size} of ${overviewData.length} selected`}
+                    ? overviewData.length ? `${overviewIndex + 1} of ${overviewData.length}` : "No labour records"
+                    : `${selectedOverviewLabours.size} selected`}
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={() => setShowOverview(false)}
-                className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white hover:bg-white/30 transition-colors"
-                data-ocid="payments.overview.close_button"
-                aria-label="Close"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden="true"
-                >
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
+              <button type="button" onClick={() => setShowOverview(false)} className="rounded-xl bg-white/15 p-2 text-white" data-ocid="payments.overview.close_button">
+                <X size={18} />
               </button>
             </div>
 
-            {/* Include advances toggle */}
-            <div className="shrink-0 px-4 py-3 flex items-center justify-between border-b border-white/10">
-              <span className="text-sm font-medium text-white/80">
-                Include advances in net pay
-              </span>
+            <div className="flex shrink-0 items-center justify-between border-b border-white/10 px-5 py-3">
+              <span className="text-sm text-white/70">Deduct advances</span>
               <button
                 type="button"
                 onClick={() => setExcludeAdvances((v) => !v)}
-                aria-label={
-                  excludeAdvances ? "Advances excluded" : "Advances included"
-                }
-                className={`relative inline-flex h-6 w-12 shrink-0 items-center rounded-full transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 ${
-                  excludeAdvances ? "bg-white/20" : "bg-orange-500"
-                }`}
+                className={`relative h-6 w-11 rounded-full ${excludeAdvances ? "bg-white/15" : "bg-orange-500"}`}
+                aria-label={excludeAdvances ? "Advances excluded" : "Advances included"}
                 data-ocid="payments.overview.include_advances_toggle"
               >
-                <span
-                  className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition-transform duration-200 ${
-                    excludeAdvances ? "translate-x-0.5" : "translate-x-[22px]"
-                  }`}
-                />
+                <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-transform ${excludeAdvances ? "left-0.5" : "left-[22px]"}`} />
               </button>
             </div>
 
-            {/* Mode Toggle */}
-            <div className="shrink-0 px-4 py-3 border-b border-white/10 flex gap-2 justify-center">
-              <button
-                type="button"
-                onClick={() => setOverviewMode("oneByOne")}
-                className={`rounded-full px-5 py-2 text-sm font-semibold transition-colors ${overviewMode === "oneByOne" ? "bg-orange-500 text-white" : "bg-white/10 text-white/60"}`}
-                data-ocid="payments.overview.mode_onebyone"
-              >
-                One by One
-              </button>
-              <button
-                type="button"
-                onClick={() => setOverviewMode("multiSelect")}
-                className={`rounded-full px-5 py-2 text-sm font-semibold transition-colors ${overviewMode === "multiSelect" ? "bg-orange-500 text-white" : "bg-white/10 text-white/60"}`}
-                data-ocid="payments.overview.mode_multiselect"
-              >
-                Multi Select
-              </button>
+            <div className="flex shrink-0 gap-2 border-b border-white/10 p-3">
+              <button type="button" onClick={() => setOverviewMode("oneByOne")} className={`flex-1 rounded-xl py-2 text-sm font-bold ${overviewMode === "oneByOne" ? "bg-orange-500 text-white" : "bg-white/5 text-white/45"}`} data-ocid="payments.overview.mode_onebyone">One by One</button>
+              <button type="button" onClick={() => setOverviewMode("multiSelect")} className={`flex-1 rounded-xl py-2 text-sm font-bold ${overviewMode === "multiSelect" ? "bg-orange-500 text-white" : "bg-white/5 text-white/45"}`} data-ocid="payments.overview.mode_multiselect">Multi Select</button>
             </div>
 
-            {/* Scrollable Content */}
-            <div className="flex-1 overflow-y-auto min-h-0">
+            <div className="min-h-0 flex-1 overflow-y-auto">
               {overviewMode === "oneByOne" && overviewData.length > 0 && (
-                <div className="px-4 py-4 space-y-4">
-                  {/* Counter pill */}
-                  <div className="text-center">
-                    <span className="inline-block bg-white/10 rounded-full px-4 py-1 text-white/60 text-sm">
-                      {overviewIndex + 1} / {overviewData.length}
-                    </span>
+                <div className="space-y-4 p-5">
+                  <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-center">
+                    <p className="text-xs font-bold uppercase tracking-wider text-white/35">Labour</p>
+                    <h3 className="mt-1 text-3xl font-black">{overviewData[overviewIndex]?.labour.name}</h3>
                   </div>
-
-                  {/* Labour name — large */}
-                  <h3 className="text-4xl font-black text-white text-center mb-4">
-                    {overviewData[overviewIndex]?.labour.name}
-                  </h3>
-
-                  {/* Gross Salary row */}
-                  <div className="rounded-xl px-4 py-2.5 border-l-4 border-cyan-400 bg-white/5 flex items-center justify-between">
-                    <span className="text-xs font-bold text-cyan-400 uppercase tracking-wider">
-                      Gross Salary
-                    </span>
-                    <span className="text-sm font-semibold text-cyan-300">
-                      {fmt(overviewData[overviewIndex]?.totalNetSalary || 0)}
-                    </span>
-                  </div>
-
-                  {/* Total Advances row */}
-                  {!excludeAdvances && (
-                    <div className="space-y-0">
-                      <button
-                        type="button"
-                        onClick={() => setShowAdvanceBreakdown((s) => !s)}
-                        className="w-full rounded-xl px-4 py-2.5 border-l-4 border-red-400 bg-white/5 flex items-center justify-between hover:bg-white/10 transition-colors"
-                        data-ocid="payments.overview.show_breakdown"
-                      >
-                        <span className="text-xs font-bold text-red-400 uppercase tracking-wider">
-                          Total Advances
-                        </span>
-                        <span className="flex items-center gap-1.5">
-                          <span className="text-sm font-semibold text-red-300">
-                            {fmt(
-                              overviewData[overviewIndex]?.totalAdvances || 0,
-                            )}
-                          </span>
-                          {showAdvanceBreakdown ? (
-                            <ChevronUp size={14} className="text-red-400" />
-                          ) : (
-                            <ChevronDown size={14} className="text-red-400" />
-                          )}
-                        </span>
-                      </button>
-                      {showAdvanceBreakdown && (
-                        <div className="text-left space-y-1.5 max-h-32 overflow-y-auto">
-                          {(() => {
-                            const labour = overviewData[overviewIndex]?.labour;
-                            if (!labour) return null;
-                            const labourAdvances = advances.filter(
-                              (a: any) => a.labourId === labour.id,
-                            );
-                            if (labourAdvances.length === 0) {
-                              return (
-                                <p className="text-gray-500 text-xs text-center py-2">
-                                  No advances found
-                                </p>
-                              );
-                            }
-                            return labourAdvances.map((a: any) => {
-                              const contract = contracts.find(
-                                (c: any) => c.id === a.contractId,
-                              );
-                              return (
-                                <div
-                                  key={a.id.toString()}
-                                  className="glass-card rounded-lg p-2 flex justify-between items-center"
-                                >
-                                  <div>
-                                    <p className="text-white text-xs">
-                                      {fmt(a.amount)}
-                                    </p>
-                                    {a.note && (
-                                      <p className="text-gray-500 text-[10px]">
-                                        {a.note}
-                                      </p>
-                                    )}
-                                    {contract && (
-                                      <p className="text-gray-500 text-[10px]">
-                                        {contract.name}
-                                        {contract.settled ? " (Settled)" : ""}
-                                      </p>
-                                    )}
-                                  </div>
-                                  <span
-                                    className={`text-[10px] px-1.5 py-0.5 rounded-full ${contract?.settled ? "bg-gray-700 text-gray-400" : "bg-red-500/20 text-red-400"}`}
-                                  >
-                                    {contract?.settled ? "Cleared" : "Active"}
-                                  </span>
-                                </div>
-                              );
-                            });
-                          })()}
-                        </div>
-                      )}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="rounded-2xl bg-cyan-400/5 p-4">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-cyan-300/60">Gross</p>
+                      <p className="mt-1 text-lg font-black text-cyan-300">{fmt(overviewData[overviewIndex]?.totalNetSalary || 0)}</p>
                     </div>
-                  )}
-
-                  {/* NET PAY card */}
-                  <div className="rounded-xl p-4 border-2 border-orange-500 bg-orange-500/10 text-center">
-                    <p className="text-xs font-bold text-orange-400 uppercase tracking-wider">
-                      Net Pay
-                    </p>
-                    <p className="text-5xl font-black text-orange-400 mt-1">
-                      {fmt(
-                        excludeAdvances
-                          ? overviewData[overviewIndex]?.totalNetSalary || 0
-                          : overviewData[overviewIndex]?.amountPayable || 0,
-                      )}
+                    <div className="rounded-2xl bg-red-400/5 p-4">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-red-300/60">Advances</p>
+                      <p className="mt-1 text-lg font-black text-red-300">{fmt(overviewData[overviewIndex]?.totalAdvances || 0)}</p>
+                    </div>
+                  </div>
+                  <div className="rounded-2xl border border-orange-500/30 bg-orange-500/10 p-5 text-center">
+                    <p className="text-xs font-bold uppercase tracking-wider text-orange-300/70">Net pay</p>
+                    <p className="mt-1 text-4xl font-black text-orange-300">
+                      {fmt(excludeAdvances ? overviewData[overviewIndex]?.totalNetSalary || 0 : overviewData[overviewIndex]?.amountPayable || 0)}
                     </p>
                   </div>
                 </div>
               )}
 
               {overviewMode === "multiSelect" && (
-                <div className="flex flex-col h-full">
-                  {/* Deselect All */}
-                  <div className="shrink-0 px-4 py-3">
-                    <button
-                      type="button"
-                      onClick={() => setSelectedOverviewLabours(new Set())}
-                      className="rounded-full border border-orange-500 text-orange-400 text-sm px-4 py-1 hover:bg-orange-500/10 transition-colors"
-                      data-ocid="payments.overview.deselect_all"
-                    >
-                      Deselect All
-                    </button>
+                <div className="p-3">
+                  <div className="mb-2 flex items-center justify-between px-2">
+                    <span className="text-xs font-bold text-white/40">SELECT LABOURS</span>
+                    <button type="button" onClick={() => setSelectedOverviewLabours(new Set())} className="text-xs font-bold text-orange-400" data-ocid="payments.overview.deselect_all">Clear</button>
                   </div>
-
-                  {/* Scrollable labour list */}
-                  <div className="flex-1 overflow-y-auto min-h-0">
-                    <div className="space-y-0">
-                      {overviewData.map((row: any) => (
-                        <label
-                          key={row.labour.id.toString()}
-                          className="flex items-center gap-3 py-2 px-4 cursor-pointer hover:bg-white/5 transition-colors"
-                        >
-                          <div
-                            className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${selectedOverviewLabours.has(row.labour.id.toString()) ? "bg-orange-500 border-orange-500" : "border-orange-500"}`}
-                          >
-                            {selectedOverviewLabours.has(
-                              row.labour.id.toString(),
-                            ) && (
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                width="14"
-                                height="14"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="white"
-                                strokeWidth="3"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                aria-hidden="true"
-                              >
-                                <polyline points="20 6 9 17 4 12" />
-                              </svg>
-                            )}
-                          </div>
-                          <input
-                            type="checkbox"
-                            checked={selectedOverviewLabours.has(
-                              row.labour.id.toString(),
-                            )}
-                            onChange={() => {
-                              setSelectedOverviewLabours((prev) => {
-                                const next = new Set(prev);
-                                if (next.has(row.labour.id.toString()))
-                                  next.delete(row.labour.id.toString());
-                                else next.add(row.labour.id.toString());
-                                return next;
-                              });
-                            }}
-                            className="sr-only"
-                          />
-                          <span className="flex-1 text-white text-sm">
-                            {row.labour.name}
-                          </span>
-                          <span className="text-cyan-400 font-semibold text-sm">
-                            {fmt(row.amountPayable)}
-                          </span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
+                  {overviewData.map((row: any) => {
+                    const id = row.labour.id.toString();
+                    const checked = selectedOverviewLabours.has(id);
+                    return (
+                      <label key={id} className={`flex cursor-pointer items-center gap-3 rounded-xl px-3 py-3 ${checked ? "bg-orange-500/10" : "hover:bg-white/5"}`}>
+                        <input type="checkbox" className="sr-only" checked={checked} onChange={() => setSelectedOverviewLabours((prev) => { const next = new Set(prev); checked ? next.delete(id) : next.add(id); return next; })} />
+                        <span className={`flex h-5 w-5 items-center justify-center rounded-md border-2 ${checked ? "border-orange-500 bg-orange-500" : "border-white/20"}`}>
+                          {checked && <CheckCheck size={13} />}
+                        </span>
+                        <span className="min-w-0 flex-1 truncate text-sm font-semibold">{row.labour.name}</span>
+                        <span className="text-sm font-bold text-orange-300">{fmt(row.amountPayable)}</span>
+                      </label>
+                    );
+                  })}
                 </div>
               )}
             </div>
 
-            {/* Bottom Section */}
-            <div className="shrink-0 border-t border-white/10">
-              {overviewMode === "oneByOne" && (
-                /* Prev / Next buttons pinned to bottom */
-                <div className="grid grid-cols-2 gap-3 p-4">
-                  <button
-                    type="button"
-                    onClick={() => setOverviewIndex((i) => Math.max(0, i - 1))}
-                    disabled={overviewIndex === 0}
-                    className="bg-white/10 text-white rounded-xl py-3 font-semibold hover:bg-white/20 transition-colors disabled:opacity-30"
-                    data-ocid="payments.overview.prev_button"
-                  >
-                    Prev
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setOverviewIndex((i) =>
-                        Math.min(overviewData.length - 1, i + 1),
-                      )
-                    }
-                    disabled={overviewIndex === overviewData.length - 1}
-                    className="bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-xl py-3 font-semibold disabled:opacity-40"
-                    data-ocid="payments.overview.next_button"
-                  >
-                    Next
-                  </button>
+            <div className="shrink-0 border-t border-white/10 p-4">
+              {overviewMode === "oneByOne" ? (
+                <div className="grid grid-cols-2 gap-2">
+                  <button type="button" onClick={() => setOverviewIndex((i) => Math.max(0, i - 1))} disabled={overviewIndex === 0} className="rounded-xl bg-white/5 py-3 text-sm font-bold disabled:opacity-25" data-ocid="payments.overview.prev_button">Previous</button>
+                  <button type="button" onClick={() => setOverviewIndex((i) => Math.min(overviewData.length - 1, i + 1))} disabled={overviewIndex >= overviewData.length - 1} className="rounded-xl bg-orange-500 py-3 text-sm font-bold disabled:opacity-25" data-ocid="payments.overview.next_button">Next</button>
                 </div>
-              )}
-
-              {overviewMode === "multiSelect" && (
-                /* Bottom summary section — fixed at bottom */
-                <div className="shrink-0 p-4 border-t border-white/10">
-                  <p className="text-xs font-bold text-orange-400 uppercase tracking-wider mb-2">
-                    Selected: {selectedOverviewLabours.size} labours
+              ) : (
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wider text-white/35">Selected labour</p>
+                  <p className="mt-1 text-3xl font-black text-orange-300">
+                    {fmt(excludeAdvances ? overviewTotals.netSalary : overviewTotals.payable)}
                   </p>
-                  {!excludeAdvances && (
-                    <div className="flex justify-between text-sm">
-                      <span className="text-white/60">Total Advances</span>
-                      <span className="text-cyan-400 font-semibold">
-                        {fmt(overviewTotals.advances)}
-                      </span>
-                    </div>
-                  )}
-                  <div className="mt-3 mb-1">
-                    <p className="text-xs font-bold text-orange-400 uppercase tracking-wider">
-                      Combined Net Pay
-                    </p>
-                    <p className="text-5xl font-black text-orange-400">
-                      {fmt(
-                        excludeAdvances
-                          ? overviewTotals.netSalary
-                          : overviewTotals.payable,
-                      )}
-                    </p>
-                  </div>
                 </div>
               )}
             </div>
           </div>
         </div>
       )}
-    {showPaymentPdfPreview && (
-  <div className="fixed inset-0 z-[9999] bg-black/80 flex items-center justify-center p-4">
-    <div className="bg-white w-full h-full max-w-4xl max-h-full overflow-hidden flex flex-col">
-      
-      <div className="flex-1 overflow-auto p-2">
-        <div
-          dangerouslySetInnerHTML={{
-            __html: `<style>${REPORT_CSS}</style>${paymentPreviewHTML}`,
-          }}
-        />
-      </div>
 
-      <div className="flex gap-3 p-4 border-t bg-white">
-        <button
-          type="button"
-          onClick={() => setShowPaymentPdfPreview(false)}
-          className="flex-1 rounded-lg bg-gray-500 px-4 py-3 font-semibold text-white"
-        >
-          Close
-        </button>
-
-        <button
-          type="button"
-          onClick={async () => {
-  await openPrintWindow(paymentPreviewTitle, paymentPreviewHTML);
-  setShowPaymentPdfPreview(false);
-}}
-          className="flex-1 rounded-lg bg-orange-500 px-4 py-3 font-semibold text-white"
-        >
-          Save PDF
-        </button>
-      </div>
-
-    </div>
-  </div>
-)}    
+      {/* PDF preview */}
+      {showPaymentPdfPreview && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 p-3">
+          <div className="flex h-full max-h-full w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-white">
+            <div className="flex-1 overflow-auto p-2">
+              <div dangerouslySetInnerHTML={{ __html: `<style>${REPORT_CSS}</style>${paymentPreviewHTML}` }} />
+            </div>
+            <div className="flex shrink-0 gap-3 border-t bg-white p-4">
+              <button type="button" onClick={() => setShowPaymentPdfPreview(false)} className="flex-1 rounded-xl bg-gray-500 px-4 py-3 font-bold text-white">Close</button>
+              <button type="button" onClick={async () => { await openPrintWindow(paymentPreviewTitle, paymentPreviewHTML); setShowPaymentPdfPreview(false); }} className="flex-1 rounded-xl bg-orange-500 px-4 py-3 font-bold text-white">Save PDF</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
