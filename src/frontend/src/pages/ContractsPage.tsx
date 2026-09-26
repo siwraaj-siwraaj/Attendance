@@ -11,19 +11,13 @@ import { useAuth } from "../hooks/useAuth";
 
 import {
   useAddContract,
-  useAddWorkColumn,
   useContracts,
-  useGetActiveLabours,
-  useLabours,
-  useSetAttendance,
   useUpdateContract,
 } from "../hooks/useBackend";
 
 import { format } from "date-fns";
 import { Calendar, FileText, LayoutGrid, List, Wrench } from "lucide-react";
-import SkeletonLoader, { SkeletonCardList } from "../components/SkeletonLoader";
-import type { Contract, Labour, WorkColumn } from "../types";
-import { sortWorkColumns } from "../types";
+import { SkeletonCardList } from "../components/SkeletonLoader";
 
 interface ContractFormData {
   name: string;
