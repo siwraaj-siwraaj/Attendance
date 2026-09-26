@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import * as XLSX from "xlsx";
-import { FileText, KeyRound, LogOut, Settings, ShieldCheck, Upload, UserCircle } from "lucide-react";
+import { FileText, KeyRound, LogOut, Settings, ShieldCheck, Upload } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import { markBackupDownloaded } from "../hooks/useAutoBackupReminder";
 import { useChangeOwnPassword, useExportData, useImportData } from "../hooks/useBackend";
