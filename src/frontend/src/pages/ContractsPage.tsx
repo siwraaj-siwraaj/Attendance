@@ -40,7 +40,7 @@ function ContractsPage({
 }: {
   onViewAttendance?: (id: bigint) => void;
 }) {
-  const { canEdit, isAdmin } = useAuth();
+  const { canEdit, isAdmin, username, name } = useAuth();
   const { data: contracts = [], isLoading } = useContracts();
   const addContract = useAddContract();
   const updateContract = useUpdateContract();
@@ -52,6 +52,7 @@ function ContractsPage({
   );
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<"list" | "card">("list");
+  const [contractFilter, setContractFilter] = useState<"active" | "completed">("active");
 
   const getBedBase = () =>
     Number(localStorage.getItem("rossie_bed_base") || "11000") || 11000;
@@ -156,21 +157,17 @@ function ContractsPage({
     return format(new Date(ms), "MMM d, yyyy");
   };
 
-  const activeContracts = useMemo(
-    () => contracts.filter((c: any) => !c.settled),
-    [contracts],
-  );
-
   const filteredContracts = useMemo(
     () =>
-      activeContracts
+      contracts
+        .filter((c: any) => (contractFilter === "active" ? !c.settled : c.settled))
         .slice()
         .sort((a: any, b: any) => (b.id > a.id ? 1 : b.id < a.id ? -1 : 0))
         .filter((c: any) => {
           if (!searchQuery.trim()) return true;
           return c.name.toLowerCase().includes(searchQuery.toLowerCase());
         }),
-    [activeContracts, searchQuery],
+    [contracts, searchQuery, contractFilter],
   );
 
   if (isLoading)
@@ -185,13 +182,12 @@ function ContractsPage({
 
   return (
     <div className="flex flex-col h-full bg-[#0a0f1e] text-white font-['Figtree',sans-serif]">
-      {/* FROZEN top section: heading + search */}
+      {/* FROZEN top section: greeting + search + status filter */}
       <div className="shrink-0 space-y-3 px-4 pt-4 pb-3 bg-[#0a0f1e] sticky top-0 z-10">
-        <div className="flex items-center justify-between px-1">
-          <h1 className="text-xl font-bold text-white flex items-center gap-2">
-            <FileText className="w-5 h-5 text-orange-400" />
-            Contracts
-          </h1>
+        <div className="px-1">
+          <p className="text-sm font-medium text-white/45">Hi {(name?.trim() || username?.trim() || "there")}</p>
+          <h1 className="mt-0.5 text-2xl font-bold tracking-tight text-white">Contracts</h1>
+        </div>
           <div className="flex items-center gap-2" />
         </div>
 
@@ -204,12 +200,7 @@ function ContractsPage({
               viewBox="0 0 24 24"
             >
               <title>Search</title>
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z"
-              />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
             </svg>
             <input
               type="text"
@@ -224,20 +215,20 @@ function ContractsPage({
             type="button"
             onClick={() => setViewMode(viewMode === "list" ? "card" : "list")}
             className="p-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-colors shrink-0"
-            aria-label={
-              viewMode === "list"
-                ? "Switch to card view"
-                : "Switch to list view"
-            }
+            aria-label={viewMode === "list" ? "Switch to card view" : "Switch to list view"}
             data-ocid="contracts.view_toggle"
           >
-            {viewMode === "list" ? (
-              <LayoutGrid className="w-4 h-4 text-white/60" />
-            ) : (
-              <List className="w-4 h-4 text-white/60" />
-            )}
+            {viewMode === "list" ? <LayoutGrid className="w-4 h-4 text-white/60" /> : <List className="w-4 h-4 text-white/60" />}
           </button>
         </div>
+        <div className="grid grid-cols-2 rounded-xl border border-white/10 bg-white/[0.03] p-1">
+          <button type="button" onClick={() => setContractFilter("active")} className={`rounded-lg py-2 text-xs font-semibold transition ${contractFilter === "active" ? "bg-white/[0.08] text-white" : "text-white/40"}`}>
+            Active <span className="ml-1 text-white/30">{contracts.filter((c: any) => !c.settled).length}</span>
+          </button>
+          <button type="button" onClick={() => setContractFilter("completed")} className={`rounded-lg py-2 text-xs font-semibold transition ${contractFilter === "completed" ? "bg-emerald-500/10 text-emerald-300" : "text-white/40"}`}>
+            Completed <span className="ml-1 text-white/30">{contracts.filter((c: any) => c.settled).length}</span>
+          </button>
+        </div>/div>
       </div>
 
       {/* Scrollable contract list */}
@@ -250,7 +241,7 @@ function ContractsPage({
       >
         {!isLoading && filteredContracts.length === 0 ? (
           <div className="glass-card rounded-2xl p-8 text-center text-gray-400 mt-2">
-            No active contracts. {canEdit && 'Tap "+" to add a contract.'}
+            {contractFilter === "active" ? "No active contracts." : "No completed contracts."} {canEdit && contractFilter === "active" && 'Tap "+" to add a contract.'}
           </div>
         ) : viewMode === "card" ? (
           /* CARD VIEW — vertical cards */
