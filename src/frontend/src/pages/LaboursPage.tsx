@@ -100,17 +100,38 @@ function LaboursPage() {
         </div>
 
         {/* List */}
-        <div className="mt-4 space-y-2.5">
-          {filtered.length === 0 ? <div className="rounded-[24px] border border-dashed border-white/10 bg-white/[0.025] p-10 text-center"><Users className="mx-auto h-9 w-9 text-white/15"/><p className="mt-3 text-sm font-semibold text-white/55">No labours found</p><p className="mt-1 text-xs text-white/30">Try another search or filter</p></div> : filtered.map((l: any, index: number) => {
-            const isActive = l.isActive !== false;
-            return <button key={String(l.id)} type="button" onClick={() => isAdmin && openEdit(l)} className="group flex w-full items-center gap-3 rounded-[22px] border border-white/[0.07] bg-gradient-to-r from-[#131d31] to-[#0f1728] p-3.5 text-left shadow-sm transition hover:border-orange-500/25 hover:bg-[#162139] active:scale-[0.99]" data-ocid={`labour.item.${index+1}`}>
-              <div className={`relative flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-sm font-extrabold ${isActive?"bg-orange-500/15 text-orange-300 ring-1 ring-orange-400/15":"bg-white/5 text-white/30"}`}>{String(l.name ?? "?").trim().charAt(0).toUpperCase() || "?"}<span className={`absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-[#111b2d] ${isActive?"bg-emerald-400":"bg-white/20"}`}/></div>
-              <div className="min-w-0 flex-1"><div className="flex items-center gap-2"><p className="truncate text-sm font-bold text-white">{l.name}</p>{isActive&&<span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[9px] font-bold text-emerald-300">Active</span>}</div><div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-white/38">{l.employeeId&&<span>ID {l.employeeId}</span>}{l.phoneNumber&&<span className="flex items-center gap-1"><Phone className="h-3 w-3"/>{l.phoneNumber}</span>}{l.joinDate&&<span className="flex items-center gap-1"><CalendarDays className="h-3 w-3"/>{l.joinDate}</span>}</div></div>
-              {isAdmin&&<div className="shrink-0 rounded-xl border border-white/[0.06] bg-white/[0.04] p-2.5 text-white/35 group-hover:border-orange-400/20 group-hover:text-orange-300"><Pencil className="h-4 w-4"/></div>}
-            </button>;
-          })}
+        <div className="mt-4">
+          {filtered.length === 0 ? (
+            <div className="rounded-[24px] border border-dashed border-white/10 bg-white/[0.025] p-10 text-center">
+              <Users className="mx-auto h-9 w-9 text-white/15"/><p className="mt-3 text-sm font-semibold text-white/55">No labours found</p><p className="mt-1 text-xs text-white/30">Try another search or filter</p>
+            </div>
+          ) : (
+            <div className="grid gap-2.5 sm:grid-cols-2">
+              {filtered.map((l: any, index: number) => {
+                const isActive = l.isActive !== false;
+                const initial = String(l.name ?? "?").trim().charAt(0).toUpperCase() || "?";
+                return (
+                  <button key={String(l.id)} type="button" onClick={() => isAdmin && openEdit(l)} className="group w-full rounded-[22px] border border-white/[0.07] bg-[#111a2d] p-3.5 text-left transition-all hover:border-orange-500/25 hover:bg-[#152037] active:scale-[0.99]" data-ocid={`labour.item.${index+1}`}>
+                    <div className="flex items-center gap-3">
+                      <div className={`relative flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-sm font-extrabold ${isActive?"bg-orange-500/15 text-orange-300 ring-1 ring-orange-400/15":"bg-white/5 text-white/30"}`}>
+                        {initial}<span className={`absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-[#111a2d] ${isActive?"bg-emerald-400":"bg-white/20"}`}/>
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2"><p className="truncate text-sm font-bold text-white">{l.name}</p><span className={`shrink-0 rounded-full px-2 py-0.5 text-[9px] font-bold ${isActive?"bg-emerald-500/10 text-emerald-300":"bg-white/[0.06] text-white/35"}`}>{isActive?"Active":"Inactive"}</span></div>
+                        <p className="mt-1 truncate text-[10px] text-white/35">{l.employeeId ? `ID ${l.employeeId}` : "No employee ID"}</p>
+                      </div>
+                      {isAdmin && <div className="shrink-0 rounded-xl border border-white/[0.07] bg-white/[0.035] p-2 text-white/30 transition group-hover:border-orange-400/20 group-hover:text-orange-300"><Pencil className="h-4 w-4"/></div>}
+                    </div>
+                    <div className="mt-3 grid grid-cols-2 gap-2 border-t border-white/[0.06] pt-3">
+                      <div className="min-w-0"><p className="text-[9px] uppercase tracking-wider text-white/25">Mobile</p><p className="mt-0.5 truncate text-[11px] font-medium text-white/60">{l.phoneNumber || "—"}</p></div>
+                      <div className="min-w-0"><p className="text-[9px] uppercase tracking-wider text-white/25">Joined</p><p className="mt-0.5 truncate text-[11px] font-medium text-white/60">{l.joinDate || "—"}</p></div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
-      </div>
 
       {isAdmin && <button type="button" onClick={openAdd} className="fixed bottom-24 right-5 z-30 flex h-14 w-14 items-center justify-center rounded-[20px] bg-gradient-to-br from-orange-400 to-orange-600 text-white shadow-xl shadow-orange-900/30 active:scale-95" aria-label="Add Labour" data-ocid="labours.add_button"><UserPlus className="h-6 w-6"/></button>}
 
