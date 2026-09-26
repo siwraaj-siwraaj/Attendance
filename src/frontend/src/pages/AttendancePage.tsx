@@ -34,10 +34,7 @@ interface AttendancePageProps {
   // onColumnPickerOpened so the parent can clear the signal.
   openColumnPickerFor?: bigint | null;
   onColumnPickerOpened?: () => void;
-}
-
-function formatCurrency(n: number): string {
-  return `₹${n.toLocaleString("en-IN", { maximumFractionDigits: 0 })}`;
+  onBackToContracts?: () => void;
 }
 
 function getSelectBgClass(value: AttendanceValue): string {
@@ -321,6 +318,7 @@ export default function AttendancePage({
   onContractChange,
   openColumnPickerFor,
   onColumnPickerOpened,
+  onBackToContracts,
 }: AttendancePageProps) {
   const { canEdit, isAdmin } = useAuth();
 
@@ -778,78 +776,30 @@ export default function AttendancePage({
       className="flex flex-col h-full overflow-hidden"
       data-ocid="attendance.page"
     >
-      {/* Compact contract context — the attendance page starts directly with the active contract. */}
-      <div className="shrink-0 sticky top-0 z-10 border-b border-white/10 bg-[#0f1525]/95 backdrop-blur-xl">
-        <div className="px-4 py-3">
-          <label
-            htmlFor="contract-select"
-            className="block text-[11px] font-semibold uppercase tracking-wider text-white/45 mb-1.5"
+      {/* Attendance sheet header */}
+      <div className="shrink-0 border-b border-white/10 bg-[#0f1525]/98 backdrop-blur-xl">
+        <div className="flex items-center gap-3 px-4 py-4">
+          <button
+            type="button"
+            onClick={() => onBackToContracts?.()}
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] text-white/70 transition-colors hover:bg-white/[0.08] hover:text-white"
+            aria-label="Back to contracts"
+            data-ocid="attendance.back_button"
           >
-            Contract
-          </label>
-          <select
-            id="contract-select"
-            value={
-              effectiveContractId !== null ? String(effectiveContractId) : ""
-            }
-            onChange={(e) => {
-              const val = e.target.value;
-              handleContractSelect(val ? BigInt(val) : null);
-            }}
-            className="w-full px-3 py-2.5 rounded-xl bg-white/[0.04] border border-white/10 text-white text-sm focus:outline-none focus:border-white/20 focus:bg-white/[0.06] transition-all"
-            data-ocid="attendance.contract_select"
-          >
-            <option value="" className="bg-[#0f1525]">
-              -- Choose a contract --
-            </option>
-            {contracts
-              .filter((c) => !c.settled)
-              .map((c) => (
-                <option
-                  key={String(c.id)}
-                  value={String(c.id)}
-                  className="bg-[#0f1525]"
-                >
-                  {c.name}
-                </option>
-              ))}
-          </select>
-        </div>
-
-        {contract && (
-          <div className="px-4 pb-3 grid grid-cols-3 gap-2">
-            <div className="rounded-xl p-2.5 text-center bg-teal-500/[0.07] border border-teal-400/15">
-              <p className="text-[9px] font-semibold text-teal-300/75 uppercase tracking-widest mb-0.5">
-                Mesh Pool
-              </p>
-              <p className="text-sm font-bold text-teal-200">
-                ₹{(contract.meshAmount ?? 0).toLocaleString("en-IN", {
-                  maximumFractionDigits: 0,
-                })}
-              </p>
-            </div>
-            <div className="rounded-xl p-2.5 text-center bg-slate-400/[0.06] border border-slate-300/10">
-              <p className="text-[9px] font-semibold text-slate-300/70 uppercase tracking-widest mb-0.5">
-                Bed Pool
-              </p>
-              <p className="text-sm font-bold text-slate-100">
-                ₹{(contract.bedAmount ?? 0).toLocaleString("en-IN", {
-                  maximumFractionDigits: 0,
-                })}
-              </p>
-            </div>
-            <div className="rounded-xl p-2.5 text-center bg-violet-500/[0.07] border border-violet-400/15">
-              <p className="text-[9px] font-semibold text-violet-300/75 uppercase tracking-widest mb-0.5">
-                Paper Pool
-              </p>
-              <p className="text-sm font-bold text-violet-200">
-                ₹{(contract.paperAmount ?? 0).toLocaleString("en-IN", {
-                  maximumFractionDigits: 0,
-                })}
-              </p>
-            </div>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M19 12H5" />
+              <path d="m12 19-7-7 7-7" />
+            </svg>
+          </button>
+          <div className="min-w-0">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/35">
+              Attendance
+            </p>
+            <h1 className="mt-0.5 truncate text-2xl font-bold tracking-tight text-white">
+              {contract?.name ?? "Attendance"}
+            </h1>
           </div>
-        )}
+        </div>
       </div>
 
       {/* Scrollable Content */}
