@@ -267,6 +267,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const isAdmin = roles.includes(Role.admin);
 
   useEffect(() => {
+    // "attendance" is an internal route opened from a contract's
+    // View Attendance action. It is intentionally not a bottom-nav tab,
+    // so it must remain accessible even though it is omitted from
+    // allowedTabs/ALL_TABS.
+    if (activeTab === "attendance") return;
+
     if (allowedTabs.length > 0 && !allowedTabs.includes(activeTab)) {
       setActiveTabState(allowedTabs[0]);
     }
