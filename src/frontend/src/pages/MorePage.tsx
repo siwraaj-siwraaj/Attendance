@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import * as XLSX from "xlsx";
 import { ChevronRight, FileText, KeyRound, LogOut, Settings, ShieldCheck, Upload, UserCircle } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
@@ -84,7 +84,7 @@ export default function MorePage() {
     changePasswordMutation.mutate(newPassword,{onSuccess:()=>{setNewPassword("");setConfirmNewPassword("");setChangePasswordOpen(false);setPasswordMessage("Password changed successfully.");setTimeout(()=>setPasswordMessage(null),2500);},onError:(e:any)=>setPasswordMessage(e?.message??"Could not change password.")});
   };
 
-  const menuItem = (icon: React.ReactNode, title: string, description: string, onClick: () => void, danger = false) => (
+  const menuItem = (icon: ReactNode, title: string, description: string, onClick: () => void, danger = false) => (
     <button type="button" onClick={onClick} className="group flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left transition-colors hover:bg-white/[0.045]" data-ocid={`more.${title.toLowerCase().replaceAll(" ","_")}`}>
       <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${danger ? "bg-red-500/10 text-red-300" : "bg-orange-500/10 text-orange-300"}`}>{icon}</span>
       <span className="min-w-0 flex-1"><span className={`block text-sm font-semibold ${danger ? "text-red-200" : "text-white"}`}>{title}</span><span className="mt-0.5 block text-[11px] text-white/35">{description}</span></span>
