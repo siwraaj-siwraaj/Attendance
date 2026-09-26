@@ -42,10 +42,10 @@ function formatCurrency(n: number): string {
 
 function getSelectBgClass(value: AttendanceValue): string {
   if (value.__kind__ === "present")
-    return "bg-emerald-500 border-emerald-400 text-white";
+    return "bg-emerald-500/15 border-emerald-400/40 text-emerald-300";
   if (value.__kind__ === "absent")
-    return "bg-rose-600 border-rose-500 text-white";
-  return "bg-amber-500 border-amber-400 text-white";
+    return "bg-rose-500/15 border-rose-400/40 text-rose-300";
+  return "bg-amber-500/15 border-amber-400/40 text-amber-300";
 }
 
 function calculateLabourSalary(
@@ -778,149 +778,72 @@ export default function AttendancePage({
       className="flex flex-col h-full overflow-hidden"
       data-ocid="attendance.page"
     >
-      {/* Frozen Header Banner */}
-      <div
-        className="shrink-0 sticky top-0 z-10 border-b border-white/10"
-        style={{ background: "#0a0f1e" }}
-      >
-        {/* Banner from uploaded design */}
-        <div
-          className="relative overflow-hidden"
-          style={{
-            background:
-              "linear-gradient(135deg, #0a0f1e 0%, #1a0f00 50%, #0a1a10 100%)",
-            minHeight: "80px",
-          }}
-        >
-          {/* Gradient overlay */}
-          <div
-            className="absolute inset-0"
-            style={{
-              background:
-                "linear-gradient(135deg, rgba(10,15,30,0.85) 0%, rgba(249,115,22,0.15) 60%, rgba(10,15,30,0.9) 100%)",
+      {/* Compact contract context — the attendance page starts directly with the active contract. */}
+      <div className="shrink-0 sticky top-0 z-10 border-b border-white/10 bg-[#0f1525]/95 backdrop-blur-xl">
+        <div className="px-4 py-3">
+          <label
+            htmlFor="contract-select"
+            className="block text-[11px] font-semibold uppercase tracking-wider text-white/45 mb-1.5"
+          >
+            Contract
+          </label>
+          <select
+            id="contract-select"
+            value={
+              effectiveContractId !== null ? String(effectiveContractId) : ""
+            }
+            onChange={(e) => {
+              const val = e.target.value;
+              handleContractSelect(val ? BigInt(val) : null);
             }}
-          />
-          <div className="relative z-10 px-4 pt-3 pb-2 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div
-                className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-                style={{
-                  background: "linear-gradient(135deg, #f97316, #ea580c)",
-                  boxShadow: "0 4px 16px rgba(249,115,22,0.5)",
-                }}
-              >
-                <svg
-                  width="22"
-                  height="22"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="white"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden="true"
+            className="w-full px-3 py-2.5 rounded-xl bg-white/[0.04] border border-white/10 text-white text-sm focus:outline-none focus:border-white/20 focus:bg-white/[0.06] transition-all"
+            data-ocid="attendance.contract_select"
+          >
+            <option value="" className="bg-[#0f1525]">
+              -- Choose a contract --
+            </option>
+            {contracts
+              .filter((c) => !c.settled)
+              .map((c) => (
+                <option
+                  key={String(c.id)}
+                  value={String(c.id)}
+                  className="bg-[#0f1525]"
                 >
-                  <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
-                  <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
-                  <line x1="9" y1="12" x2="15" y2="12" />
-                  <line x1="9" y1="16" x2="13" y2="16" />
-                </svg>
-              </div>
-              <div>
-                <h1 className="text-xl font-black text-white leading-tight tracking-tight">
-                  Attendance
-                </h1>
-                <p className="text-xs text-white/50">Track daily attendance</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Contract selector inside banner */}
-          <div className="relative z-10 px-4 pb-3">
-            <select
-              id="contract-select"
-              value={
-                effectiveContractId !== null ? String(effectiveContractId) : ""
-              }
-              onChange={(e) => {
-                const val = e.target.value;
-                handleContractSelect(val ? BigInt(val) : null);
-              }}
-              className="w-full px-3 py-2 rounded-xl text-white text-sm focus:outline-none transition-all"
-              style={{
-                background: "rgba(5,10,20,0.85)",
-                border: "1px solid rgba(249,115,22,0.4)",
-              }}
-              data-ocid="attendance.contract_select"
-            >
-              <option value="" className="bg-[#0a0f1e]">
-                -- Choose a contract --
-              </option>
-              {contracts
-                .filter((c) => !c.settled)
-                .map((c) => (
-                  <option
-                    key={String(c.id)}
-                    value={String(c.id)}
-                    className="bg-[#0a0f1e]"
-                  >
-                    {c.name}
-                  </option>
-                ))}
-            </select>
-          </div>
+                  {c.name}
+                </option>
+              ))}
+          </select>
         </div>
 
-        {/* Pool amount cards — only when a contract is selected */}
         {contract && (
-          <div className="px-4 py-2 grid grid-cols-3 gap-2">
-            <div
-              className="rounded-xl p-2.5 text-center"
-              style={{
-                background: "rgba(20,184,166,0.12)",
-                border: "1px solid rgba(20,184,166,0.3)",
-              }}
-            >
-              <p className="text-[9px] font-bold text-teal-400 uppercase tracking-widest mb-0.5">
+          <div className="px-4 pb-3 grid grid-cols-3 gap-2">
+            <div className="rounded-xl p-2.5 text-center bg-teal-500/[0.07] border border-teal-400/15">
+              <p className="text-[9px] font-semibold text-teal-300/75 uppercase tracking-widest mb-0.5">
                 Mesh Pool
               </p>
-              <p className="text-sm font-black text-teal-300">
-                ₹
-                {(contract.meshAmount ?? 0).toLocaleString("en-IN", {
+              <p className="text-sm font-bold text-teal-200">
+                ₹{(contract.meshAmount ?? 0).toLocaleString("en-IN", {
                   maximumFractionDigits: 0,
                 })}
               </p>
             </div>
-            <div
-              className="rounded-xl p-2.5 text-center"
-              style={{
-                background: "rgba(249,115,22,0.12)",
-                border: "1px solid rgba(249,115,22,0.3)",
-              }}
-            >
-              <p className="text-[9px] font-bold text-orange-400 uppercase tracking-widest mb-0.5">
+            <div className="rounded-xl p-2.5 text-center bg-slate-400/[0.06] border border-slate-300/10">
+              <p className="text-[9px] font-semibold text-slate-300/70 uppercase tracking-widest mb-0.5">
                 Bed Pool
               </p>
-              <p className="text-sm font-black text-orange-300">
-                ₹
-                {(contract.bedAmount ?? 0).toLocaleString("en-IN", {
+              <p className="text-sm font-bold text-slate-100">
+                ₹{(contract.bedAmount ?? 0).toLocaleString("en-IN", {
                   maximumFractionDigits: 0,
                 })}
               </p>
             </div>
-            <div
-              className="rounded-xl p-2.5 text-center"
-              style={{
-                background: "rgba(168,85,247,0.12)",
-                border: "1px solid rgba(168,85,247,0.3)",
-              }}
-            >
-              <p className="text-[9px] font-bold text-purple-400 uppercase tracking-widest mb-0.5">
+            <div className="rounded-xl p-2.5 text-center bg-violet-500/[0.07] border border-violet-400/15">
+              <p className="text-[9px] font-semibold text-violet-300/75 uppercase tracking-widest mb-0.5">
                 Paper Pool
               </p>
-              <p className="text-sm font-black text-purple-300">
-                ₹
-                {(contract.paperAmount ?? 0).toLocaleString("en-IN", {
+              <p className="text-sm font-bold text-violet-200">
+                ₹{(contract.paperAmount ?? 0).toLocaleString("en-IN", {
                   maximumFractionDigits: 0,
                 })}
               </p>
