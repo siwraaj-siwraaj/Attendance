@@ -150,6 +150,7 @@ function LaboursPage() {
           </div>
         </div>
       </div>}
+      </div>
     </div>
   );
 }
