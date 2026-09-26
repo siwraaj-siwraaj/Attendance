@@ -11,7 +11,7 @@ import AdvancesPage from "./pages/AdvancesPage";
 import PaymentsPage from "./pages/PaymentsPage";
 import LaboursPage from "./pages/LaboursPage";
 import AdminPanel from "./pages/AdminPanel";
-import SettingsPanel from "./components/SettingsPanel";
+import MorePage from "./pages/MorePage";
 
 // Keep stalled mobile/WebView requests from blocking the app indefinitely.
 const FETCH_TIMEOUT_MS = 8_000;
@@ -75,17 +75,7 @@ function AppContent() {
     {(mode === "edit" || mode === "view") && activeTab === "advances" && <AdvancesPage key="advances" />}
     {(mode === "edit" || mode === "view") && activeTab === "payments" && <PaymentsPage key="payments" selectedContractIds={selectedContractIds} setSelectedContractIds={setSelectedContractIds} paymentData={paymentData} setPaymentData={setPaymentData} />}
     {(mode === "edit" || mode === "view") && activeTab === "labours" && <LaboursPage key="labours" />}
-    {(mode === "edit" || mode === "view") && activeTab === "more" && (
-      <div className="h-full overflow-y-auto px-4 pt-5 pb-24">
-        <div className="mx-auto w-full max-w-2xl">
-          <h1 className="mb-1 text-2xl font-bold text-white">More</h1>
-          <p className="mb-5 text-sm text-white/45">Settings</p>
-          <div className="rounded-2xl border border-white/10 bg-[#11192b] p-2">
-            <SettingsPanel />
-          </div>
-        </div>
-      </div>
-    )}
+    {(mode === "edit" || mode === "view") && activeTab === "more" && <MorePage key="more" />}
 
   </ErrorBoundary></div></Layout>;
 }
