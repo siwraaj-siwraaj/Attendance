@@ -185,10 +185,12 @@ function ContractsPage({
       {/* FROZEN top section: greeting + search + status filter */}
       <div className="shrink-0 space-y-3 px-4 pt-4 pb-3 bg-[#0a0f1e] sticky top-0 z-10">
         <div className="px-1">
-          <p className="text-sm font-medium text-white/45">Hi {(name?.trim() || username?.trim() || "there")}</p>
-          <h1 className="mt-0.5 text-2xl font-bold tracking-tight text-white">Contracts</h1>
-        </div>
-          <div className="flex items-center gap-2" />
+          <p className="text-sm font-medium text-white/45">
+            Hi {name?.trim() || username?.trim() || "there"} +
+          </p>
+          <h1 className="mt-0.5 text-2xl font-bold tracking-tight text-white">
+            Contracts
+          </h1>
         </div>
 
         <div className="flex items-center gap-2">
@@ -200,7 +202,12 @@ function ContractsPage({
               viewBox="0 0 24 24"
             >
               <title>Search</title>
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z"
+              />
             </svg>
             <input
               type="text"
@@ -218,17 +225,36 @@ function ContractsPage({
             aria-label={viewMode === "list" ? "Switch to card view" : "Switch to list view"}
             data-ocid="contracts.view_toggle"
           >
-            {viewMode === "list" ? <LayoutGrid className="w-4 h-4 text-white/60" /> : <List className="w-4 h-4 text-white/60" />}
+            {viewMode === "list" ? (
+              <LayoutGrid className="w-4 h-4 text-white/60" />
+            ) : (
+              <List className="w-4 h-4 text-white/60" />
+            )}
           </button>
         </div>
+
         <div className="grid grid-cols-2 rounded-xl border border-white/10 bg-white/[0.03] p-1">
-          <button type="button" onClick={() => setContractFilter("active")} className={`rounded-lg py-2 text-xs font-semibold transition ${contractFilter === "active" ? "bg-white/[0.08] text-white" : "text-white/40"}`}>
-            Active <span className="ml-1 text-white/30">{contracts.filter((c: any) => !c.settled).length}</span>
+          <button
+            type="button"
+            onClick={() => setContractFilter("active")}
+            className={`rounded-lg py-2 text-xs font-semibold transition ${contractFilter === "active" ? "bg-white/[0.08] text-white" : "text-white/40"}`}
+          >
+            Active{" "}
+            <span className="ml-1 text-white/30">
+              {contracts.filter((c: any) => !c.settled).length}
+            </span>
           </button>
-          <button type="button" onClick={() => setContractFilter("completed")} className={`rounded-lg py-2 text-xs font-semibold transition ${contractFilter === "completed" ? "bg-emerald-500/10 text-emerald-300" : "text-white/40"}`}>
-            Completed <span className="ml-1 text-white/30">{contracts.filter((c: any) => c.settled).length}</span>
+          <button
+            type="button"
+            onClick={() => setContractFilter("completed")}
+            className={`rounded-lg py-2 text-xs font-semibold transition ${contractFilter === "completed" ? "bg-emerald-500/10 text-emerald-300" : "text-white/40"}`}
+          >
+            Completed{" "}
+            <span className="ml-1 text-white/30">
+              {contracts.filter((c: any) => c.settled).length}
+            </span>
           </button>
-        </div>/div>
+        </div>
       </div>
 
       {/* Scrollable contract list */}
