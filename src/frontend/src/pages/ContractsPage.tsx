@@ -202,11 +202,12 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
             <p className="text-xs font-semibold uppercase tracking-[0.16em]" style={{ color: "#667085" }}>
               {name?.trim() || username?.trim() || "Welcome back"}
             </p>
-            <div className="mt-1 h-9" aria-hidden="true" />
+            {contractsTitleTop !== null && <div className="mt-1 h-9" aria-hidden="true" />}
             <h1
               ref={contractsTitleRef}
-              className="fixed z-40 font-black tracking-tight text-white transition-[top,left,width,height,font-size,padding,background-color,box-shadow] duration-150 ease-out"
+              className="z-40 font-black tracking-tight text-white transition-[top,left,width,height,font-size,padding,background-color,box-shadow] duration-150 ease-out"
               style={{
+                position: contractsTitleTop === null ? "relative" : "fixed",
                 top: `${Math.max(0, (contractsTitleTop ?? 0) - contractsScrollTop)}px`,
                 left: contractsScrollTop > 24 ? 0 : 20,
                 width: contractsScrollTop > 24 ? "100%" : "auto",
