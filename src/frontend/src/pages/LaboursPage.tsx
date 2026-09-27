@@ -66,7 +66,7 @@ function LaboursPage() {
 
   return (
     <div className="min-h-full bg-[#F8FAFC] text-[#101828] font-['Figtree',sans-serif]">
-      <div className="h-full overflow-y-auto pb-28">
+      <div className="pb-28">
         <header className="app-scroll-header shrink-0 border-b border-white/10 bg-[#172536] px-5 pb-5 pt-5 text-white shadow-sm">
           <div className="flex items-center justify-between">
             <div>
