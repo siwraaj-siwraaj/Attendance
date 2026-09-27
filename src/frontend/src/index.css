@@ -341,29 +341,27 @@
 }
 
 
-/* Shared collapsing header behavior for every scrollable tab page */
-.app-scroll-container .app-scroll-header {
+/* Contracts tab: compact the existing header only after the app scroll container moves. */
+.app-scroll-container .contracts-scroll-header {
   position: sticky;
   top: 0;
   z-index: 30;
   overflow: hidden;
-  max-height: 420px;
   transition: max-height 240ms ease, padding 240ms ease, box-shadow 240ms ease;
 }
 
-.app-scroll-container .app-scroll-header > div {
+.app-scroll-container .contracts-scroll-header > div {
   transition: opacity 180ms ease, max-height 220ms ease, margin 220ms ease, transform 220ms ease;
 }
 
-.app-scroll-container.is-scrolled .app-scroll-header {
+.app-scroll-container.is-scrolled .contracts-scroll-header {
   max-height: 78px;
   padding-top: 10px !important;
   padding-bottom: 10px !important;
   box-shadow: 0 6px 18px rgba(8, 17, 31, 0.18);
 }
 
-/* Keep the title/action row visible; collapse secondary header content. */
-.app-scroll-container.is-scrolled .app-scroll-header > div:not(:first-child) {
+.app-scroll-container.is-scrolled .contracts-scroll-header > div:not(:first-child) {
   max-height: 0 !important;
   margin-top: 0 !important;
   opacity: 0;
@@ -371,19 +369,9 @@
   pointer-events: none;
 }
 
-.app-scroll-container.is-scrolled .app-scroll-header h1 {
-  font-size: 1.5rem !important;
-  line-height: 1.15 !important;
-}
-
-.app-scroll-container.is-scrolled .app-scroll-header h2 {
-  font-size: 1.25rem !important;
-  line-height: 1.2 !important;
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .app-scroll-container .app-scroll-header,
-  .app-scroll-container .app-scroll-header > div {
+  .app-scroll-container .contracts-scroll-header,
+  .app-scroll-container .contracts-scroll-header > div {
     transition: none;
   }
 }
