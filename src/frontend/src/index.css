@@ -341,22 +341,49 @@
 }
 
 
-/* Shared mobile tab-page scroll behavior */
+/* Shared collapsing header behavior for every scrollable tab page */
 .app-scroll-container .app-scroll-header {
   position: sticky;
   top: 0;
   z-index: 30;
   overflow: hidden;
-  transition: max-height 220ms ease, padding 220ms ease, box-shadow 220ms ease;
+  max-height: 420px;
+  transition: max-height 240ms ease, padding 240ms ease, box-shadow 240ms ease;
+}
+
+.app-scroll-container .app-scroll-header > div {
+  transition: opacity 180ms ease, max-height 220ms ease, margin 220ms ease, transform 220ms ease;
 }
 
 .app-scroll-container.is-scrolled .app-scroll-header {
-  max-height: 76px;
+  max-height: 78px;
   padding-top: 10px !important;
   padding-bottom: 10px !important;
-  box-shadow: 0 6px 18px rgba(8, 17, 31, 0.16);
+  box-shadow: 0 6px 18px rgba(8, 17, 31, 0.18);
+}
+
+/* Keep the title/action row visible; collapse secondary header content. */
+.app-scroll-container.is-scrolled .app-scroll-header > div:not(:first-child) {
+  max-height: 0 !important;
+  margin-top: 0 !important;
+  opacity: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.app-scroll-container.is-scrolled .app-scroll-header h1 {
+  font-size: 1.5rem !important;
+  line-height: 1.15 !important;
+}
+
+.app-scroll-container.is-scrolled .app-scroll-header h2 {
+  font-size: 1.25rem !important;
+  line-height: 1.2 !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .app-scroll-container .app-scroll-header { transition: none; }
+  .app-scroll-container .app-scroll-header,
+  .app-scroll-container .app-scroll-header > div {
+    transition: none;
+  }
 }
