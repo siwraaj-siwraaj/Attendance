@@ -45,6 +45,11 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<"list" | "card">("card");
   const [contractFilter, setContractFilter] = useState<"active" | "completed">("active");
+  const [isHeaderCompact, setIsHeaderCompact] = useState(false);
+  const contractsScrollRef = useRef<HTMLDivElement>(null);
+  const handleContractsScroll = useCallback((event: React.UIEvent<HTMLDivElement>) => {
+    setIsHeaderCompact(event.currentTarget.scrollTop > 24);
+  }, []);
 
   const getBedBase = () => Number(localStorage.getItem("rossie_bed_base") || "11000") || 11000;
   const getPaperBase = () => Number(localStorage.getItem("rossie_paper_base") || "7000") || 7000;
@@ -167,17 +172,24 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
   }
 
   return (
-    <div className="flex min-h-full flex-col font-['Figtree',sans-serif]" style={{ background: OFF_WHITE, color: NAVY }}>
-      <header className="app-scroll-header shrink-0 bg-[#172536] px-5 pb-5 pt-5 text-white shadow-sm">
+    <div
+      ref={contractsScrollRef}
+      onScroll={handleContractsScroll}
+      className="flex h-full min-h-0 flex-col overflow-y-auto overflow-x-hidden overscroll-contain font-['Figtree',sans-serif]"
+      style={{ background: OFF_WHITE, color: NAVY, WebkitOverflowScrolling: "touch" }}
+    >
+      <header
+        className={`sticky top-0 z-30 shrink-0 overflow-hidden bg-[#172536] px-5 text-white shadow-sm transition-[max-height,padding] duration-200 ${isHeaderCompact ? "max-h-[76px] pb-3 pt-3" : "max-h-[420px] pb-5 pt-5"}`}
+      >
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.16em]" style={{ color: "#667085" }}>
+            <p className={`overflow-hidden text-xs font-semibold uppercase tracking-[0.16em] transition-all duration-150 ${isHeaderCompact ? "max-h-0 opacity-0" : "max-h-5 opacity-100"}`} style={{ color: "#667085" }}>
               {name?.trim() || username?.trim() || "Welcome back"}
             </p>
             <h1 className="mt-1 text-3xl font-black tracking-tight text-white">
               Contracts
             </h1>
-            <p className="mt-1 text-sm" style={{ color: "#667085" }}>
+            <p className={`overflow-hidden text-sm transition-all duration-150 ${isHeaderCompact ? "mt-0 max-h-0 opacity-0" : "mt-1 max-h-6 opacity-100"}`} style={{ color: "#667085" }}>
               Manage your work agreements and attendance.
             </p>
           </div>
@@ -196,7 +208,8 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
           )}
         </div>
 
-        <div className="mt-5 grid grid-cols-2 gap-3">
+        <div className={`overflow-hidden transition-all duration-200 ${isHeaderCompact ? "mt-0 max-h-0 opacity-0" : "mt-5 max-h-28 opacity-100"}`}>
+          <div className="grid grid-cols-2 gap-3">
           <button
             type="button"
             onClick={() => setContractFilter("active")}
@@ -231,8 +244,8 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
           </button>
         </div>
 
-        <div className="mt-3 flex gap-2">
-          <div className="relative flex-1">
+          <div className="mt-3 flex gap-2">
+            <div className="relative flex-1">
             <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2" style={{ color: "#98A2B3" }} />
             <input
               type="text"
@@ -253,7 +266,8 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
             data-ocid="contracts.view_toggle"
           >
             {viewMode === "card" ? <List className="h-5 w-5" /> : <Grid2X2 className="h-5 w-5" />}
-          </button>
+            </button>
+          </div>
         </div>
       </header>
 
