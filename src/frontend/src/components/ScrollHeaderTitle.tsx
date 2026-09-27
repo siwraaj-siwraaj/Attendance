@@ -44,8 +44,8 @@ export default function ScrollHeaderTitle({ title, className = "" }: ScrollHeade
         ref={titleRef}
         className={`z-40 font-black tracking-tight text-white transition-[top,left,width,height,font-size,padding,background-color,box-shadow] duration-150 ease-out ${className}`}
         style={{
-          position: titleTop === null ? "relative" : "fixed",
-          top: `${Math.max(0, (titleTop ?? 0) - scrollTop)}px`,
+          position: titleTop !== null && scrollTop >= titleTop ? "fixed" : "relative",
+          top: titleTop !== null && scrollTop >= titleTop ? 0 : "auto",
           left: scrollTop > 24 ? 0 : 20,
           width: scrollTop > 24 ? "100%" : "auto",
           height: scrollTop > 24 ? 56 : "auto",
