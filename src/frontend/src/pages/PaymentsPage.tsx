@@ -20,6 +20,7 @@ import {
   X,
 } from "lucide-react";
 import LoadingSpinner from "../components/LoadingSpinner";
+import ScrollHeaderTitle from "../components/ScrollHeaderTitle";
 import { type AttendanceValue, getAttendanceDisplay } from "../types";
 import html2pdf from "html2pdf.js";
 import { registerPlugin } from "@capacitor/core";
@@ -349,14 +350,14 @@ export default function PaymentsPage({
 
   return (
     <div className="flex min-h-full min-w-0 flex-col bg-[#f5f7fa] text-[#182230]">
-      <header className="app-scroll-header shrink-0 bg-[#172536] px-4 pb-5 pt-5 text-white sm:px-6">
+      <header className="app-scroll-header shrink-0 rounded-b-[28px] bg-[#172536] px-4 pb-5 pt-5 text-white sm:px-6">
         <div className="mx-auto w-full max-w-5xl">
           <div className="flex items-start justify-between gap-3">
             <div>
               <div className="mb-1 flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-[0.2em] text-orange-300">
                 <Wallet size={14} /> Payroll
               </div>
-              <h1 className="text-3xl font-black tracking-tight">Payments</h1>
+              <ScrollHeaderTitle title="Payments" className="text-3xl" />
               <p className="mt-1 max-w-xl text-xs leading-5 text-white/55">
                 Calculate labour earnings from attendance, account for advances, and prepare payment sheets.
               </p>
