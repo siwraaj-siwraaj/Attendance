@@ -133,25 +133,25 @@ export default function LoginPage() {
 
   const noticeClass =
     requestStatus === "approved"
-      ? "border-emerald-400/25 bg-emerald-500/10"
+      ? "border-emerald-200 bg-emerald-50"
       : requestStatus === "revoked"
-        ? "border-red-400/25 bg-red-500/10"
-        : "border-orange-400/25 bg-orange-500/10";
+        ? "border-red-200 bg-red-50"
+        : "border-[#F97316]/20 bg-[#F97316]/8";
 
   const noticeTitleClass =
     requestStatus === "approved"
-      ? "text-emerald-200"
+      ? "text-emerald-700"
       : requestStatus === "revoked"
-        ? "text-red-200"
-        : "text-orange-200";
+        ? "text-red-600"
+        : "text-[#F97316]";
 
   return (
     <div
       className="min-h-screen flex flex-col items-center justify-center relative overflow-y-auto px-5 py-6"
-      style={{ background: "#0d1220" }}
+      style={{ background: "#F8FAFC" }}
     >
-      <div className="ambient-glow-1" aria-hidden="true" />
-      <div className="ambient-glow-2" aria-hidden="true" />
+      <div className="pointer-events-none absolute -left-24 -top-24 h-64 w-64 rounded-full bg-[#F97316]/10 blur-3xl" aria-hidden="true" />
+      <div className="pointer-events-none absolute -bottom-24 -right-24 h-72 w-72 rounded-full bg-[#101828]/8 blur-3xl" aria-hidden="true" />
 
       <div
         className="relative z-10 w-full max-w-sm"
@@ -159,10 +159,10 @@ export default function LoginPage() {
       >
         <div className="mb-6 flex flex-col items-center text-center">
           <div
-            className="mb-3 flex h-16 w-16 items-center justify-center rounded-2xl"
+            className="mb-3 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#101828]"
             style={{
-              background: "linear-gradient(135deg, #f97316, #ea580c)",
-              boxShadow: "0 8px 28px rgba(249,115,22,0.28)",
+              background: "#F97316",
+              boxShadow: "0 8px 28px rgba(249,115,22,0.25)",
             }}
           >
             <svg
@@ -187,21 +187,21 @@ export default function LoginPage() {
             className="text-4xl font-bold tracking-tight"
             style={{
               fontFamily: "Figtree, sans-serif",
-              color: "#f97316",
+              color: "#101828",
             }}
           >
             Rossie
           </h1>
-          <p className="mt-1 text-xs font-medium text-white/40">
+          <p className="mt-1 text-xs font-medium text-[#101828]/50">
             Attendance Management
           </p>
         </div>
 
-        <div className="login-card p-5 sm:p-6">
+        <div className="overflow-hidden rounded-[28px] border border-[#101828]/10 bg-white p-5 shadow-[0_18px_55px_rgba(16,24,40,0.10)] sm:p-6">
           {mode === "login" && (
             <form onSubmit={handleLogin} data-ocid="login.form">
               <div className="mb-6">
-                <h2 className="text-2xl font-bold text-white">Sign in</h2>
+                <h2 className="text-2xl font-bold text-[#101828]">Sign in</h2>
               </div>
 
               {loginNotice && (
@@ -211,13 +211,13 @@ export default function LoginPage() {
                 >
                   <div className="flex items-start gap-2.5">
                     {requestStatus === "approved" ? (
-                      <CheckCircle2 className="mt-0.5 shrink-0 text-emerald-300" size={18} />
+                      <CheckCircle2 className="mt-0.5 shrink-0 text-emerald-600" size={18} />
                     ) : (
                       <AlertCircle
                         className={
                           requestStatus === "revoked"
-                            ? "mt-0.5 shrink-0 text-red-300"
-                            : "mt-0.5 shrink-0 text-orange-300"
+                            ? "mt-0.5 shrink-0 text-red-600"
+                            : "mt-0.5 shrink-0 text-[#F97316]"
                         }
                         size={18}
                       />
@@ -230,10 +230,10 @@ export default function LoginPage() {
                             ? "Request revoked"
                             : "Request sent to admin"}
                       </p>
-                      <p className="mt-1 text-xs text-white/60">
+                      <p className="mt-1 text-xs text-[#101828]/65">
                         {loginNotice.name || "Labour"} • {loginNotice.phone}
                       </p>
-                      <p className="mt-1 text-xs text-white/50">
+                      <p className="mt-1 text-xs text-[#101828]/50">
                         {requestStatus === "approved"
                           ? "You can log in now."
                           : requestStatus === "revoked"
@@ -250,7 +250,7 @@ export default function LoginPage() {
                         setUsername(loginNotice.phone);
                         setPassword("");
                       }}
-                      className="mt-3 w-full rounded-lg border border-emerald-400/25 bg-emerald-500/10 py-2.5 text-xs font-bold text-emerald-200"
+                      className="mt-3 w-full rounded-lg border border-emerald-200 bg-emerald-50 py-2.5 text-xs font-bold text-emerald-700"
                     >
                       Continue
                     </button>
@@ -262,7 +262,7 @@ export default function LoginPage() {
                 <div className="relative">
                   <UserRound
                     size={19}
-                    className="pointer-events-none absolute left-4 top-1/2 z-10 -translate-y-1/2 text-[#aab5c7]"
+                    className="pointer-events-none absolute left-4 top-1/2 z-10 -translate-y-1/2 text-[#101828]/45"
                   />
                   <input
                     id="login-username"
@@ -273,10 +273,10 @@ export default function LoginPage() {
                       setUsername(e.target.value);
                       setError(null);
                     }}
-                    className="login-input h-12"
+                    className="h-12 w-full rounded-xl border border-[#101828]/10 bg-[#F8FAFC] px-4 text-sm text-[#101828] outline-none transition focus:border-[#F97316]/60 focus:ring-2 focus:ring-[#F97316]/10"
                     style={{
-                      color: "#fff",
-                      WebkitTextFillColor: "#fff",
+                      color: "#101828",
+                      WebkitTextFillColor: "#101828",
                       paddingLeft: "3.25rem",
                     }}
                     placeholder="Mobile number or username"
@@ -290,7 +290,7 @@ export default function LoginPage() {
                 <div className="relative">
                   <LockKeyhole
                     size={19}
-                    className="pointer-events-none absolute left-4 top-1/2 z-10 -translate-y-1/2 text-[#aab5c7]"
+                    className="pointer-events-none absolute left-4 top-1/2 z-10 -translate-y-1/2 text-[#101828]/45"
                   />
                   <input
                     id="login-password"
@@ -301,10 +301,10 @@ export default function LoginPage() {
                       setPassword(e.target.value);
                       setError(null);
                     }}
-                    className="login-input h-12"
+                    className="h-12 w-full rounded-xl border border-[#101828]/10 bg-[#F8FAFC] px-4 text-sm text-[#101828] outline-none transition focus:border-[#F97316]/60 focus:ring-2 focus:ring-[#F97316]/10"
                     style={{
-                      color: "#fff",
-                      WebkitTextFillColor: "#fff",
+                      color: "#101828",
+                      WebkitTextFillColor: "#101828",
                       paddingLeft: "3.25rem",
                       paddingRight: "3.25rem",
                     }}
@@ -315,7 +315,7 @@ export default function LoginPage() {
                   <button
                     type="button"
                     onClick={() => setShowPassword((v) => !v)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-[#9aa6ba]"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-[#101828]/40"
                     aria-label={showPassword ? "Hide password" : "Show password"}
                   >
                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -324,7 +324,7 @@ export default function LoginPage() {
               </div>
 
               {error && (
-                <div className="login-error mb-4" role="alert">
+                <div className="mb-4 flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-xs font-medium text-red-600" role="alert">
                   <AlertCircle size={16} />
                   <span>{error}</span>
                 </div>
@@ -337,27 +337,27 @@ export default function LoginPage() {
                   onChange={(e) => setRememberMe(e.target.checked)}
                   className="peer sr-only"
                 />
-                <span className="flex h-5 w-5 items-center justify-center rounded-[5px] border border-[#7d899d] text-white peer-checked:border-orange-500 peer-checked:bg-orange-500">
+                <span className="flex h-5 w-5 items-center justify-center rounded-[5px] border border-[#7d899d] text-white peer-checked:border-[#F97316] peer-checked:bg-[#F97316]">
                   ✓
                 </span>
-                <span className="text-sm text-white">Keep me signed in</span>
+                <span className="text-sm text-[#101828]">Keep me signed in</span>
               </label>
 
               <button
                 type="submit"
-                className="login-submit flex h-12 w-full items-center justify-center gap-2"
+                className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#F97316] text-sm font-bold text-white shadow-lg shadow-orange-200 transition hover:bg-[#ea580c] disabled:opacity-60"
                 disabled={submitting}
               >
                 {submitting && <Loader2 size={18} className="animate-spin" />}
                 {submitting ? "Signing in…" : "SIGN IN"}
               </button>
 
-              <div className="mt-5 border-t border-white/10 pt-4 text-center">
-                <span className="text-sm text-white/45">New here? </span>
+              <div className="mt-5 border-t border-[#101828]/10 pt-4 text-center">
+                <span className="text-sm text-[#101828]/45">New here? </span>
                 <button
                   type="button"
                   onClick={goToRegister}
-                  className="text-sm font-bold text-orange-300 hover:text-orange-200"
+                  className="text-sm font-bold text-[#F97316] hover:text-[#F97316]"
                   data-ocid="login.create_account_button"
                 >
                   Create account
@@ -371,7 +371,7 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={backToLogin}
-                className="mb-5 flex items-center gap-1.5 text-sm font-semibold text-white/55 hover:text-white"
+                className="mb-5 flex items-center gap-1.5 text-sm font-semibold text-[#101828]/55 hover:text-[#F97316]"
                 data-ocid="login.back_button"
               >
                 <ArrowLeft size={16} /> Back to sign in
@@ -379,13 +379,13 @@ export default function LoginPage() {
 
               <div className="mb-6">
                 <h2 className="text-2xl font-bold text-white">Create account</h2>
-                <p className="mt-1 text-sm text-white/45">
+                <p className="mt-1 text-sm text-[#101828]/45">
                   Use your mobile number from Labour details.
                 </p>
               </div>
 
               <div className="mb-4">
-                <label className="login-label" htmlFor="register-mobile">
+                <label className="mb-1.5 block text-xs font-semibold text-[#101828]/60" htmlFor="register-mobile">
                   Mobile number
                 </label>
                 <input
@@ -398,14 +398,14 @@ export default function LoginPage() {
                     setUsername(e.target.value);
                     setError(null);
                   }}
-                  className="login-input h-12"
+                  className="h-12 w-full rounded-xl border border-[#101828]/10 bg-[#F8FAFC] px-4 text-sm text-[#101828] outline-none transition focus:border-[#F97316]/60 focus:ring-2 focus:ring-[#F97316]/10"
                   placeholder="Enter mobile number"
                   data-ocid="login.register_mobile_input"
                 />
               </div>
 
               <div className="mb-4">
-                <label className="login-label" htmlFor="register-password">
+                <label className="mb-1.5 block text-xs font-semibold text-[#101828]/60" htmlFor="register-password">
                   Create password
                 </label>
                 <input
@@ -416,7 +416,7 @@ export default function LoginPage() {
                     setNewPassword(e.target.value);
                     setError(null);
                   }}
-                  className="login-input h-12"
+                  className="h-12 w-full rounded-xl border border-[#101828]/10 bg-[#F8FAFC] px-4 text-sm text-[#101828] outline-none transition focus:border-[#F97316]/60 focus:ring-2 focus:ring-[#F97316]/10"
                   placeholder="At least 6 characters"
                   autoComplete="new-password"
                   data-ocid="login.register_password_input"
@@ -424,7 +424,7 @@ export default function LoginPage() {
               </div>
 
               <div className="mb-4">
-                <label className="login-label" htmlFor="register-confirm">
+                <label className="mb-1.5 block text-xs font-semibold text-[#101828]/60" htmlFor="register-confirm">
                   Confirm password
                 </label>
                 <input
@@ -435,7 +435,7 @@ export default function LoginPage() {
                     setConfirmPassword(e.target.value);
                     setError(null);
                   }}
-                  className="login-input h-12"
+                  className="h-12 w-full rounded-xl border border-[#101828]/10 bg-[#F8FAFC] px-4 text-sm text-[#101828] outline-none transition focus:border-[#F97316]/60 focus:ring-2 focus:ring-[#F97316]/10"
                   placeholder="Enter password again"
                   autoComplete="new-password"
                   data-ocid="login.register_confirm_input"
@@ -443,7 +443,7 @@ export default function LoginPage() {
               </div>
 
               {error && (
-                <div className="login-error mb-4" role="alert">
+                <div className="mb-4 flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-xs font-medium text-red-600" role="alert">
                   <AlertCircle size={16} />
                   <span>{error}</span>
                 </div>
@@ -451,14 +451,14 @@ export default function LoginPage() {
 
               <button
                 type="submit"
-                className="login-submit flex h-12 w-full items-center justify-center gap-2"
+                className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#F97316] text-sm font-bold text-white shadow-lg shadow-orange-200 transition hover:bg-[#ea580c] disabled:opacity-60"
                 disabled={submitting}
               >
                 {submitting && <Loader2 size={18} className="animate-spin" />}
                 {submitting ? "Sending request…" : "CREATE ACCOUNT"}
               </button>
 
-              <p className="mt-3 text-center text-[11px] text-white/35">
+              <p className="mt-3 text-center text-[11px] text-[#101828]/40">
                 Admin approval is required before you can sign in.
               </p>
             </form>
