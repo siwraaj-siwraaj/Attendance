@@ -1,4 +1,4 @@
-import { type ReactNode, useRef, useState } from "react";
+import { type ReactNode, type UIEvent, useRef, useState } from "react";
 import * as XLSX from "xlsx";
 import { FileText, KeyRound, LogOut, Settings, ShieldCheck, Upload, UserCircle, X } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
@@ -34,7 +34,7 @@ export default function Layout({ children }: LayoutProps) {
 
   useAutoBackupReminder(mode === "edit");
 
-  const handleMainScroll = (event: React.UIEvent<HTMLElement>) => {
+  const handleMainScroll = (event: UIEvent<HTMLElement>) => {
     setIsScrolled(event.currentTarget.scrollTop > 24);
   };
 
