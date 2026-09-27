@@ -67,12 +67,12 @@ function LaboursPage() {
   return (
     <div className="min-h-full bg-[#F8FAFC] text-[#101828] font-['Figtree',sans-serif]">
       <div className="h-full overflow-y-auto pb-28">
-        <header className="border-b border-[#101828]/10 bg-white px-5 pb-5 pt-5">
+        <header className="shrink-0 border-b border-white/10 bg-[#172536] px-5 pb-5 pt-5 text-white shadow-sm">
           <div className="flex items-center justify-between">
             <div>
-              <div className="flex items-center gap-2 text-[#F97316]"><BriefcaseBusiness className="h-4 w-4" /><span className="text-[10px] font-extrabold uppercase tracking-[0.2em]">Workforce</span></div>
-              <h1 className="mt-1 text-[28px] font-extrabold tracking-tight text-[#101828]">Labours</h1>
-              <p className="mt-1 text-xs text-[#101828]/60">Your workforce, in one place.</p>
+              <div className="flex items-center gap-2 text-orange-300"><BriefcaseBusiness className="h-4 w-4" /><span className="text-[10px] font-extrabold uppercase tracking-[0.2em]">Workforce</span></div>
+              <h1 className="mt-1 text-3xl font-black tracking-tight text-white">Labours</h1>
+              <p className="mt-1 max-w-xl text-xs leading-5 text-white/55">Your workforce, in one place.</p>
             </div>
             {isAdmin && <button type="button" onClick={openAdd} className="flex h-11 items-center gap-2 rounded-2xl bg-[#F97316] px-4 text-xs font-extrabold text-white shadow-lg shadow-orange-200 active:scale-95"><UserPlus className="h-4 w-4" />Add</button>}
           </div>
