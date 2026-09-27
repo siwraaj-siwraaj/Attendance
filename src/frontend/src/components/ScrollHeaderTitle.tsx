@@ -50,8 +50,8 @@ export default function ScrollHeaderTitle({ title, className = "" }: ScrollHeade
         ref={titleRef}
         className={`z-40 font-black tracking-tight text-white transition-[top,left,width,height,font-size,padding,background-color,box-shadow] duration-150 ease-out ${className}`}
         style={{
-          position: titleTop === null ? "relative" : "fixed",
-          top: `${Math.max(0, (titleTop ?? 0) - scrollTop)}px`,
+          position: compact ? "fixed" : "relative",
+          top: compact ? 0 : "auto",
           left: compact ? 0 : 20,
           width: compact ? "100%" : "auto",
           height: compact ? 56 : "auto",
@@ -67,7 +67,7 @@ export default function ScrollHeaderTitle({ title, className = "" }: ScrollHeade
       >
         {title}
       </h1>
-      {titleTop !== null && <div className="h-9" aria-hidden="true" />}
+      {compact && <div className="h-9" aria-hidden="true" />}
     </>
   );
 }
