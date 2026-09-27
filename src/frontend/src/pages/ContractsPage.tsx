@@ -202,7 +202,7 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
 
   return (
     <div className="flex flex-col font-['Figtree',sans-serif]" style={{ background: OFF_WHITE, color: NAVY }}>
-      <header className="shrink-0 bg-[#172536] px-5 pb-5 pt-5 text-white shadow-sm">
+      <header className="shrink-0 rounded-b-[28px] bg-[#172536] px-5 pb-5 pt-5 text-white shadow-sm">
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.16em]" style={{ color: "#667085" }}>
@@ -255,14 +255,15 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
             onClick={() => setContractFilter("active")}
             className="rounded-2xl border p-4 text-left transition-all"
             style={{
-              background: contractFilter === "active" ? NAVY : "#fff",
-              color: contractFilter === "active" ? "#fff" : NAVY,
-              borderColor: contractFilter === "active" ? NAVY : "#E4E7EC",
+              background: contractFilter === "active" ? "#FFF4EC" : "#FFFFFF",
+              color: NAVY,
+              borderColor: contractFilter === "active" ? "#FDBA74" : "#E4E7EC",
+              boxShadow: contractFilter === "active" ? "0 4px 14px rgba(249,115,22,0.10)" : "none",
             }}
           >
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold uppercase tracking-wider opacity-70">Active</span>
-              <span className="h-2 w-2 rounded-full" style={{ background: ORANGE }} />
+              <span className="h-2.5 w-2.5 rounded-full" style={{ background: "#F97316", boxShadow: "0 0 0 4px #FED7AA" }} />
             </div>
             <div className="mt-1 text-2xl font-extrabold">{activeCount}</div>
           </button>
@@ -271,14 +272,15 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
             onClick={() => setContractFilter("completed")}
             className="rounded-2xl border p-4 text-left transition-all"
             style={{
-              background: contractFilter === "completed" ? NAVY : "#fff",
-              color: contractFilter === "completed" ? "#fff" : NAVY,
-              borderColor: contractFilter === "completed" ? NAVY : "#E4E7EC",
+              background: contractFilter === "completed" ? "#ECFDF3" : "#FFFFFF",
+              color: NAVY,
+              borderColor: contractFilter === "completed" ? "#86EFAC" : "#E4E7EC",
+              boxShadow: contractFilter === "completed" ? "0 4px 14px rgba(16,185,129,0.10)" : "none",
             }}
           >
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold uppercase tracking-wider opacity-70">Completed</span>
-              <CheckCircle2 className="h-4 w-4" style={{ color: contractFilter === "completed" ? "#FDBA74" : "#98A2B3" }} />
+              <CheckCircle2 className="h-4 w-4" style={{ color: "#16A34A" }} />
             </div>
             <div className="mt-1 text-2xl font-extrabold">{completedCount}</div>
           </button>
