@@ -147,8 +147,8 @@
 }
 
 @layer utilities {
-  /* Standard mobile tab-header baseline; content may expand when a tab needs extra controls. More is intentionally excluded. */
-  .app-tab-header { min-height: 200px; }
+  /* Standard mobile tab-header: fixed 200px for every tab except More. */
+  .app-tab-header { height: 200px; min-height: 200px; max-height: 200px; box-sizing: border-box; }
   .transition-smooth { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
   .glass-card { background: rgba(10, 15, 30, 0.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255, 140, 0, 0.15); box-shadow: 0 0 30px rgba(255, 140, 0, 0.05); }
   .glass-dialog { background: rgba(5, 10, 20, 0.97); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border: 1px solid rgba(255, 140, 0, 0.25); }
