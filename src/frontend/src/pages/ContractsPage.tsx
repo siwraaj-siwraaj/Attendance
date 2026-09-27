@@ -69,21 +69,23 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
     if (!scrollContainer) return;
 
     let frame = 0;
+    const onScroll = () => setContractsScrollTop(scrollContainer.scrollTop);
     const measureAndSync = () => {
       const title = contractsTitleRef.current;
       if (title) {
-        const top = title.getBoundingClientRect().top;
-        setContractsTitleTop((current) => current ?? top);
+        const documentTop = title.getBoundingClientRect().top + scrollContainer.scrollTop;
+        setContractsTitleTop((current) => current ?? documentTop);
       }
       setContractsScrollTop(scrollContainer.scrollTop);
     };
 
     frame = requestAnimationFrame(measureAndSync);
-    scrollContainer.addEventListener("scroll", () => setContractsScrollTop(scrollContainer.scrollTop), { passive: true });
+    scrollContainer.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", measureAndSync);
 
     return () => {
       cancelAnimationFrame(frame);
+      scrollContainer.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", measureAndSync);
     };
   }, []);
