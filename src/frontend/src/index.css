@@ -339,3 +339,24 @@
   .report-table tr, .report-section, .report-summary-item, .report-total-row { page-break-inside: avoid; }
   .report-table thead { display: table-header-group; }
 }
+
+
+/* Shared mobile tab-page scroll behavior */
+.app-scroll-container .app-scroll-header {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  overflow: hidden;
+  transition: max-height 220ms ease, padding 220ms ease, box-shadow 220ms ease;
+}
+
+.app-scroll-container.is-scrolled .app-scroll-header {
+  max-height: 76px;
+  padding-top: 10px !important;
+  padding-bottom: 10px !important;
+  box-shadow: 0 6px 18px rgba(8, 17, 31, 0.16);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-scroll-container .app-scroll-header { transition: none; }
+}
