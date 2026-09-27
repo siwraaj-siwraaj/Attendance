@@ -15,7 +15,8 @@ export default function ScrollHeaderTitle({ title, className = "" }: ScrollHeade
     if (!scrollContainer) return;
 
     let frame = 0;
-    const onScroll = () => setScrollTop((scrollContainer as HTMLElement).scrollTop);
+    const element = scrollContainer as HTMLElement;
+    const onScroll = () => setScrollTop(element.scrollTop);
 
     const measureInitialPosition = () => {
       const title = titleRef.current;
@@ -25,18 +26,20 @@ export default function ScrollHeaderTitle({ title, className = "" }: ScrollHeade
       }
 
       const rect = title.getBoundingClientRect();
-      setTitleTop(rect.top + (scrollContainer as HTMLElement).scrollTop);
-      setScrollTop((scrollContainer as HTMLElement).scrollTop);
+      setTitleTop(rect.top + element.scrollTop);
+      setScrollTop(element.scrollTop);
     };
 
     frame = requestAnimationFrame(measureInitialPosition);
-    scrollContainer.addEventListener("scroll", onScroll, { passive: true });
+    element.addEventListener("scroll", onScroll, { passive: true });
 
     return () => {
       cancelAnimationFrame(frame);
-      scrollContainer.removeEventListener("scroll", onScroll);
+      element.removeEventListener("scroll", onScroll);
     };
   }, []);
+
+  const compact = titleTop !== null && scrollTop >= titleTop;
 
   return (
     <>
