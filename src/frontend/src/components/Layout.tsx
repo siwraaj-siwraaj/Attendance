@@ -27,10 +27,16 @@ export default function Layout({ children }: LayoutProps) {
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
   const [passwordMessage, setPasswordMessage] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const swipeContentRef = useRef<HTMLDivElement | null>(null);
+  const mainRef = useRef<HTMLElement | null>(null);
   const csvInputRef = useRef<HTMLInputElement>(null);
 
   useAutoBackupReminder(mode === "edit");
+
+  const handleMainScroll = (event: React.UIEvent<HTMLElement>) => {
+    setIsScrolled(event.currentTarget.scrollTop > 24);
+  };
 
   const handleExportCSV = async () => {
     setMenuOpen(false);
@@ -267,10 +273,11 @@ export default function Layout({ children }: LayoutProps) {
 
       <main
         ref={mainRef}
-        className="flex-1 min-h-0 min-w-0 overflow-y-auto overflow-x-hidden flex flex-col overscroll-contain"
-      style={{ touchAction: "auto", WebkitOverflowScrolling: "touch" }}
+        className={`flex-1 min-h-0 min-w-0 overflow-y-auto overflow-x-hidden flex flex-col overscroll-contain app-scroll-container ${isScrolled ? "is-scrolled" : ""}`}
+        onScroll={handleMainScroll}
+        style={{ touchAction: "auto", WebkitOverflowScrolling: "touch" }}
       >
-        <div ref={swipeContentRef} className="min-h-full min-w-0 flex flex-col" style={{ width: "100%", touchAction: "pan-y" }}>
+        <div ref={swipeContentRef} className="min-h-full min-w-0 flex flex-col" style={{ width: "100%", touchAction: "pan-y", paddingBottom: mode && activeTab !== "admin" && activeTab !== "attendance" ? "calc(4rem + env(safe-area-inset-bottom))" : undefined }}>
           {children}
         </div>
       </main>
