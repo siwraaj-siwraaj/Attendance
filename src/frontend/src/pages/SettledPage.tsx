@@ -4,6 +4,7 @@ import { useAdvances, useAllAttendance, useContracts, useDeleteContract, useLabo
 import { useAdminGuard } from "../hooks/useAdminGuard";
 import { useAuth } from "../hooks/useAuth";
 import LoadingSpinner from "../components/LoadingSpinner";
+import ScrollHeaderTitle from "../components/ScrollHeaderTitle";
 
 const money = (n: number) => `₹${Number(n || 0).toLocaleString("en-IN", { maximumFractionDigits: 0 })}`;
 const date = (ts: bigint | number | undefined) => {
@@ -46,11 +47,11 @@ function SettledPage() {
   if (isLoading) return <div className="flex h-full items-center justify-center"><LoadingSpinner size="lg"/></div>;
 
   return <div className="h-full overflow-hidden bg-[#080d1b] text-white font-['Figtree',sans-serif]">
-    <div className="h-full overflow-y-auto px-4 pt-4 pb-28">
+    <div className="h-full overflow-y-auto px-4 pt-4 pb-28" data-page-scroll>
       {/* Dashboard hero */}
-      <section className="relative overflow-hidden rounded-[26px] border border-orange-400/15 bg-gradient-to-br from-[#172039] via-[#111a2d] to-[#0d1323] p-5 shadow-xl">
+      <section className="app-scroll-header relative overflow-hidden rounded-b-[28px] border border-orange-400/15 bg-gradient-to-br from-[#172039] via-[#111a2d] to-[#0d1323] p-5 shadow-xl">
         <div className="absolute -right-14 -top-16 h-44 w-44 rounded-full bg-orange-500/10 blur-3xl"/>
-        <div className="relative flex items-start justify-between"><div><div className="flex items-center gap-2 text-orange-400"><Archive className="h-4 w-4"/><span className="text-[10px] font-bold uppercase tracking-[0.2em]">Settlement Center</span></div><h1 className="mt-2 text-2xl font-bold">Settled</h1><p className="mt-1 text-xs text-white/40">Track completed and pending contracts</p></div><div className="rounded-2xl bg-orange-500/15 p-3 text-orange-400"><CircleDollarSign className="h-6 w-6"/></div></div>
+        <div className="relative flex items-start justify-between"><div><div className="flex items-center gap-2 text-orange-400"><Archive className="h-4 w-4"/><span className="text-[10px] font-bold uppercase tracking-[0.2em]">Settlement Center</span></div><ScrollHeaderTitle title="Settled" className="text-2xl" /><p className="mt-1 text-xs text-white/40">Track completed and pending contracts</p></div><div className="rounded-2xl bg-orange-500/15 p-3 text-orange-400"><CircleDollarSign className="h-6 w-6"/></div></div>
         <div className="relative mt-5 grid grid-cols-3 gap-2"><div className="rounded-2xl bg-white/[0.055] p-3"><p className="text-[10px] uppercase tracking-wider text-white/35">Total</p><p className="mt-1 text-xl font-bold">{contracts.length}</p></div><div className="rounded-2xl bg-amber-500/10 p-3"><p className="text-[10px] uppercase tracking-wider text-amber-300/60">Pending</p><p className="mt-1 text-xl font-bold text-amber-300">{pending.length}</p></div><div className="rounded-2xl bg-emerald-500/10 p-3"><p className="text-[10px] uppercase tracking-wider text-emerald-300/60">Settled</p><p className="mt-1 text-xl font-bold text-emerald-300">{settled.length}</p></div></div>
       </section>
 
