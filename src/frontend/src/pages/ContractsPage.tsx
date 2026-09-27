@@ -70,23 +70,27 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
 
     let frame = 0;
     const onScroll = () => setContractsScrollTop(scrollContainer.scrollTop);
-    const measureAndSync = () => {
+
+    // Measure the title while it is still in normal document flow.
+    // This gives us a stable document position for the same title element.
+    const measureInitialPosition = () => {
       const title = contractsTitleRef.current;
-      if (title) {
-        const documentTop = title.getBoundingClientRect().top + scrollContainer.scrollTop;
-        setContractsTitleTop((current) => current ?? documentTop);
+      if (!title) {
+        frame = requestAnimationFrame(measureInitialPosition);
+        return;
       }
+
+      const rect = title.getBoundingClientRect();
+      setContractsTitleTop(rect.top + scrollContainer.scrollTop);
       setContractsScrollTop(scrollContainer.scrollTop);
     };
 
-    frame = requestAnimationFrame(measureAndSync);
+    frame = requestAnimationFrame(measureInitialPosition);
     scrollContainer.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", measureAndSync);
 
     return () => {
       cancelAnimationFrame(frame);
       scrollContainer.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", measureAndSync);
     };
   }, []);
 
@@ -204,7 +208,7 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
             <p className="text-xs font-semibold uppercase tracking-[0.16em]" style={{ color: "#667085" }}>
               {name?.trim() || username?.trim() || "Welcome back"}
             </p>
-            {contractsTitleTop !== null && <div className="mt-1 h-9" aria-hidden="true" />}
+            <div className="mt-1 h-9" aria-hidden="true" />
             <h1
               ref={contractsTitleRef}
               className="z-40 font-black tracking-tight text-white transition-[top,left,width,height,font-size,padding,background-color,box-shadow] duration-150 ease-out"
