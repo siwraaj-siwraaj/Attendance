@@ -85,10 +85,10 @@ export default function MorePage() {
   };
 
   const menuItem = (icon: ReactNode, title: string, description: string, onClick: () => void, danger = false) => (
-    <button type="button" onClick={onClick} className="group flex w-full items-center gap-3 rounded-2xl border border-[#101828]/8 bg-[#F8FAFC] p-3 text-left transition-all hover:border-[#F97316]/25 hover:shadow-sm active:scale-[0.99]" data-ocid={`more.${title.toLowerCase().replaceAll(" ","_")}`}>
+    <button type="button" onClick={onClick} className="group flex w-full items-center gap-3 rounded-2xl border border-[#101828]/10 bg-[#F8FAFC] p-3 text-left transition-all hover:border-[#F97316]/25 hover:shadow-sm active:scale-[0.99]" data-ocid={`more.${title.toLowerCase().replaceAll(" ","_")}`}>
       <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${danger ? "bg-red-50 text-red-500" : "bg-[#F97316]/10 text-[#F97316]"}`}>{icon}</span>
-      <span className="min-w-0 flex-1"><span className={`block text-sm font-bold ${danger ? "text-red-600" : "text-[#101828]"}`}>{title}</span><span className="mt-0.5 block text-[11px] text-[#101828]/50">{description}</span></span>
-      {!danger && <ChevronRight size={17} className="shrink-0 text-[#101828]/30 transition-transform group-hover:translate-x-0.5 group-hover:text-[#F97316]" />}
+      <span className="min-w-0 flex-1"><span className={`block text-sm font-bold ${danger ? "text-red-600" : "text-[#101828]"}`}>{title}</span><span className="mt-0.5 block text-[11px] text-white/70">{description}</span></span>
+      {!danger && <ChevronRight size={17} className="shrink-0 text-[#101828]/65 transition-transform group-hover:translate-x-0.5 group-hover:text-[#F97316]" />}
     </button>
   );
 
@@ -99,15 +99,15 @@ export default function MorePage() {
           <div className="absolute -right-10 -top-16 h-44 w-44 rounded-full bg-[#F97316]/20 blur-3xl"/>
           <div className="relative flex items-center gap-3">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#F97316] shadow-lg shadow-orange-900/20"><Settings size={22}/></div>
-            <div><p className="text-[10px] font-bold uppercase tracking-[0.2em] text-orange-200">Rossie</p><h1 className="text-2xl font-extrabold tracking-tight">More</h1><p className="mt-0.5 text-xs text-white/55">Account, management and app tools</p></div>
+            <div><p className="text-[10px] font-bold uppercase tracking-[0.2em] text-orange-100">Rossie</p><h1 className="text-2xl font-extrabold tracking-tight">More</h1><p className="mt-0.5 text-xs text-white/55">Account, management and app tools</p></div>
           </div>
         </header>
 
         <section className="relative overflow-hidden rounded-[26px] border border-[#101828]/10 bg-white p-4 shadow-sm">
-          <div className="absolute right-0 top-0 h-24 w-24 rounded-full bg-[#F97316]/8"/>
+          <div className="absolute right-0 top-0 h-24 w-24 rounded-full bg-[#F97316]/10"/>
           <div className="relative flex items-center gap-3">
             <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[#101828] text-white shadow-md"><UserCircle size={29}/></div>
-            <div className="min-w-0 flex-1"><p className="truncate text-lg font-extrabold">{profileName}</p><p className="mt-0.5 text-xs font-semibold text-[#F97316]">{role ? roleLabel(role) : "Account"}</p><p className="mt-1 truncate text-[11px] text-[#101828]/45">{username || "Mobile number not available"}</p></div>
+            <div className="min-w-0 flex-1"><p className="truncate text-lg font-extrabold">{profileName}</p><p className="mt-0.5 text-xs font-semibold text-[#F97316]">{role ? roleLabel(role) : "Account"}</p><p className="mt-1 truncate text-[11px] text-[#101828]/65">{username || "Mobile number not available"}</p></div>
             <span className="hidden rounded-full bg-[#F97316]/10 px-3 py-1 text-[10px] font-bold text-[#F97316] sm:block">SIGNED IN</span>
           </div>
         </section>
@@ -115,7 +115,7 @@ export default function MorePage() {
         <section className="rounded-[26px] border border-[#101828]/10 bg-white p-3 shadow-sm">
           <div className="flex items-center gap-3 px-2 pb-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#F97316]/10 text-[#F97316]"><KeyRound size={17}/></div>
-            <div><p className="text-sm font-extrabold text-[#101828]">Security</p><p className="text-[11px] text-[#101828]/45">Keep your account protected</p></div>
+            <div><p className="text-sm font-extrabold text-[#101828]">Security</p><p className="text-[11px] text-[#101828]/65">Keep your account protected</p></div>
           </div>
           {menuItem(<KeyRound size={18}/>,"Change password","Update your Rossie login password",()=>{setPasswordMessage(null);setChangePasswordOpen(v=>!v);})}
           {changePasswordOpen && <div className="mt-2 rounded-2xl border border-[#F97316]/20 bg-[#F97316]/5 p-3 space-y-2">
@@ -129,7 +129,7 @@ export default function MorePage() {
         {mode !== "view" && <section className="rounded-[26px] border border-[#101828]/10 bg-white p-3 shadow-sm">
           <div className="flex items-center gap-3 px-2 pb-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#F97316]/10 text-[#F97316]"><ShieldCheck size={17}/></div>
-            <div><p className="text-sm font-extrabold">Management</p><p className="text-[11px] text-[#101828]/45">Administration and data tools</p></div>
+            <div><p className="text-sm font-extrabold">Management</p><p className="text-[11px] text-[#101828]/65">Administration and data tools</p></div>
           </div>
           <div className="space-y-2">
             {menuItem(<ShieldCheck size={18}/>,activeTab==="admin"?"Close Admin Panel":"Admin Panel","Manage accounts and permissions",()=>setActiveTab(activeTab==="admin"?"contracts":"admin"))}
@@ -142,13 +142,13 @@ export default function MorePage() {
         {mode !== "view" && <section className="rounded-[26px] border border-[#101828]/10 bg-white p-3 shadow-sm">
           <div className="flex items-center gap-3 px-2 pb-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#F97316]/10 text-[#F97316]"><Settings size={17}/></div>
-            <div><p className="text-sm font-extrabold">App settings</p><p className="text-[11px] text-[#101828]/45">Application preferences</p></div>
+            <div><p className="text-sm font-extrabold">App settings</p><p className="text-[11px] text-[#101828]/65">Application preferences</p></div>
           </div>
-          <div className="overflow-hidden rounded-2xl border border-[#101828]/8 bg-[#F8FAFC]"><SettingsPanel /></div>
+          <div className="overflow-hidden rounded-2xl border border-[#101828]/10 bg-[#F8FAFC]"><SettingsPanel /></div>
         </section>}
 
         <section className="rounded-[26px] border border-red-100 bg-white p-3 shadow-sm">
-          <div className="px-2 pb-3"><p className="text-sm font-extrabold text-[#101828]">Session</p><p className="text-[11px] text-[#101828]/45">Finish using Rossie on this device</p></div>
+          <div className="px-2 pb-3"><p className="text-sm font-extrabold text-[#101828]">Session</p><p className="text-[11px] text-[#101828]/65">Finish using Rossie on this device</p></div>
           {menuItem(<LogOut size={18}/>,"Logout","Sign out of this Rossie account",logout,true)}
         </section>
       </div>
