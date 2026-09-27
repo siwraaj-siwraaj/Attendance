@@ -7,7 +7,7 @@ import LoadingSpinner from "../components/LoadingSpinner";
 const NAVY="#101828", ORANGE="#F97316", OFF_WHITE="#F8FAFC";
 const border="#E4E7EC", muted="#667085";
 
-function AdvancesPage(){
+function AdvancesPage(){ // APK build trigger
   const {isAdmin}=useAuth();
   const {data:contracts=[]}=useContracts();
   const {data:labours=[]}=useLabours();
