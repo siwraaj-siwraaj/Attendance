@@ -468,7 +468,7 @@ export default function PaymentsPage({
         </div>
       </header>
 
-      <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-32 pt-4 sm:px-6">
+      <main className="px-4 pb-32 pt-4 sm:px-6">
         <div className="mx-auto w-full max-w-5xl">
           {!paymentData ? (
             <div className="py-8 sm:py-12">
