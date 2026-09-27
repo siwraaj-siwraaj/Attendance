@@ -7,6 +7,7 @@ import { useChangeOwnPassword, useExportData, useImportData } from "../hooks/use
 import { safeParse, safeStringify } from "../lib/bigintJson";
 import { roleLabel } from "../types";
 import SettingsPanel from "../components/SettingsPanel";
+import ScrollHeaderTitle from "../components/ScrollHeaderTitle";
 
 export default function MorePage() {
   const { mode, activeTab, setActiveTab, logout, role, username, name } = useAuth();
@@ -95,11 +96,11 @@ export default function MorePage() {
   return (
     <div className="min-h-full bg-[#F8FAFC] pb-28 text-[#101828]">
       <div className="mx-auto w-full max-w-5xl space-y-4">
-        <header className="app-scroll-header relative shrink-0 overflow-hidden bg-[#172536] px-5 pb-5 pt-5 text-white shadow-sm">
+        <header className="app-scroll-header relative shrink-0 overflow-hidden rounded-b-[28px] bg-[#172536] px-5 pb-5 pt-5 text-white shadow-sm">
           <div className="absolute -right-10 -top-16 h-44 w-44 rounded-full bg-[#F97316]/20 blur-3xl"/>
           <div className="relative flex items-start justify-between gap-3">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-orange-500/15 text-orange-300"><Settings size={20}/></div>
-            <div><p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-orange-300">Rossie</p><h1 className="mt-1 text-3xl font-black tracking-tight">More</h1><p className="mt-1 max-w-xl text-xs leading-5 text-white/55">Account, management and app tools</p></div>
+            <div><p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-orange-300">Rossie</p><ScrollHeaderTitle title="More" className="text-3xl" /><p className="mt-1 max-w-xl text-xs leading-5 text-white/55">Account, management and app tools</p></div>
           </div>
         </header>
 
