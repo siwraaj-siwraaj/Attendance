@@ -341,9 +341,11 @@
 }
 
 
-/* Contracts tab: compact the existing header only after the app scroll container moves. */
+/* Contracts tab: keep the existing header fixed while only the page content scrolls. */
 .app-scroll-container .contracts-scroll-header {
-  position: relative;
+  position: sticky;
+  top: 0;
+  z-index: 20;
   overflow: hidden;
   transition: max-height 240ms ease, padding 240ms ease, box-shadow 240ms ease;
 }
@@ -353,7 +355,7 @@
 }
 
 .app-scroll-container .contracts-scroll-header.is-compact {
-  max-height: 78px;
+  max-height: 72px;
   padding-top: 10px !important;
   padding-bottom: 10px !important;
   box-shadow: 0 6px 18px rgba(8, 17, 31, 0.18);
@@ -365,6 +367,25 @@
   opacity: 0;
   overflow: hidden;
   pointer-events: none;
+}
+
+.app-scroll-container .contracts-scroll-header.is-compact > div:first-child {
+  align-items: center;
+}
+
+.app-scroll-container .contracts-scroll-header.is-compact > div:first-child > div:first-child > p:first-child,
+.app-scroll-container .contracts-scroll-header.is-compact > div:first-child > div:first-child > p:last-child {
+  display: none;
+}
+
+.app-scroll-container .contracts-scroll-header.is-compact > div:first-child > div:first-child > h1 {
+  margin-top: 0;
+  font-size: 1.25rem;
+  line-height: 1.5rem;
+}
+
+.app-scroll-container .contracts-scroll-header.is-compact > div:first-child > button {
+  height: 40px;
 }
 
 @media (prefers-reduced-motion: reduce) {
