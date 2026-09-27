@@ -253,7 +253,7 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
           <button
             type="button"
             onClick={() => setContractFilter("active")}
-            className="rounded-2xl border p-4 text-left transition-all"
+            className="rounded-2xl border px-3.5 py-3 text-left transition-all"
             style={{
               background: contractFilter === "active" ? "#FFF4EC" : "#FFFFFF",
               color: NAVY,
@@ -265,7 +265,7 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
               <span className="text-xs font-semibold uppercase tracking-wider opacity-70">Active</span>
               <span className="h-2.5 w-2.5 rounded-full" style={{ background: "#F97316", boxShadow: "0 0 0 4px #FED7AA" }} />
             </div>
-            <div className="mt-1 text-2xl font-extrabold">{activeCount}</div>
+            <div className="mt-0.5 text-xl font-extrabold">{activeCount}</div>
           </button>
           <button
             type="button"
@@ -282,7 +282,7 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
               <span className="text-xs font-semibold uppercase tracking-wider opacity-70">Completed</span>
               <CheckCircle2 className="h-4 w-4" style={{ color: "#16A34A" }} />
             </div>
-            <div className="mt-1 text-2xl font-extrabold">{completedCount}</div>
+            <div className="mt-0.5 text-xl font-extrabold">{completedCount}</div>
           </button>
         </div>
 
