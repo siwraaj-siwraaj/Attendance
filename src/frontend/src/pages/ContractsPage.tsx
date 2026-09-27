@@ -45,6 +45,7 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<"list" | "card">("card");
   const [contractFilter, setContractFilter] = useState<"active" | "completed">("active");
+  const [isContractsScrolled, setIsContractsScrolled] = useState(false);
 
   const getBedBase = () => Number(localStorage.getItem("rossie_bed_base") || "11000") || 11000;
   const getPaperBase = () => Number(localStorage.getItem("rossie_paper_base") || "7000") || 7000;
@@ -60,6 +61,15 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
   });
 
   const nameRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const scrollContainer = document.querySelector(".app-scroll-container");
+    if (!scrollContainer) return;
+    const onScroll = () => setIsContractsScrolled(scrollContainer.scrollTop > 24);
+    onScroll();
+    scrollContainer.addEventListener("scroll", onScroll, { passive: true });
+    return () => scrollContainer.removeEventListener("scroll", onScroll);
+  }, []);
 
   useEffect(() => {
     if (!showForm) return;
@@ -257,6 +267,15 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
           </button>
         </div>
       </header>
+
+
+      <div className="sticky top-0 z-30 h-0 pointer-events-none">
+        <div
+          className={`flex h-14 items-center bg-[#172536] px-5 text-white shadow-md transition-all duration-200 ${isContractsScrolled ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0"}`}
+        >
+          <h2 className="text-lg font-extrabold tracking-tight">Contracts</h2>
+        </div>
+      </div>
 
       <main className="px-5 pb-28">
         {filteredContracts.length === 0 ? (
