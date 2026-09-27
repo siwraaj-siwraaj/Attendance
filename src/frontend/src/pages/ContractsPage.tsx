@@ -68,25 +68,25 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
     const scrollContainer = document.querySelector(".app-scroll-container");
     if (!scrollContainer) return;
 
-    const measureTitle = () => {
+    let frame = 0;
+    const measureAndSync = () => {
       const title = contractsTitleRef.current;
-      if (title && contractsTitleTop === null) {
-        setContractsTitleTop(title.getBoundingClientRect().top);
+      if (title) {
+        const top = title.getBoundingClientRect().top;
+        setContractsTitleTop((current) => current ?? top);
       }
+      setContractsScrollTop(scrollContainer.scrollTop);
     };
 
-    measureTitle();
-
-    const onScroll = () => setContractsScrollTop(scrollContainer.scrollTop);
-    onScroll();
-    scrollContainer.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", measureTitle);
+    frame = requestAnimationFrame(measureAndSync);
+    scrollContainer.addEventListener("scroll", () => setContractsScrollTop(scrollContainer.scrollTop), { passive: true });
+    window.addEventListener("resize", measureAndSync);
 
     return () => {
-      scrollContainer.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", measureTitle);
+      cancelAnimationFrame(frame);
+      window.removeEventListener("resize", measureAndSync);
     };
-  }, [contractsTitleTop]);
+  }, []);
 
   useEffect(() => {
     if (!showForm) return;
