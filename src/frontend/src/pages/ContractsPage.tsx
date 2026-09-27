@@ -208,7 +208,6 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
             <p className="text-xs font-semibold uppercase tracking-[0.16em]" style={{ color: "#667085" }}>
               {name?.trim() || username?.trim() || "Welcome back"}
             </p>
-            <div className="mt-1 h-9" aria-hidden="true" />
             <h1
               ref={contractsTitleRef}
               className="z-40 font-black tracking-tight text-white transition-[top,left,width,height,font-size,padding,background-color,box-shadow] duration-150 ease-out"
@@ -230,6 +229,7 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
             >
               Contracts
             </h1>
+            {contractsTitleTop !== null && <div className="h-9" aria-hidden="true" />}
             <p className="mt-1 text-sm" style={{ color: "#667085" }}>
               Manage your work agreements and attendance.
             </p>
