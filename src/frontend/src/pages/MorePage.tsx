@@ -85,45 +85,53 @@ export default function MorePage() {
   };
 
   const menuItem = (icon: ReactNode, title: string, description: string, onClick: () => void, danger = false) => (
-    <button type="button" onClick={onClick} className="group flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left transition-colors hover:bg-white/[0.045]" data-ocid={`more.${title.toLowerCase().replaceAll(" ","_")}`}>
-      <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${danger ? "bg-red-500/10 text-red-300" : "bg-orange-500/10 text-orange-300"}`}>{icon}</span>
-      <span className="min-w-0 flex-1"><span className={`block text-sm font-semibold ${danger ? "text-red-200" : "text-white"}`}>{title}</span><span className="mt-0.5 block text-[11px] text-white/35">{description}</span></span>
-      {!danger && <ChevronRight size={16} className="shrink-0 text-white/20 transition-transform group-hover:translate-x-0.5" />}
+    <button type="button" onClick={onClick} className="group flex w-full items-center gap-3 rounded-2xl border border-[#101828]/8 bg-[#F8FAFC] p-3 text-left transition-all hover:border-[#F97316]/25 hover:shadow-sm active:scale-[0.99]" data-ocid={`more.${title.toLowerCase().replaceAll(" ","_")}`}>
+      <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${danger ? "bg-red-50 text-red-500" : "bg-[#F97316]/10 text-[#F97316]"}`}>{icon}</span>
+      <span className="min-w-0 flex-1"><span className={`block text-sm font-bold ${danger ? "text-red-600" : "text-[#101828]"}`}>{title}</span><span className="mt-0.5 block text-[11px] text-[#101828]/50">{description}</span></span>
+      {!danger && <ChevronRight size={17} className="shrink-0 text-[#101828]/30 transition-transform group-hover:translate-x-0.5 group-hover:text-[#F97316]" />}
     </button>
   );
 
   return (
-    <div className="min-h-full bg-[#080d1b] px-4 pb-28 pt-5 text-white">
+    <div className="min-h-full bg-[#F8FAFC] px-4 pb-28 pt-4 text-[#101828]">
       <div className="mx-auto w-full max-w-2xl space-y-4">
-        <header className="flex items-center gap-3 px-1">
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-orange-500/10 text-orange-400 ring-1 ring-orange-400/15"><Settings size={21}/></div>
-          <div><h1 className="text-2xl font-bold tracking-tight">More</h1><p className="mt-0.5 text-xs text-white/40">Everything else in Rossie, in one place</p></div>
+        <header className="relative overflow-hidden rounded-[28px] bg-[#101828] p-5 text-white shadow-xl">
+          <div className="absolute -right-10 -top-16 h-44 w-44 rounded-full bg-[#F97316]/20 blur-3xl"/>
+          <div className="relative flex items-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#F97316] shadow-lg shadow-orange-900/20"><Settings size={22}/></div>
+            <div><p className="text-[10px] font-bold uppercase tracking-[0.2em] text-orange-200">Rossie</p><h1 className="text-2xl font-extrabold tracking-tight">More</h1><p className="mt-0.5 text-xs text-white/55">Account, management and app tools</p></div>
+          </div>
         </header>
 
-        <section className="relative overflow-hidden rounded-[28px] border border-orange-400/15 bg-gradient-to-br from-[#19253c] via-[#111a2d] to-[#0d1424] p-5 shadow-xl">
-          <div className="absolute -right-12 -top-16 h-40 w-40 rounded-full bg-orange-500/10 blur-3xl"/>
+        <section className="relative overflow-hidden rounded-[26px] border border-[#101828]/10 bg-white p-4 shadow-sm">
+          <div className="absolute right-0 top-0 h-24 w-24 rounded-full bg-[#F97316]/8"/>
           <div className="relative flex items-center gap-3">
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-orange-500/15 text-lg font-extrabold text-orange-300 ring-1 ring-orange-400/20"><UserCircle size={27}/></div>
-            <div className="min-w-0 flex-1"><p className="truncate text-lg font-bold">{profileName}</p><p className="mt-0.5 text-xs text-orange-300/70">{role ? roleLabel(role) : "Account"}</p><p className="mt-1 truncate text-[11px] text-white/35">{username || "Mobile number not available"}</p></div>
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[#101828] text-white shadow-md"><UserCircle size={29}/></div>
+            <div className="min-w-0 flex-1"><p className="truncate text-lg font-extrabold">{profileName}</p><p className="mt-0.5 text-xs font-semibold text-[#F97316]">{role ? roleLabel(role) : "Account"}</p><p className="mt-1 truncate text-[11px] text-[#101828]/45">{username || "Mobile number not available"}</p></div>
+            <span className="hidden rounded-full bg-[#F97316]/10 px-3 py-1 text-[10px] font-bold text-[#F97316] sm:block">SIGNED IN</span>
           </div>
         </section>
 
-        <section className="overflow-hidden rounded-[26px] border border-white/[0.08] bg-[#11192b]">
-          <div className="border-b border-white/[0.07] px-4 py-3.5"><p className="text-[10px] font-bold uppercase tracking-[0.18em] text-orange-300/75">Account</p><p className="mt-0.5 text-xs text-white/35">Security and sign-in</p></div>
-          <div className="p-2">
-            {menuItem(<KeyRound size={18}/>,"Change password","Update your Rossie login password",()=>{setPasswordMessage(null);setChangePasswordOpen(v=>!v);})}
-            {changePasswordOpen && <div className="mx-1 mb-2 rounded-2xl border border-orange-400/15 bg-orange-500/[0.045] p-3 space-y-2">
-              <input type="password" value={newPassword} onChange={e=>setNewPassword(e.target.value)} placeholder="New password" className="w-full rounded-xl border border-white/10 bg-[#0a1020] px-3 py-2.5 text-sm text-white outline-none focus:border-orange-500/50" autoComplete="new-password"/>
-              <input type="password" value={confirmNewPassword} onChange={e=>setConfirmNewPassword(e.target.value)} placeholder="Confirm password" className="w-full rounded-xl border border-white/10 bg-[#0a1020] px-3 py-2.5 text-sm text-white outline-none focus:border-orange-500/50" autoComplete="new-password"/>
-              {passwordMessage&&<p className="text-[11px] text-orange-200">{passwordMessage}</p>}
-              <button type="button" onClick={handleChangePassword} disabled={changePasswordMutation.isPending} className="w-full rounded-xl bg-orange-500 py-2.5 text-xs font-bold text-white disabled:opacity-50">{changePasswordMutation.isPending?"Changing…":"Save password"}</button>
-            </div>}
+        <section className="rounded-[26px] border border-[#101828]/10 bg-white p-3 shadow-sm">
+          <div className="flex items-center gap-3 px-2 pb-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#F97316]/10 text-[#F97316]"><KeyRound size={17}/></div>
+            <div><p className="text-sm font-extrabold text-[#101828]">Security</p><p className="text-[11px] text-[#101828]/45">Keep your account protected</p></div>
           </div>
+          {menuItem(<KeyRound size={18}/>,"Change password","Update your Rossie login password",()=>{setPasswordMessage(null);setChangePasswordOpen(v=>!v);})}
+          {changePasswordOpen && <div className="mt-2 rounded-2xl border border-[#F97316]/20 bg-[#F97316]/5 p-3 space-y-2">
+            <input type="password" value={newPassword} onChange={e=>setNewPassword(e.target.value)} placeholder="New password" className="w-full rounded-xl border border-[#101828]/10 bg-[#F8FAFC] px-3 py-3 text-sm text-[#101828] outline-none focus:border-[#F97316]/60" autoComplete="new-password"/>
+            <input type="password" value={confirmNewPassword} onChange={e=>setConfirmNewPassword(e.target.value)} placeholder="Confirm password" className="w-full rounded-xl border border-[#101828]/10 bg-[#F8FAFC] px-3 py-3 text-sm text-[#101828] outline-none focus:border-[#F97316]/60" autoComplete="new-password"/>
+            {passwordMessage&&<p className="text-[11px] font-medium text-red-500">{passwordMessage}</p>}
+            <button type="button" onClick={handleChangePassword} disabled={changePasswordMutation.isPending} className="w-full rounded-xl bg-[#F97316] py-3 text-xs font-bold text-white shadow-md shadow-orange-200 disabled:opacity-50">{changePasswordMutation.isPending?"Changing…":"Save password"}</button>
+          </div>}
         </section>
 
-        {mode !== "view" && <section className="overflow-hidden rounded-[26px] border border-white/[0.08] bg-[#11192b]">
-          <div className="border-b border-white/[0.07] px-4 py-3.5"><p className="text-[10px] font-bold uppercase tracking-[0.18em] text-orange-300/75">Management</p><p className="mt-0.5 text-xs text-white/35">Administration and data tools</p></div>
-          <div className="p-2">
+        {mode !== "view" && <section className="rounded-[26px] border border-[#101828]/10 bg-white p-3 shadow-sm">
+          <div className="flex items-center gap-3 px-2 pb-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#F97316]/10 text-[#F97316]"><ShieldCheck size={17}/></div>
+            <div><p className="text-sm font-extrabold">Management</p><p className="text-[11px] text-[#101828]/45">Administration and data tools</p></div>
+          </div>
+          <div className="space-y-2">
             {menuItem(<ShieldCheck size={18}/>,activeTab==="admin"?"Close Admin Panel":"Admin Panel","Manage accounts and permissions",()=>setActiveTab(activeTab==="admin"?"contracts":"admin"))}
             {menuItem(<FileText size={18}/>,"Export CSV","Download a portable backup",handleExportCSV)}
             {menuItem(<FileText size={18}/>,"Export Excel","Download a spreadsheet backup",handleExportExcel)}
@@ -131,13 +139,17 @@ export default function MorePage() {
           </div>
         </section>}
 
-        {mode !== "view" && <section className="overflow-hidden rounded-[26px] border border-white/[0.08] bg-[#11192b]">
-          <div className="flex items-center gap-2 border-b border-white/[0.07] px-4 py-3.5"><Settings size={15} className="text-orange-400"/><div><p className="text-[10px] font-bold uppercase tracking-[0.18em] text-orange-300/75">Settings</p><p className="mt-0.5 text-xs text-white/35">Application preferences</p></div></div>
-          <div className="p-2"><SettingsPanel /></div>
+        {mode !== "view" && <section className="rounded-[26px] border border-[#101828]/10 bg-white p-3 shadow-sm">
+          <div className="flex items-center gap-3 px-2 pb-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#F97316]/10 text-[#F97316]"><Settings size={17}/></div>
+            <div><p className="text-sm font-extrabold">App settings</p><p className="text-[11px] text-[#101828]/45">Application preferences</p></div>
+          </div>
+          <div className="overflow-hidden rounded-2xl border border-[#101828]/8 bg-[#F8FAFC]"><SettingsPanel /></div>
         </section>}
 
-        <section className="overflow-hidden rounded-[26px] border border-red-400/10 bg-[#11192b]">
-          <div className="p-2">{menuItem(<LogOut size={18}/>,"Logout","Sign out of this Rossie account",logout,true)}</div>
+        <section className="rounded-[26px] border border-red-100 bg-white p-3 shadow-sm">
+          <div className="px-2 pb-3"><p className="text-sm font-extrabold text-[#101828]">Session</p><p className="text-[11px] text-[#101828]/45">Finish using Rossie on this device</p></div>
+          {menuItem(<LogOut size={18}/>,"Logout","Sign out of this Rossie account",logout,true)}
         </section>
       </div>
       <input ref={csvInputRef} type="file" accept=".csv" className="hidden" onChange={e=>{const file=e.target.files?.[0];if(file)handleImportCSV(file);e.target.value="";}} />
