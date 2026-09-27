@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { useAuth } from "../hooks/useAuth";
 import { useAddLabour, useLabours, useUpdateLabour, useDeleteLabour } from "../hooks/useBackend";
 import SkeletonLoader from "../components/SkeletonLoader";
+import ScrollHeaderTitle from "../components/ScrollHeaderTitle";
 
 function LaboursPage() {
   const { isAdmin } = useAuth();
@@ -67,11 +68,11 @@ function LaboursPage() {
   return (
     <div className="min-h-full bg-[#F8FAFC] text-[#101828] font-['Figtree',sans-serif]">
       <div className="pb-28">
-        <header className="app-scroll-header shrink-0 border-b border-white/10 bg-[#172536] px-5 pb-5 pt-5 text-white shadow-sm">
+        <header className="app-scroll-header shrink-0 rounded-b-[28px] border-b border-white/10 bg-[#172536] px-5 pb-5 pt-5 text-white shadow-sm">
           <div className="flex items-center justify-between">
             <div>
               <div className="flex items-center gap-2 text-orange-300"><BriefcaseBusiness className="h-4 w-4" /><span className="text-[10px] font-extrabold uppercase tracking-[0.2em]">Workforce</span></div>
-              <h1 className="mt-1 text-3xl font-black tracking-tight text-white">Labours</h1>
+              <ScrollHeaderTitle title="Labours" className="text-3xl" />
               <p className="mt-1 max-w-xl text-xs leading-5 text-white/55">Your workforce, in one place.</p>
             </div>
             {isAdmin && <button type="button" onClick={openAdd} className="flex h-11 items-center gap-2 rounded-2xl bg-[#F97316] px-4 text-xs font-extrabold text-white shadow-lg shadow-orange-200 active:scale-95"><UserPlus className="h-4 w-4" />Add</button>}
