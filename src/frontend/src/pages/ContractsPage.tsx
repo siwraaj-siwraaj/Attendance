@@ -45,7 +45,6 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<"list" | "card">("card");
   const [contractFilter, setContractFilter] = useState<"active" | "completed">("active");
-  const [isContractsScrolled, setIsContractsScrolled] = useState(false);
 
   const getBedBase = () => Number(localStorage.getItem("rossie_bed_base") || "11000") || 11000;
   const getPaperBase = () => Number(localStorage.getItem("rossie_paper_base") || "7000") || 7000;
@@ -68,15 +67,6 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
     return () => clearTimeout(t);
   }, [showForm]);
 
-  useEffect(() => {
-    const scrollContainer = document.querySelector<HTMLElement>(".app-scroll-container");
-    if (!scrollContainer) return;
-
-    const updateCompactState = () => setIsContractsScrolled(scrollContainer.scrollTop > 24);
-    updateCompactState();
-    scrollContainer.addEventListener("scroll", updateCompactState, { passive: true });
-    return () => scrollContainer.removeEventListener("scroll", updateCompactState);
-  }, []);
 
   const updateMultiplier = (val: string) => {
     const multiplier = Number.parseFloat(val) || 1;
@@ -178,8 +168,8 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
   }
 
   return (
-    <div className="flex min-h-full flex-col font-['Figtree',sans-serif]" style={{ background: OFF_WHITE, color: NAVY }}>
-      <header className={`app-scroll-header contracts-scroll-header shrink-0 bg-[#172536] px-5 pb-5 pt-5 text-white shadow-sm ${isContractsScrolled ? "is-compact" : ""}`} style={{ position: "relative" }}>
+    <div className="flex flex-col font-['Figtree',sans-serif]" style={{ background: OFF_WHITE, color: NAVY }}>
+      <header className="shrink-0 bg-[#172536] px-5 pb-5 pt-5 text-white shadow-sm">
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.16em]" style={{ color: "#667085" }}>
