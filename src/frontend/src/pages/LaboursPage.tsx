@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Search, UserPlus, Users, UserCheck, UserX, Pencil, X, BriefcaseBusiness, CalendarDays, BadgeCheck, Phone, Trash2 } from "lucide-react";
+import { Search, UserPlus, Users, UserCheck, UserX, Pencil, X, BriefcaseBusiness, CalendarDays, Phone, Trash2, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "../hooks/useAuth";
 import { useAddLabour, useLabours, useUpdateLabour, useDeleteLabour } from "../hooks/useBackend";
@@ -37,18 +37,15 @@ function LaboursPage() {
   const openAdd = useCallback(() => {
     setEditing(null); setName(""); setEmployeeId(""); setPhoneNumber(""); setJoinDate(""); setActive(true); setError(""); setShowForm(true);
   }, []);
+
   const openEdit = useCallback((l: any) => {
     setEditing(l); setName(l.name ?? ""); setEmployeeId(l.employeeId ?? ""); setPhoneNumber(l.phoneNumber ?? ""); setJoinDate(l.joinDate ?? ""); setActive(l.isActive !== false); setError(""); setShowForm(true);
   }, []);
+
   const confirmDelete = useCallback(() => {
     if (!deleteTarget) return;
     deleteLabour.mutate(deleteTarget.id, {
-      onSuccess: () => {
-        toast.success("Labour removed");
-        setDeleteTarget(null);
-        setShowForm(false);
-        setEditing(null);
-      },
+      onSuccess: () => { toast.success("Labour removed"); setDeleteTarget(null); setShowForm(false); setEditing(null); },
       onError: (e: unknown) => toast.error(e instanceof Error ? e.message : "Could not remove labour"),
     });
   }, [deleteTarget, deleteLabour]);
@@ -69,87 +66,100 @@ function LaboursPage() {
 
   return (
     <div className="min-h-full bg-[#F8FAFC] text-[#101828] font-['Figtree',sans-serif]">
-      <div className="h-full overflow-y-auto px-4 pt-4 pb-28">
-        {/* Hero */}
-        <section className="relative overflow-hidden rounded-[26px] border border-[#F97316]/20 bg-gradient-to-br from-[#101828] via-[#172033] to-[#101828] p-5 shadow-xl">
-          <div className="absolute -right-12 -top-12 h-36 w-36 rounded-full bg-[#F97316]/10 blur-2xl" />
-          <div className="relative flex items-start justify-between gap-3">
+      <div className="h-full overflow-y-auto pb-28">
+        <header className="border-b border-[#101828]/10 bg-white px-5 pb-5 pt-5">
+          <div className="flex items-center justify-between">
             <div>
-              <div className="mb-2 flex items-center gap-2 text-[#F97316]"><BriefcaseBusiness className="h-4 w-4"/><span className="text-[11px] font-bold uppercase tracking-[0.18em]">Workforce</span></div>
-              <h1 className="text-2xl font-bold tracking-tight">Labours</h1>
-              <p className="mt-1 text-xs text-[#101828]/60">Manage your team and availability</p>
+              <div className="flex items-center gap-2 text-[#F97316]"><BriefcaseBusiness className="h-4 w-4" /><span className="text-[10px] font-extrabold uppercase tracking-[0.2em]">Workforce</span></div>
+              <h1 className="mt-1 text-[28px] font-extrabold tracking-tight text-[#101828]">Labours</h1>
+              <p className="mt-1 text-xs text-[#101828]/60">Your workforce, in one place.</p>
             </div>
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#F97316]/10 text-[#F97316]"><Users className="h-6 w-6"/></div>
+            {isAdmin && <button type="button" onClick={openAdd} className="flex h-11 items-center gap-2 rounded-2xl bg-[#F97316] px-4 text-xs font-extrabold text-white shadow-lg shadow-orange-200 active:scale-95"><UserPlus className="h-4 w-4" />Add</button>}
           </div>
-          <div className="relative mt-5 grid grid-cols-3 gap-2">
-            <div className="rounded-2xl bg-[#F8FAFC]/10 p-3"><p className="text-[10px] uppercase tracking-wider text-[#101828]/80">Total</p><p className="mt-1 text-xl font-bold">{labours.length}</p></div>
-            <div className="rounded-2xl bg-emerald-500/10 p-3"><p className="text-[10px] uppercase tracking-wider text-emerald-700/55">Active</p><p className="mt-1 text-xl font-bold text-emerald-700">{activeCount}</p></div>
-            <div className="rounded-2xl bg-[#F8FAFC]/10 p-3"><p className="text-[10px] uppercase tracking-wider text-[#101828]/80">Inactive</p><p className="mt-1 text-xl font-bold text-[#101828]/80">{inactiveCount}</p></div>
-          </div>
-        </section>
 
-        {/* Search */}
-        <div className="sticky top-0 z-10 -mx-1 mt-4 bg-[#F8FAFC]/95 py-1 backdrop-blur-md">
+          <div className="mt-5 grid grid-cols-3 overflow-hidden rounded-2xl border border-[#101828]/10 bg-[#F8FAFC]">
+            <button type="button" onClick={() => setFilter("all")} className="border-r border-[#101828]/10 px-3 py-3 text-left">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-[#101828]/55">Team</p><p className="mt-1 text-xl font-extrabold">{labours.length}</p>
+            </button>
+            <button type="button" onClick={() => setFilter("active")} className="border-r border-[#101828]/10 px-3 py-3 text-left">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-700">Active</p><p className="mt-1 text-xl font-extrabold text-emerald-700">{activeCount}</p>
+            </button>
+            <button type="button" onClick={() => setFilter("inactive")} className="px-3 py-3 text-left">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-[#101828]/55">Inactive</p><p className="mt-1 text-xl font-extrabold text-[#101828]/70">{inactiveCount}</p>
+            </button>
+          </div>
+        </header>
+
+        <main className="px-4 pt-4">
           <div className="relative">
-            <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#101828]/60"/>
-            <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search by name, ID or mobile" className="w-full rounded-2xl border border-[#101828]/10 bg-white py-3 pl-11 pr-4 text-sm text-[#101828] outline-none transition focus:border-[#F97316]/50" data-ocid="labours.search_input"/>
+            <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#101828]/45" />
+            <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search labour, ID or mobile" className="h-12 w-full rounded-2xl border border-[#101828]/10 bg-white pl-11 pr-4 text-sm text-[#101828] shadow-sm outline-none focus:border-[#F97316] focus:ring-2 focus:ring-orange-100" data-ocid="labours.search_input" />
           </div>
-          <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
-            {([['active',`Active ${activeCount}`],['all',`All ${labours.length}`],['inactive',`Inactive ${inactiveCount}`]] as const).map(([key,label]) => <button key={key} type="button" onClick={() => setFilter(key)} className={`shrink-0 rounded-full px-4 py-2 text-xs font-semibold transition ${filter===key?'bg-[#F97316] text-[#101828] shadow-lg shadow-[#F97316]/20':'bg-[#101828]/5 text-[#101828]/80 border border-[#101828]/10'}`}>{label}</button>)}
-          </div>
-        </div>
 
-        {/* List */}
-        <div className="mt-4">
-          {filtered.length === 0 ? (
-            <div className="rounded-[24px] border border-dashed border-[#101828]/10 bg-white p-10 text-center">
-              <Users className="mx-auto h-9 w-9 text-[#101828]/20"/><p className="mt-3 text-sm font-semibold text-[#101828]/60">No labours found</p><p className="mt-1 text-xs text-[#101828]/60">Try another search or filter</p>
-            </div>
-          ) : (
-            <div className="grid gap-2.5 sm:grid-cols-2">
-              {filtered.map((l: any, index: number) => {
-                const isActive = l.isActive !== false;
-                const initial = String(l.name ?? "?").trim().charAt(0).toUpperCase() || "?";
-                return (
-                  <button key={String(l.id)} type="button" onClick={() => isAdmin && openEdit(l)} className="group w-full rounded-[22px] border border-[#101828]/10 bg-white p-3.5 text-left transition-all hover:border-[#F97316]/25 hover:bg-[#F97316]/5 active:scale-[0.99]" data-ocid={`labour.item.${index+1}`}>
-                    <div className="flex items-center gap-3">
-                      <div className={`relative flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-sm font-extrabold ${isActive?"bg-[#F97316]/10 text-[#F97316] ring-1 ring-[#F97316]/15":"bg-[#101828]/5 text-[#101828]/60"}`}>
-                        {initial}<span className={`absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white ${isActive?"bg-emerald-400":"bg-[#101828]/20"}`}/>
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2"><p className="truncate text-sm font-bold text-[#101828]">{l.name}</p><span className={`shrink-0 rounded-full px-2 py-0.5 text-[9px] font-bold ${isActive?"bg-emerald-500/10 text-emerald-700":"bg-[#101828]/5 text-[#101828]/80"}`}>{isActive?"Active":"Inactive"}</span></div>
-                        <p className="mt-1 truncate text-[10px] text-[#101828]/80">{l.employeeId ? `ID ${l.employeeId}` : "No employee ID"}</p>
-                      </div>
-                      {isAdmin && <div className="shrink-0 rounded-xl border border-[#101828]/10 bg-[#101828]/5 p-2 text-[#101828]/60 transition group-hover:border-orange-400/20 group-hover:text-[#F97316]"><Pencil className="h-4 w-4"/></div>}
+          <div className="mt-3 flex rounded-xl bg-[#101828]/5 p-1">
+            {([["active", "Active"], ["all", "All"], ["inactive", "Inactive"]] as const).map(([key, label]) => (
+              <button key={key} type="button" onClick={() => setFilter(key)} className={`flex-1 rounded-lg py-2 text-xs font-bold transition ${filter === key ? "bg-white text-[#101828] shadow-sm" : "text-[#101828]/55"}`}>{label}</button>
+            ))}
+          </div>
+
+          <div className="mt-5 flex items-center justify-between">
+            <div><h2 className="text-sm font-extrabold">Team members</h2><p className="mt-0.5 text-[11px] text-[#101828]/50">{filtered.length} shown</p></div>
+            {isAdmin && <button type="button" onClick={openAdd} className="text-xs font-bold text-[#F97316]">+ New labour</button>}
+          </div>
+
+          <div className="mt-3 overflow-hidden rounded-2xl border border-[#101828]/10 bg-white shadow-sm">
+            {filtered.length === 0 ? (
+              <div className="px-6 py-12 text-center">
+                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#101828]/5"><Users className="h-6 w-6 text-[#101828]/35" /></div>
+                <p className="mt-4 text-sm font-bold">No labours found</p>
+                <p className="mt-1 text-xs text-[#101828]/50">Try another search or status filter.</p>
+              </div>
+            ) : filtered.map((l: any, index: number) => {
+              const isActive = l.isActive !== false;
+              const initial = String(l.name ?? "?").trim().charAt(0).toUpperCase() || "?";
+              return (
+                <button key={String(l.id)} type="button" onClick={() => isAdmin && openEdit(l)} className={`flex w-full items-center gap-3 px-4 py-3.5 text-left transition active:bg-[#F8FAFC] ${index > 0 ? "border-t border-[#101828]/10" : ""}`} data-ocid={`labour.item.${index + 1}`}>
+                  <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-base font-extrabold ${isActive ? "bg-orange-50 text-[#F97316]" : "bg-[#101828]/5 text-[#101828]/45"}`}>{initial}</div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <p className="truncate text-sm font-extrabold text-[#101828]">{l.name}</p>
+                      <span className={`shrink-0 rounded-full px-2 py-0.5 text-[9px] font-extrabold ${isActive ? "bg-emerald-50 text-emerald-700" : "bg-[#101828]/5 text-[#101828]/50"}`}>{isActive ? "ACTIVE" : "INACTIVE"}</span>
                     </div>
-                    <div className="mt-3 grid grid-cols-2 gap-2 border-t border-[#101828]/10 pt-3">
-                      <div className="min-w-0"><p className="text-[9px] uppercase tracking-wider text-[#101828]/80">Mobile</p><p className="mt-0.5 truncate text-[11px] font-medium text-[#101828]/80">{l.phoneNumber || "—"}</p></div>
-                      <div className="min-w-0"><p className="text-[9px] uppercase tracking-wider text-[#101828]/80">Joined</p><p className="mt-0.5 truncate text-[11px] font-medium text-[#101828]/80">{l.joinDate || "—"}</p></div>
+                    <div className="mt-1 flex items-center gap-3 text-[10px] text-[#101828]/55">
+                      <span>{l.employeeId ? `ID ${l.employeeId}` : "No ID"}</span>
+                      <span>{l.phoneNumber || "No mobile"}</span>
                     </div>
-                  </button>
-                );
-              })}
-            </div>
-          )}
-        </div>
-
-      {isAdmin && <button type="button" onClick={openAdd} className="fixed bottom-24 right-5 z-30 flex h-14 w-14 items-center justify-center rounded-[20px] bg-gradient-to-br from-[#F97316] to-[#ea580c] text-[#101828] shadow-xl shadow-orange-200 active:scale-95" aria-label="Add Labour" data-ocid="labours.add_button"><UserPlus className="h-6 w-6"/></button>}
-
-      {deleteTarget && <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/80 p-4 backdrop-blur-md" role="dialog" aria-modal="true"><div className="w-full max-w-sm overflow-hidden rounded-[28px] border border-red-400/20 bg-white shadow-2xl shadow-black/50"><div className="border-b border-[#101828]/10 bg-gradient-to-br from-red-500/15 via-transparent to-transparent p-5"><div className="flex items-start gap-3"><div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-red-500/15 text-red-300 ring-1 ring-red-400/20"><Trash2 className="h-5 w-5"/></div><div className="min-w-0"><h3 className="text-base font-bold text-[#101828]">Remove labour</h3><p className="mt-1 text-xs text-[#101828]/60">The labour will be removed from the active list.</p></div><button type="button" onClick={()=>setDeleteTarget(null)} className="ml-auto rounded-xl p-2 text-[#101828]/80 hover:bg-[#101828]/5 hover:text-[#101828]"><X className="h-4 w-4"/></button></div></div><div className="p-5"><div className="rounded-2xl border border-[#101828]/10 bg-[#101828]/5 p-3.5"><p className="text-sm font-semibold text-[#101828]">{deleteTarget.name}</p><p className="mt-1 text-[11px] text-[#101828]/60">{deleteTarget.phoneNumber || "No mobile number"}</p></div><div className="mt-4 rounded-2xl border border-red-400/15 bg-red-500/[0.07] p-3.5 text-xs leading-5 text-red-700">Attendance and payment history will be preserved. The labour record is archived so historical attendance, advances, and payment calculations remain available. If a non-admin Rossie account uses this mobile number, that login account will also be removed.</div><div className="mt-5 flex gap-2.5"><button type="button" onClick={()=>setDeleteTarget(null)} className="flex-1 rounded-2xl border border-[#101828]/10 bg-[#101828]/5 py-3 text-sm font-semibold text-[#101828]/80">Cancel</button><button type="button" disabled={deleteLabour.isPending} onClick={confirmDelete} className="flex-1 rounded-2xl bg-red-500 py-3 text-sm font-bold text-[#101828] shadow-lg shadow-red-900/20 disabled:opacity-50">{deleteLabour.isPending?"Removing…":"Remove labour"}</button></div></div></div></div>}
-      {showForm && <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-0 backdrop-blur-sm sm:items-center sm:p-4" onClick={e => {if(e.target===e.currentTarget)setShowForm(false)}}>
-        <div className="w-full max-w-md rounded-t-[28px] border border-[#101828]/10 bg-white p-5 shadow-2xl sm:rounded-[28px]">
-          <div className="mb-5 flex items-center justify-between"><div><p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#F97316]">Workforce</p><h2 className="mt-1 text-xl font-bold">{editing?'Edit Labour':'Add Labour'}</h2></div><button type="button" onClick={()=>setShowForm(false)} className="rounded-xl bg-[#101828]/5 p-2 text-[#101828]/80"><X className="h-5 w-5"/></button></div>
-          <div className="space-y-3">
-            <label className="block"><span className="mb-1.5 block text-xs text-[#101828]/60">Full name *</span><input ref={nameRef} value={name} onChange={e=>setName(e.target.value)} placeholder="Enter labour name" className="w-full rounded-2xl border border-[#101828]/10 bg-[#F8FAFC] px-4 py-3 text-sm outline-none focus:border-[#F97316]/60"/></label>
-            <label className="block"><span className="mb-1.5 block text-xs text-[#101828]/60">Mobile number *</span><input type="tel" inputMode="numeric" maxLength={10} value={phoneNumber} onChange={e=>setPhoneNumber(e.target.value.replace(/\D/g,"").slice(0,10))} placeholder="10-digit mobile number" className="w-full rounded-2xl border border-[#101828]/10 bg-[#F8FAFC] px-4 py-3 text-sm outline-none focus:border-[#F97316]/60"/></label>
-            <label className="block"><span className="mb-1.5 block text-xs text-[#101828]/60">Employee ID</span><input value={employeeId} onChange={e=>setEmployeeId(e.target.value)} placeholder="Optional employee ID" className="w-full rounded-2xl border border-[#101828]/10 bg-[#F8FAFC] px-4 py-3 text-sm outline-none focus:border-[#F97316]/60"/></label>
-            <label className="block"><span className="mb-1.5 block text-xs text-[#101828]/60">Join date</span><input type="date" value={joinDate} onChange={e=>setJoinDate(e.target.value)} className="w-full rounded-2xl border border-[#101828]/10 bg-[#F8FAFC] px-4 py-3 text-sm outline-none focus:border-[#F97316]/60"/></label>
-            {editing && <button type="button" onClick={()=>setActive(v=>!v)} className="flex w-full items-center justify-between rounded-2xl border border-[#101828]/10 bg-[#101828]/5 p-4"><span className="flex items-center gap-3">{active?<UserCheck className="h-5 w-5 text-emerald-400"/>:<UserX className="h-5 w-5 text-[#101828]/80"/>}<span className="text-sm font-semibold">{active?'Active labour':'Inactive labour'}</span></span><span className={`h-6 w-11 rounded-full p-1 transition ${active?'bg-emerald-500':'bg-[#101828]/15'}`}><span className={`block h-4 w-4 rounded-full bg-white transition ${active?'translate-x-5':''}`}/></span></button>}
-            {error && <p className="text-xs text-red-400">{error}</p>}
-            <div className="flex gap-2">{editing && <button type="button" onClick={()=>{setShowForm(false);setEditing(null);setDeleteTarget(editing)}} className="flex-1 rounded-2xl border border-red-400/25 bg-red-500/10 py-3.5 text-sm font-bold text-red-300"><Trash2 className="mr-2 inline h-4 w-4"/>Remove</button>}<button type="button" onClick={save} className="flex-1 rounded-2xl bg-gradient-to-r from-orange-500 to-orange-600 py-3.5 text-sm font-bold">{editing?'Save changes':'Add labour'}</button></div>
+                  </div>
+                  {isAdmin && <ChevronRight className="h-4 w-4 shrink-0 text-[#101828]/25" />}
+                </button>
+              );
+            })}
           </div>
-        </div>
-      </div>}
+        </main>
+
+        {isAdmin && <button type="button" onClick={openAdd} className="fixed bottom-24 right-5 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-[#F97316] text-white shadow-xl shadow-orange-200 active:scale-95" aria-label="Add Labour" data-ocid="labours.add_button"><UserPlus className="h-6 w-6" /></button>}
+
+        {deleteTarget && <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm" role="dialog" aria-modal="true">
+          <div className="w-full max-w-sm overflow-hidden rounded-3xl bg-white shadow-2xl">
+            <div className="border-b border-[#101828]/10 p-5"><div className="flex items-start gap-3"><div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-red-50 text-red-600"><Trash2 className="h-5 w-5" /></div><div className="flex-1"><h3 className="font-extrabold">Remove labour</h3><p className="mt-1 text-xs text-[#101828]/55">This archives the labour while preserving historical records.</p></div><button type="button" onClick={() => setDeleteTarget(null)} className="rounded-xl p-2 text-[#101828]/50"><X className="h-4 w-4" /></button></div></div>
+            <div className="p-5"><div className="rounded-2xl bg-[#F8FAFC] p-4"><p className="text-sm font-bold">{deleteTarget.name}</p><p className="mt-1 text-xs text-[#101828]/55">{deleteTarget.phoneNumber || "No mobile number"}</p></div><p className="mt-4 text-xs leading-5 text-[#101828]/60">Attendance and payment history will be preserved. The labour record will be archived.</p><div className="mt-5 flex gap-2"><button type="button" onClick={() => setDeleteTarget(null)} className="flex-1 rounded-xl border border-[#101828]/10 py-3 text-sm font-bold">Cancel</button><button type="button" disabled={deleteLabour.isPending} onClick={confirmDelete} className="flex-1 rounded-xl bg-red-600 py-3 text-sm font-bold text-white disabled:opacity-50">{deleteLabour.isPending ? "Removing…" : "Remove"}</button></div></div>
+          </div>
+        </div>}
+
+        {showForm && <div className="fixed inset-0 z-50 flex items-end justify-center bg-[#101828]/60 p-0 backdrop-blur-sm sm:items-center sm:p-4" onClick={e => { if (e.target === e.currentTarget) setShowForm(false); }}>
+          <div className="w-full max-w-md rounded-t-3xl bg-white p-5 shadow-2xl sm:rounded-3xl">
+            <div className="mb-5 flex items-center justify-between"><div><p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#F97316]">{editing ? "Edit team member" : "New team member"}</p><h2 className="mt-1 text-xl font-extrabold">{editing ? "Edit Labour" : "Add Labour"}</h2></div><button type="button" onClick={() => setShowForm(false)} className="rounded-xl bg-[#101828]/5 p-2"><X className="h-5 w-5" /></button></div>
+            <div className="space-y-3">
+              <label className="block"><span className="mb-1.5 block text-xs font-bold text-[#101828]/60">Full name *</span><input ref={nameRef} value={name} onChange={e => setName(e.target.value)} placeholder="Enter full name" className="w-full rounded-xl border border-[#101828]/10 bg-[#F8FAFC] px-4 py-3 text-sm outline-none focus:border-[#F97316]" /></label>
+              <label className="block"><span className="mb-1.5 block text-xs font-bold text-[#101828]/60">Mobile number *</span><input type="tel" inputMode="numeric" maxLength={10} value={phoneNumber} onChange={e => setPhoneNumber(e.target.value.replace(/\D/g, "").slice(0, 10))} placeholder="10-digit mobile number" className="w-full rounded-xl border border-[#101828]/10 bg-[#F8FAFC] px-4 py-3 text-sm outline-none focus:border-[#F97316]" /></label>
+              <label className="block"><span className="mb-1.5 block text-xs font-bold text-[#101828]/60">Employee ID</span><input value={employeeId} onChange={e => setEmployeeId(e.target.value)} placeholder="Optional ID" className="w-full rounded-xl border border-[#101828]/10 bg-[#F8FAFC] px-4 py-3 text-sm outline-none focus:border-[#F97316]" /></label>
+              <label className="block"><span className="mb-1.5 block text-xs font-bold text-[#101828]/60">Join date</span><input type="date" value={joinDate} onChange={e => setJoinDate(e.target.value)} className="w-full rounded-xl border border-[#101828]/10 bg-[#F8FAFC] px-4 py-3 text-sm outline-none focus:border-[#F97316]" /></label>
+              {editing && <button type="button" onClick={() => setActive(v => !v)} className="flex w-full items-center justify-between rounded-xl border border-[#101828]/10 bg-[#F8FAFC] p-4"><span className="flex items-center gap-3 text-sm font-bold">{active ? <UserCheck className="h-5 w-5 text-emerald-600" /> : <UserX className="h-5 w-5 text-[#101828]/45" />}{active ? "Active labour" : "Inactive labour"}</span><span className={`h-6 w-11 rounded-full p-1 ${active ? "bg-emerald-500" : "bg-[#101828]/20"}`}><span className={`block h-4 w-4 rounded-full bg-white transition ${active ? "translate-x-5" : ""}`} /></span></button>}
+              {error && <p className="text-xs font-semibold text-red-600">{error}</p>}
+              <div className="flex gap-2 pt-1">{editing && <button type="button" onClick={() => { setShowForm(false); setEditing(null); setDeleteTarget(editing); }} className="flex-1 rounded-xl border border-red-200 bg-red-50 py-3.5 text-sm font-bold text-red-600"><Trash2 className="mr-2 inline h-4 w-4" />Remove</button>}<button type="button" onClick={save} className="flex-1 rounded-xl bg-[#F97316] py-3.5 text-sm font-extrabold text-white">{editing ? "Save changes" : "Add labour"}</button></div>
+            </div>
+          </div>
+        </div>}
       </div>
     </div>
   );
