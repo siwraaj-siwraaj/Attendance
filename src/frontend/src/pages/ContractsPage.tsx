@@ -167,7 +167,7 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden font-['Figtree',sans-serif]" style={{ background: OFF_WHITE, color: NAVY }}>
+    <div className="flex min-h-full flex-col font-['Figtree',sans-serif]" style={{ background: OFF_WHITE, color: NAVY }}>
       <header className="app-scroll-header shrink-0 bg-[#172536] px-5 pb-5 pt-5 text-white shadow-sm">
         <div className="flex items-start justify-between gap-4">
           <div>
