@@ -48,7 +48,7 @@ export default function BottomTabBar({ activeTab, onTabChange }: LayoutProps) {
               onClick={() => onTabChange(tab.key)}
               className="relative flex min-w-0 flex-1 flex-col items-center justify-center gap-1 px-1 text-[10px] font-semibold transition-colors"
               style={{
-                color: isActive ? "#f8fafc" : "#7f8aa0",
+                color: isActive ? "#F97316" : "#7f8aa0",
                 touchAction: "manipulation",
                 WebkitTapHighlightColor: "transparent",
               }}
