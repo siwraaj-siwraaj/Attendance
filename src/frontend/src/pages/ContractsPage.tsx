@@ -45,7 +45,9 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<"list" | "card">("card");
   const [contractFilter, setContractFilter] = useState<"active" | "completed">("active");
-  const [isContractsScrolled, setIsContractsScrolled] = useState(false);
+  const [contractsScrollTop, setContractsScrollTop] = useState(0);
+  const [contractsTitleTop, setContractsTitleTop] = useState<number | null>(null);
+  const contractsTitleRef = useRef<HTMLHeadingElement>(null);
 
   const getBedBase = () => Number(localStorage.getItem("rossie_bed_base") || "11000") || 11000;
   const getPaperBase = () => Number(localStorage.getItem("rossie_paper_base") || "7000") || 7000;
@@ -65,11 +67,26 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
   useEffect(() => {
     const scrollContainer = document.querySelector(".app-scroll-container");
     if (!scrollContainer) return;
-    const onScroll = () => setIsContractsScrolled(scrollContainer.scrollTop > 24);
+
+    const measureTitle = () => {
+      const title = contractsTitleRef.current;
+      if (title && contractsTitleTop === null) {
+        setContractsTitleTop(title.getBoundingClientRect().top);
+      }
+    };
+
+    measureTitle();
+
+    const onScroll = () => setContractsScrollTop(scrollContainer.scrollTop);
     onScroll();
     scrollContainer.addEventListener("scroll", onScroll, { passive: true });
-    return () => scrollContainer.removeEventListener("scroll", onScroll);
-  }, []);
+    window.addEventListener("resize", measureTitle);
+
+    return () => {
+      scrollContainer.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", measureTitle);
+    };
+  }, [contractsTitleTop]);
 
   useEffect(() => {
     if (!showForm) return;
@@ -185,7 +202,25 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
             <p className="text-xs font-semibold uppercase tracking-[0.16em]" style={{ color: "#667085" }}>
               {name?.trim() || username?.trim() || "Welcome back"}
             </p>
-            <h1 className="mt-1 text-3xl font-black tracking-tight text-white">
+            <div className="mt-1 h-9" aria-hidden="true" />
+            <h1
+              ref={contractsTitleRef}
+              className="fixed z-40 font-black tracking-tight text-white transition-[top,left,width,height,font-size,padding,background-color,box-shadow] duration-150 ease-out"
+              style={{
+                top: `${Math.max(0, (contractsTitleTop ?? 0) - contractsScrollTop)}px`,
+                left: contractsScrollTop > 24 ? 0 : 20,
+                width: contractsScrollTop > 24 ? "100%" : "auto",
+                height: contractsScrollTop > 24 ? 56 : "auto",
+                paddingLeft: contractsScrollTop > 24 ? 20 : 0,
+                paddingRight: contractsScrollTop > 24 ? 20 : 0,
+                display: "flex",
+                alignItems: "center",
+                background: contractsScrollTop > 24 ? "#172536" : "transparent",
+                boxShadow: contractsScrollTop > 24 ? "0 6px 18px rgba(8,17,31,0.18)" : "none",
+                fontSize: `${Math.max(18, 30 - Math.min(contractsScrollTop, 120) * 0.1)}px`,
+                lineHeight: 1.2,
+              }}
+            >
               Contracts
             </h1>
             <p className="mt-1 text-sm" style={{ color: "#667085" }}>
@@ -268,14 +303,6 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
         </div>
       </header>
 
-
-      <div className="sticky top-0 z-30 h-0 pointer-events-none">
-        <div
-          className={`flex h-14 items-center bg-[#172536] px-5 text-white shadow-md transition-all duration-200 ${isContractsScrolled ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0"}`}
-        >
-          <h2 className="text-lg font-extrabold tracking-tight">Contracts</h2>
-        </div>
-      </div>
 
       <main className="px-5 pb-28">
         {filteredContracts.length === 0 ? (
