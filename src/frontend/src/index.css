@@ -354,14 +354,14 @@
   transition: opacity 180ms ease, max-height 220ms ease, margin 220ms ease, transform 220ms ease;
 }
 
-.app-scroll-container.is-scrolled .contracts-scroll-header {
+.app-scroll-container .contracts-scroll-header.is-compact {
   max-height: 78px;
   padding-top: 10px !important;
   padding-bottom: 10px !important;
   box-shadow: 0 6px 18px rgba(8, 17, 31, 0.18);
 }
 
-.app-scroll-container.is-scrolled .contracts-scroll-header > div:not(:first-child) {
+.app-scroll-container .contracts-scroll-header.is-compact > div:not(:first-child) {
   max-height: 0 !important;
   margin-top: 0 !important;
   opacity: 0;
