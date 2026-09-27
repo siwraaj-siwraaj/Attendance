@@ -350,7 +350,7 @@ export default function PaymentsPage({
 
   return (
     <div className="flex min-h-full min-w-0 flex-col bg-[#f5f7fa] text-[#182230]">
-      <header className="app-scroll-header shrink-0 rounded-b-[28px] bg-[#172536] px-4 pb-5 pt-5 text-white sm:px-6">
+      <header className="shrink-0 rounded-b-[28px] bg-[#172536] px-4 pb-5 pt-5 text-white sm:px-6">
         <div className="mx-auto w-full max-w-5xl">
           <div className="flex items-start justify-between gap-3">
             <div>
