@@ -44,24 +44,24 @@ export default function ScrollHeaderTitle({ title, className = "" }: ScrollHeade
         ref={titleRef}
         className={`z-40 font-black tracking-tight text-white transition-[top,left,width,height,font-size,padding,background-color,box-shadow] duration-150 ease-out ${className}`}
         style={{
-          position: titleTop !== null && scrollTop >= titleTop ? "fixed" : "relative",
-          top: titleTop !== null && scrollTop >= titleTop ? 0 : "auto",
-          left: scrollTop > 24 ? 0 : 20,
-          width: scrollTop > 24 ? "100%" : "auto",
-          height: scrollTop > 24 ? 56 : "auto",
-          paddingLeft: scrollTop > 24 ? 20 : 0,
-          paddingRight: scrollTop > 24 ? 20 : 0,
+          position: compact ? "fixed" : "relative",
+          top: compact ? 0 : "auto",
+          left: compact ? 0 : 20,
+          width: compact ? "100%" : "auto",
+          height: compact ? 56 : "auto",
+          paddingLeft: compact ? 20 : 0,
+          paddingRight: compact ? 20 : 0,
           display: "flex",
           alignItems: "center",
-          background: scrollTop > 24 ? "#172536" : "transparent",
-          boxShadow: scrollTop > 24 ? "0 6px 18px rgba(8,17,31,0.18)" : "none",
+          background: compact ? "#172536" : "transparent",
+          boxShadow: compact ? "0 6px 18px rgba(8,17,31,0.18)" : "none",
           fontSize: `${Math.max(18, 30 - Math.min(scrollTop, 120) * 0.1)}px`,
           lineHeight: 1.2,
         }}
       >
         {title}
       </h1>
-      {titleTop !== null && <div className="h-9" aria-hidden="true" />}
+      {compact && <div className="h-9" aria-hidden="true" />}
     </>
   );
 }
