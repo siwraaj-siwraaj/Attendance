@@ -168,13 +168,13 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden font-['Figtree',sans-serif]" style={{ background: OFF_WHITE, color: NAVY }}>
-      <header className="shrink-0 px-5 pt-5 pb-4">
+      <header className="shrink-0 bg-[#172536] px-5 pb-5 pt-5 text-white shadow-sm">
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.16em]" style={{ color: "#667085" }}>
               {name?.trim() || username?.trim() || "Welcome back"}
             </p>
-            <h1 className="mt-1 text-[30px] font-extrabold tracking-[-0.04em]" style={{ color: NAVY }}>
+            <h1 className="mt-1 text-3xl font-black tracking-tight text-white">
               Contracts
             </h1>
             <p className="mt-1 text-sm" style={{ color: "#667085" }}>
