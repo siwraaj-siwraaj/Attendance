@@ -93,13 +93,13 @@ export default function MorePage() {
   );
 
   return (
-    <div className="min-h-full bg-[#F8FAFC] px-4 pb-28 pt-4 text-[#101828]">
-      <div className="mx-auto w-full max-w-2xl space-y-4">
-        <header className="relative overflow-hidden rounded-[28px] bg-[#101828] p-5 text-white shadow-xl">
+    <div className="min-h-full bg-[#F8FAFC] pb-28 text-[#101828]">
+      <div className="mx-auto w-full max-w-5xl space-y-4">
+        <header className="relative shrink-0 overflow-hidden bg-[#172536] px-5 pb-5 pt-5 text-white shadow-sm">
           <div className="absolute -right-10 -top-16 h-44 w-44 rounded-full bg-[#F97316]/20 blur-3xl"/>
-          <div className="relative flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#F97316] shadow-lg shadow-orange-900/20"><Settings size={22}/></div>
-            <div><p className="text-[10px] font-bold uppercase tracking-[0.2em] text-orange-100">Rossie</p><h1 className="text-2xl font-extrabold tracking-tight">More</h1><p className="mt-0.5 text-xs text-white/55">Account, management and app tools</p></div>
+          <div className="relative flex items-start justify-between gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-orange-500/15 text-orange-300"><Settings size={20}/></div>
+            <div><p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-orange-300">Rossie</p><h1 className="mt-1 text-3xl font-black tracking-tight">More</h1><p className="mt-1 max-w-xl text-xs leading-5 text-white/55">Account, management and app tools</p></div>
           </div>
         </header>
 
