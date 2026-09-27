@@ -11,38 +11,32 @@ export default function ScrollHeaderTitle({ title, className = "" }: ScrollHeade
   const titleRef = useRef<HTMLHeadingElement>(null);
 
   useEffect(() => {
-    const titleElement = titleRef.current;
-    if (!titleElement) return;
-
-    let node: HTMLElement | null = titleElement.parentElement;
-    let scrollContainer: HTMLElement | null = null;
-    while (node) {
-      const style = window.getComputedStyle(node);
-      if (style.overflowY === "auto" || style.overflowY === "scroll") {
-        scrollContainer = node;
-        break;
-      }
-      node = node.parentElement;
-    }
-    scrollContainer ??= document.querySelector<HTMLElement>(".app-scroll-container");
+    const scrollContainer = document.querySelector(".app-scroll-container");
     if (!scrollContainer) return;
 
-    const measure = () => {
-      const rect = titleElement.getBoundingClientRect();
-      setTitleTop(rect.top + scrollContainer!.scrollTop);
-      setScrollTop(scrollContainer!.scrollTop);
-    };
-    const onScroll = () => setScrollTop(scrollContainer!.scrollTop);
+    let frame = 0;
+    const onScroll = () => setScrollTop((scrollContainer as HTMLElement).scrollTop);
 
-    const frame = requestAnimationFrame(measure);
+    const measureInitialPosition = () => {
+      const title = titleRef.current;
+      if (!title) {
+        frame = requestAnimationFrame(measureInitialPosition);
+        return;
+      }
+
+      const rect = title.getBoundingClientRect();
+      setTitleTop(rect.top + (scrollContainer as HTMLElement).scrollTop);
+      setScrollTop((scrollContainer as HTMLElement).scrollTop);
+    };
+
+    frame = requestAnimationFrame(measureInitialPosition);
     scrollContainer.addEventListener("scroll", onScroll, { passive: true });
+
     return () => {
       cancelAnimationFrame(frame);
-      scrollContainer?.removeEventListener("scroll", onScroll);
+      scrollContainer.removeEventListener("scroll", onScroll);
     };
   }, []);
-
-  const compact = scrollTop > 24;
 
   return (
     <>
@@ -50,24 +44,24 @@ export default function ScrollHeaderTitle({ title, className = "" }: ScrollHeade
         ref={titleRef}
         className={`z-40 font-black tracking-tight text-white transition-[top,left,width,height,font-size,padding,background-color,box-shadow] duration-150 ease-out ${className}`}
         style={{
-          position: compact ? "fixed" : "relative",
-          top: compact ? 0 : "auto",
-          left: compact ? 0 : 20,
-          width: compact ? "100%" : "auto",
-          height: compact ? 56 : "auto",
-          paddingLeft: compact ? 20 : 0,
-          paddingRight: compact ? 20 : 0,
+          position: titleTop === null ? "relative" : "fixed",
+          top: `${Math.max(0, (titleTop ?? 0) - scrollTop)}px`,
+          left: scrollTop > 24 ? 0 : 20,
+          width: scrollTop > 24 ? "100%" : "auto",
+          height: scrollTop > 24 ? 56 : "auto",
+          paddingLeft: scrollTop > 24 ? 20 : 0,
+          paddingRight: scrollTop > 24 ? 20 : 0,
           display: "flex",
           alignItems: "center",
-          background: compact ? "#172536" : "transparent",
-          boxShadow: compact ? "0 6px 18px rgba(8,17,31,0.18)" : "none",
+          background: scrollTop > 24 ? "#172536" : "transparent",
+          boxShadow: scrollTop > 24 ? "0 6px 18px rgba(8,17,31,0.18)" : "none",
           fontSize: `${Math.max(18, 30 - Math.min(scrollTop, 120) * 0.1)}px`,
           lineHeight: 1.2,
         }}
       >
         {title}
       </h1>
-      {compact && <div className="h-9" aria-hidden="true" />}
+      {titleTop !== null && <div className="h-9" aria-hidden="true" />}
     </>
   );
 }
