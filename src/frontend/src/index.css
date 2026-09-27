@@ -343,9 +343,7 @@
 
 /* Contracts tab: compact the existing header only after the app scroll container moves. */
 .app-scroll-container .contracts-scroll-header {
-  position: sticky;
-  top: 0;
-  z-index: 30;
+  position: relative;
   overflow: hidden;
   transition: max-height 240ms ease, padding 240ms ease, box-shadow 240ms ease;
 }
