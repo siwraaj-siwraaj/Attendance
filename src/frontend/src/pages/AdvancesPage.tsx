@@ -258,27 +258,30 @@ function AdvancesPage() {
             </button>
           )}
         </div>
-      </header>
-
-      <main className="px-4 pb-28 pt-4 sm:px-6">
-        <div className="mx-auto w-full max-w-5xl">
-          <section className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            <div className="rounded-2xl bg-[#172536] p-4 text-white shadow-sm">
-              <div className="flex items-center justify-between gap-2"><p className="text-[10px] font-extrabold uppercase tracking-wider text-white/55">Outstanding</p><Wallet className="h-4 w-4 text-orange-300" /></div>
-              <p className="mt-2 break-words text-xl font-black sm:text-2xl">{money(outstanding)}</p>
-              <p className="mt-1 text-[11px] text-white/55">{peopleCount} people with active advances</p>
+        <div className="mx-auto mt-3 w-full max-w-5xl">
+          <section className="grid grid-cols-3 gap-2">
+            <div className="min-w-0 rounded-xl bg-white/10 p-2 text-white">
+              <div className="flex items-center justify-between gap-2"><p className="truncate text-[8px] font-extrabold uppercase tracking-wide text-white/60">Outstanding</p><Wallet className="h-4 w-4 text-orange-300" /></div>
+              <p className="mt-1 truncate text-base font-black">{money(outstanding)}</p>
+              <p className="mt-0.5 truncate text-[9px] text-white/55">{peopleCount} people with active advances</p>
             </div>
-            <div className="rounded-2xl border bg-white p-4 shadow-sm" style={{ borderColor: BORDER }}>
-              <p className="text-[10px] font-extrabold uppercase tracking-wider" style={{ color: MUTED }}>Active advances</p>
-              <p className="mt-2 text-2xl font-black" style={{ color: NAVY }}>{active.length}</p>
-              <p className="mt-1 text-[11px]" style={{ color: MUTED }}>In current view</p>
+            <div className="min-w-0 rounded-xl border border-white/10 bg-white/10 p-2" style={{ borderColor: BORDER }}>
+              <p className="truncate text-[8px] font-extrabold uppercase tracking-wide" style={{ color: MUTED }}>Active advances</p>
+              <p className="mt-1 text-base font-black" style={{ color: NAVY }}>{active.length}</p>
+              <p className="mt-0.5 truncate text-[9px]" style={{ color: MUTED }}>In current view</p>
             </div>
-            <div className="col-span-2 rounded-2xl border bg-white p-4 shadow-sm sm:col-span-1" style={{ borderColor: BORDER }}>
+            <div className="min-w-0 rounded-xl border border-white/10 bg-white/10 p-2" style={{ borderColor: BORDER }}>
               <p className="text-[10px] font-extrabold uppercase tracking-wider" style={{ color: MUTED }}>Cleared advances</p>
               <p className="mt-2 text-2xl font-black" style={{ color: NAVY }}>{cleared.length}</p>
               <p className="mt-1 text-[11px]" style={{ color: MUTED }}>From settled contracts</p>
             </div>
           </section>
+        </div>
+      </header>
+
+      <main className="px-4 pb-28 pt-4 sm:px-6">
+        <div className="mx-auto w-full max-w-5xl">
+
 
           <section className="mt-4 rounded-2xl border bg-white p-3 shadow-sm" style={{ borderColor: BORDER }}>
             <div className="relative">
