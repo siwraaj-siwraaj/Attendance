@@ -108,35 +108,49 @@ function LaboursPage() {
             {isAdmin && <button type="button" onClick={openAdd} className="text-xs font-bold text-[#F97316]">+ New labour</button>}
           </div>
 
-          <div className="mt-3 overflow-hidden rounded-2xl border border-[#101828]/10 bg-white shadow-sm">
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
             {filtered.length === 0 ? (
-              <div className="px-6 py-12 text-center">
-                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#101828]/5"><Users className="h-6 w-6 text-[#101828]/35" /></div>
+              <div className="sm:col-span-2 rounded-2xl border border-dashed border-[#101828]/10 bg-white px-6 py-12 text-center">
+                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-slate-100"><Users className="h-6 w-6 text-slate-400" /></div>
                 <p className="mt-4 text-sm font-bold">No labours found</p>
-                <p className="mt-1 text-xs text-[#101828]/50">Try another search or status filter.</p>
+                <p className="mt-1 text-xs text-slate-500">Try another search or status filter.</p>
               </div>
             ) : filtered.map((l: any, index: number) => {
               const isActive = l.isActive !== false;
               const initial = String(l.name ?? "?").trim().charAt(0).toUpperCase() || "?";
               return (
-                <button key={String(l.id)} type="button" onClick={() => isAdmin && openEdit(l)} className={`flex w-full items-center gap-3 px-4 py-3.5 text-left transition active:bg-[#F8FAFC] ${index > 0 ? "border-t border-[#101828]/10" : ""}`} data-ocid={`labour.item.${index + 1}`}>
-                  <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-base font-extrabold ${isActive ? "bg-orange-50 text-[#F97316]" : "bg-[#101828]/5 text-[#101828]/45"}`}>{initial}</div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <p className="truncate text-sm font-extrabold text-[#101828]">{l.name}</p>
-                      <span className={`shrink-0 rounded-full px-2 py-0.5 text-[9px] font-extrabold ${isActive ? "bg-emerald-50 text-emerald-700" : "bg-[#101828]/5 text-[#101828]/50"}`}>{isActive ? "ACTIVE" : "INACTIVE"}</span>
+                <button
+                  key={String(l.id)}
+                  type="button"
+                  onClick={() => isAdmin && openEdit(l)}
+                  className="group relative w-full overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm transition active:scale-[0.99] hover:border-slate-300 hover:shadow-md"
+                  data-ocid={`labour.item.${index + 1}`}
+                >
+                  <span className={`absolute inset-x-0 top-0 h-1 ${isActive ? "bg-emerald-500" : "bg-slate-300"}`} />
+                  <div className="flex items-start gap-3">
+                    <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-base font-extrabold ${isActive ? "bg-orange-50 text-orange-600" : "bg-slate-100 text-slate-500"}`}>{initial}</div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="truncate text-[15px] font-extrabold text-slate-900">{l.name}</p>
+                        <span className={`shrink-0 rounded-full px-2 py-1 text-[9px] font-extrabold tracking-wide ${isActive ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>{isActive ? "ACTIVE" : "INACTIVE"}</span>
+                      </div>
+                      <div className="mt-3 grid grid-cols-2 gap-2">
+                        <div className="rounded-xl bg-slate-50 px-3 py-2">
+                          <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400">Employee ID</p>
+                          <p className="mt-0.5 truncate text-xs font-bold text-slate-700">{l.employeeId || "Not set"}</p>
+                        </div>
+                        <div className="rounded-xl bg-slate-50 px-3 py-2">
+                          <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400">Mobile</p>
+                          <p className="mt-0.5 truncate text-xs font-bold text-slate-700">{l.phoneNumber || "Not set"}</p>
+                        </div>
+                      </div>
                     </div>
-                    <div className="mt-1 flex items-center gap-3 text-[10px] text-[#101828]/55">
-                      <span>{l.employeeId ? `ID ${l.employeeId}` : "No ID"}</span>
-                      <span>{l.phoneNumber || "No mobile"}</span>
-                    </div>
+                    {isAdmin && <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-slate-300 transition group-hover:text-slate-500" />}
                   </div>
-                  {isAdmin && <ChevronRight className="h-4 w-4 shrink-0 text-[#101828]/25" />}
                 </button>
               );
             })}
-          </div>
-        </main>
+          </div>       </main>
 
         {isAdmin && <button type="button" onClick={openAdd} className="fixed bottom-24 right-5 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-[#F97316] text-white shadow-xl shadow-orange-200 active:scale-95" aria-label="Add Labour" data-ocid="labours.add_button"><UserPlus className="h-6 w-6" /></button>}
 
