@@ -201,7 +201,7 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
   }
 
   return (
-    <div className="flex flex-col font-['Figtree',sans-serif]" style={{ background: OFF_WHITE, color: NAVY }}>
+    <div className="flex flex-col pb-28 font-['Figtree',sans-serif]" style={{ background: OFF_WHITE, color: NAVY }}>
       <header className="app-tab-header shrink-0 rounded-b-[28px] bg-[#172536] px-5 pb-5 pt-5 text-white shadow-sm">
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -280,7 +280,7 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
       </header>
 
 
-      <main className="px-5 pb-28">
+      <main className="px-5">
         {filteredContracts.length === 0 ? (
           <div className="rounded-3xl border bg-white px-6 py-12 text-center" style={{ borderColor: "#E4E7EC" }}>
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl" style={{ background: "#FFF3EB", color: ORANGE }}>
