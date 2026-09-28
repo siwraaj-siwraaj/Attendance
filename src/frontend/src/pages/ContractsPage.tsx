@@ -236,19 +236,21 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
             )}
           </div>
 
-          <div className="relative mt-1.5 rounded-2xl border border-white/10 bg-white/[0.06] p-1.5 shadow-inner">
-            <div className="flex items-center justify-between gap-3">
-              <button type="button" onClick={() => setShowSearch((open) => !open)} className="flex min-w-0 flex-1 items-center gap-3 text-left" data-ocid="contracts.search_toggle">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-orange-500/15 text-orange-300"><Search size={18} /></span>
-                <span className="min-w-0">
-                  <span className="block text-[9px] font-bold uppercase tracking-widest text-white/35">Contract view</span>
-                  <span className="mt-0.5 block truncate text-sm font-bold">{contractFilter === "active" ? "Ongoing contracts" : "Completed contracts"}</span>
-                </span>
-                <ChevronDown className={`ml-auto shrink-0 text-white/40 transition ${showSearch ? "rotate-180" : ""}`} size={18} />
-              </button>
-              <span className="shrink-0 rounded-xl bg-white/10 px-3 py-2.5 text-[11px] font-extrabold text-white/75">{filteredContracts.length} shown</span>
-            </div>
+          <div className="mt-2 grid grid-cols-2 gap-2">
+            <button type="button" onClick={() => setContractFilter("active")} className={`min-w-0 rounded-2xl border p-3 text-left transition ${contractFilter === "active" ? "border-orange-400/40 bg-white/[0.11]" : "border-white/10 bg-white/[0.05]"}`} data-ocid="contracts.ongoing_card">
+              <span className="block text-[9px] font-extrabold uppercase tracking-[0.16em] text-white/40">Ongoing</span>
+              <span className="mt-0.5 block text-2xl font-black leading-none text-white">{activeCount}</span>
+              <span className="mt-1 block text-[10px] font-semibold text-white/45">Active contracts</span>
+            </button>
+            <button type="button" onClick={() => setContractFilter("completed")} className={`min-w-0 rounded-2xl border p-3 text-left transition ${contractFilter === "completed" ? "border-emerald-400/30 bg-white/[0.11]" : "border-white/10 bg-white/[0.05]"}`} data-ocid="contracts.completed_card">
+              <span className="block text-[9px] font-extrabold uppercase tracking-[0.16em] text-white/40">Completed</span>
+              <span className="mt-0.5 block text-2xl font-black leading-none text-white">{completedCount}</span>
+              <span className="mt-1 block text-[10px] font-semibold text-white/45">Settled contracts</span>
+            </button>
           </div>
+          <button type="button" onClick={() => setShowSearch((open) => !open)} className="mt-2 flex h-9 w-full items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.05] text-[10px] font-extrabold text-white/60" data-ocid="contracts.search_toggle">
+            <Search size={14} /> Search contracts <ChevronDown className={`text-white/40 transition ${showSearch ? "rotate-180" : ""}`} size={15} />
+          </button>
         </div>
       </header>
 
