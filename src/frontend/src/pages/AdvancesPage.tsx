@@ -295,12 +295,9 @@ function AdvancesPage() {
             </button>
           )}
         </div>
-        <div className="mx-auto mt-4 flex w-full max-w-5xl items-center justify-between border-t border-white/10 pt-3">
-          <div>
-            <p className="text-[9px] font-extrabold uppercase tracking-[0.18em] text-white/45">Outstanding</p>
-            <p className="mt-0.5 text-xl font-black text-white">{money(outstanding)}</p>
-          </div>
-          <p className="text-right text-[10px] font-semibold text-white/45">{peopleCount} {peopleCount === 1 ? "person" : "people"} with outstanding advances</p>
+        <div className="mx-auto mt-4 flex w-full max-w-5xl items-center border-t border-white/10 pt-3">
+          <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-white/45">Outstanding</p>
+          <p className="ml-3 text-xl font-black text-white">{money(outstanding)}</p>
         </div>
       </header>
 
