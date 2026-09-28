@@ -238,7 +238,7 @@ function AdvancesPage() {
   if (isLoading) {
     return (
       <div className="min-h-full bg-[#F8FAFC] pb-28 font-['Figtree',sans-serif] text-[#101828]">
-        <header className="app-tab-header h-[200px] shrink-0 rounded-b-[28px] border-b border-white/10 bg-[#172536] px-4 py-3 text-white shadow-sm sm:px-6">
+        <header className="app-tab-header flex h-[220px] shrink-0 flex-col justify-between rounded-b-[28px] border-b border-white/10 bg-[#172536] px-4 py-4 text-white shadow-sm sm:px-6">
           <div className="mx-auto w-full max-w-5xl">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
