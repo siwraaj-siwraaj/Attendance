@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ChevronDown, ChevronRight, CircleDollarSign, Pencil, Plus, Search,
   Trash2, UserRound, Wallet, X,
