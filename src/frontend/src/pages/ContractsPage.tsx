@@ -17,6 +17,7 @@ import {
 import { useAuth } from "../hooks/useAuth";
 import { useAddContract, useContracts, useUpdateContract } from "../hooks/useBackend";
 import { SkeletonCardList } from "../components/SkeletonLoader";
+import ScrollHeaderTitle from "../components/ScrollHeaderTitle";
 
 interface ContractFormData {
   name: string;
