@@ -256,7 +256,7 @@ function AdvancesPage() {
   if (isLoading) {
     return (
       <div className="min-h-full bg-[#F8FAFC] pb-28 font-['Figtree',sans-serif] text-[#101828]">
-        <header className="app-tab-header flex h-[220px] shrink-0 flex-col justify-between rounded-b-[28px] border-b border-white/10 bg-[#172536] px-4 py-4 text-white shadow-sm sm:px-6">
+        <header className="app-tab-header flex h-[200px] shrink-0 flex-col justify-between rounded-b-[28px] border-b border-white/10 bg-[#172536] px-4 py-4 text-white shadow-sm sm:px-6">
           <div className="mx-auto w-full max-w-5xl">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
@@ -329,7 +329,7 @@ function AdvancesPage() {
         </div>
       </header>
 
-      <main className="px-4 pb-20 pt-4 sm:px-6">
+      <main className="px-4 pb-32 pt-4 sm:px-6">
         <div className="mx-auto w-full max-w-5xl">
           <section className="rounded-2xl border bg-white p-3 shadow-sm" style={{ borderColor: BORDER }}>
             <div className="relative">
