@@ -236,7 +236,7 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
 
   return (
     <div
-      className="flex flex-col font-['Figtree',sans-serif]"
+      className="flex flex-col bg-[#F8FAFC] pb-32 font-['Figtree',sans-serif] text-[#182230]"
       style={{
         background: OFF_WHITE,
         color: NAVY,
