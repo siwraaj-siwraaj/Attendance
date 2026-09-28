@@ -317,7 +317,7 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
         </div>
       )}
 
-      <main className="px-5 pb-28">
+      <main className="px-5 pb-32">
         {filteredContracts.length === 0 ? (
           <div className="rounded-3xl border bg-white px-6 py-12 text-center" style={{ borderColor: "#E4E7EC" }}>
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl" style={{ background: "#FFF3EB", color: ORANGE }}>
