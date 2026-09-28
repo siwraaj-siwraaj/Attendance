@@ -275,11 +275,16 @@ export default function Layout({ children }: LayoutProps) {
         ref={mainRef}
         className={`flex-1 min-h-0 min-w-0 overflow-y-auto overflow-x-hidden flex flex-col overscroll-contain app-scroll-container ${isScrolled ? "is-scrolled" : ""}`}
         onScroll={handleMainScroll}
-        style={{ touchAction: "auto", WebkitOverflowScrolling: "touch", paddingBottom: "calc(64px + env(safe-area-inset-bottom, 0px))" }}
+        style={{ touchAction: "auto", WebkitOverflowScrolling: "touch" }}
       >
         <div ref={swipeContentRef} className="min-h-full min-w-0 flex flex-col" style={{ width: "100%", touchAction: "pan-y" }}>
           {children}
         </div>
+        <div
+          aria-hidden="true"
+          className="h-28 w-full shrink-0"
+          style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+        />
       </main>
       {mode && activeTab !== "admin" && activeTab !== "attendance" && <BottomTabBar activeTab={activeTab} onTabChange={onTabChange} />}
       <input ref={csvInputRef} type="file" accept=".csv" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) handleImportCSV(file); e.target.value = ""; }} />
