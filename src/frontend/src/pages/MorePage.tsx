@@ -95,65 +95,81 @@ export default function MorePage() {
 
   return (
     <div className="min-h-full bg-[#F8FAFC] pb-32 text-[#101828]">
-      <div className="mx-auto w-full max-w-5xl space-y-4">
-        <header className="relative shrink-0 overflow-hidden rounded-b-[28px] bg-[#172536] px-5 pb-5 pt-5 text-white shadow-sm">
-          <div className="absolute -right-10 -top-16 h-44 w-44 rounded-full bg-[#F97316]/20 blur-3xl"/>
-          <div className="relative flex items-start justify-between gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-orange-500/15 text-orange-300"><Settings size={20}/></div>
-            <div><p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-orange-300">Rossie</p><ScrollHeaderTitle title="More" className="text-3xl" /><p className="mt-1 max-w-xl text-xs leading-5 text-white/55">Account, management and app tools</p></div>
+      <div className="mx-auto w-full max-w-5xl">
+        <header className="relative overflow-hidden rounded-b-[28px] bg-[#172536] px-4 py-5 text-white shadow-sm sm:px-6">
+          <div className="absolute -right-12 -top-16 h-48 w-48 rounded-full bg-orange-500/15 blur-3xl" />
+          <div className="relative flex items-start justify-between gap-4">
+            <div className="min-w-0">
+              <p className="mb-1 flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-[0.2em] text-orange-300"><Settings className="h-3.5 w-3.5" /> Rossie</p>
+              <ScrollHeaderTitle title="More" className="text-2xl" />
+              <p className="mt-0.5 text-[11px] leading-4 text-white/55">Account, management and app tools.</p>
+            </div>
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.06] text-orange-300"><UserCircle className="h-5 w-5" /></div>
           </div>
         </header>
 
-        <section className="relative overflow-hidden rounded-[26px] border border-[#101828]/10 bg-white p-4 shadow-sm">
-          <div className="absolute right-0 top-0 h-24 w-24 rounded-full bg-[#F97316]/10"/>
-          <div className="relative flex items-center gap-3">
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[#101828] text-white shadow-md"><UserCircle size={29}/></div>
-            <div className="min-w-0 flex-1"><p className="truncate text-lg font-extrabold">{profileName}</p><p className="mt-0.5 text-xs font-semibold text-[#F97316]">{role ? roleLabel(role) : "Account"}</p><p className="mt-1 truncate text-[11px] text-[#101828]/65">{username || "Mobile number not available"}</p></div>
-            <span className="hidden rounded-full bg-[#F97316]/10 px-3 py-1 text-[10px] font-bold text-[#F97316] sm:block">SIGNED IN</span>
-          </div>
-        </section>
+        <main className="space-y-4 px-4 pb-32 pt-4 sm:px-6">
+          <section className="rounded-3xl border bg-white p-4 shadow-sm" style={{ borderColor: "#E4E7EC" }}>
+            <div className="flex items-center gap-3">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#101828] text-white"><UserCircle className="h-6 w-6" /></div>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-base font-extrabold text-[#101828]">{profileName}</p>
+                <p className="mt-0.5 text-xs font-bold text-orange-500">{role ? roleLabel(role) : "Account"}</p>
+                <p className="mt-1 truncate text-[11px] text-[#667085]">{username || "Mobile number not available"}</p>
+              </div>
+              <span className="hidden rounded-full bg-orange-50 px-3 py-1 text-[9px] font-extrabold text-orange-600 sm:block">SIGNED IN</span>
+            </div>
+          </section>
 
-        <section className="rounded-[26px] border border-[#101828]/10 bg-white p-3 shadow-sm">
-          <div className="flex items-center gap-3 px-2 pb-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#F97316]/10 text-[#F97316]"><KeyRound size={17}/></div>
-            <div><p className="text-sm font-extrabold text-[#101828]">Security</p><p className="text-[11px] text-[#101828]/65">Keep your account protected</p></div>
-          </div>
-          {menuItem(<KeyRound size={18}/>,"Change password","Update your Rossie login password",()=>{setPasswordMessage(null);setChangePasswordOpen(v=>!v);})}
-          {changePasswordOpen && <div className="mt-2 rounded-2xl border border-[#F97316]/20 bg-[#F97316]/5 p-3 space-y-2">
-            <input type="password" value={newPassword} onChange={e=>setNewPassword(e.target.value)} placeholder="New password" className="w-full rounded-xl border border-[#101828]/10 bg-[#F8FAFC] px-3 py-3 text-sm text-[#101828] outline-none focus:border-[#F97316]/60" autoComplete="new-password"/>
-            <input type="password" value={confirmNewPassword} onChange={e=>setConfirmNewPassword(e.target.value)} placeholder="Confirm password" className="w-full rounded-xl border border-[#101828]/10 bg-[#F8FAFC] px-3 py-3 text-sm text-[#101828] outline-none focus:border-[#F97316]/60" autoComplete="new-password"/>
-            {passwordMessage&&<p className="text-[11px] font-medium text-red-500">{passwordMessage}</p>}
-            <button type="button" onClick={handleChangePassword} disabled={changePasswordMutation.isPending} className="w-full rounded-xl bg-[#F97316] py-3 text-xs font-bold text-white shadow-md shadow-orange-200 disabled:opacity-50">{changePasswordMutation.isPending?"Changing…":"Save password"}</button>
-          </div>}
-        </section>
+          <section className="rounded-3xl border bg-white p-3 shadow-sm" style={{ borderColor: "#E4E7EC" }}>
+            <div className="flex items-center gap-3 px-2 pb-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-orange-50 text-orange-500"><KeyRound className="h-4 w-4" /></div>
+              <div><h2 className="text-sm font-extrabold">Security</h2><p className="text-[11px] text-[#667085]">Protect your Rossie account</p></div>
+            </div>
+            {menuItem(<KeyRound className="h-4 w-4" />,"Change password","Update your login password",()=>{setPasswordMessage(null);setChangePasswordOpen(v=>!v);})}
+            {changePasswordOpen && (
+              <div className="mt-2 space-y-2 rounded-2xl border border-orange-100 bg-orange-50/50 p-3">
+                <input type="password" value={newPassword} onChange={e=>setNewPassword(e.target.value)} placeholder="New password" className="w-full rounded-xl border border-[#D0D5DD] bg-white px-3 py-3 text-sm outline-none focus:border-orange-400" autoComplete="new-password" />
+                <input type="password" value={confirmNewPassword} onChange={e=>setConfirmNewPassword(e.target.value)} placeholder="Confirm password" className="w-full rounded-xl border border-[#D0D5DD] bg-white px-3 py-3 text-sm outline-none focus:border-orange-400" autoComplete="new-password" />
+                {passwordMessage && <p className="text-[11px] font-semibold text-red-500">{passwordMessage}</p>}
+                <button type="button" onClick={handleChangePassword} disabled={changePasswordMutation.isPending} className="w-full rounded-xl bg-orange-500 py-3 text-xs font-extrabold text-white disabled:opacity-50">{changePasswordMutation.isPending ? "Changing…" : "Save password"}</button>
+              </div>
+            )}
+          </section>
 
-        {mode !== "view" && <section className="rounded-[26px] border border-[#101828]/10 bg-white p-3 shadow-sm">
-          <div className="flex items-center gap-3 px-2 pb-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#F97316]/10 text-[#F97316]"><ShieldCheck size={17}/></div>
-            <div><p className="text-sm font-extrabold">Management</p><p className="text-[11px] text-[#101828]/65">Administration and data tools</p></div>
-          </div>
-          <div className="space-y-2">
-            {menuItem(<ShieldCheck size={18}/>,activeTab==="admin"?"Close Admin Panel":"Admin Panel","Manage accounts and permissions",()=>setActiveTab(activeTab==="admin"?"contracts":"admin"))}
-            {menuItem(<FileText size={18}/>,"Export CSV","Download a portable backup",handleExportCSV)}
-            {menuItem(<FileText size={18}/>,"Export Excel","Download a spreadsheet backup",handleExportExcel)}
-            {menuItem(<Upload size={18}/>,"Import CSV","Restore compatible Rossie data",()=>csvInputRef.current?.click())}
-          </div>
-        </section>}
+          {mode !== "view" && (
+            <>
+              <section className="rounded-3xl border bg-white p-3 shadow-sm" style={{ borderColor: "#E4E7EC" }}>
+                <div className="flex items-center gap-3 px-2 pb-3">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-orange-50 text-orange-500"><ShieldCheck className="h-4 w-4" /></div>
+                  <div><h2 className="text-sm font-extrabold">Management</h2><p className="text-[11px] text-[#667085]">Administration and data tools</p></div>
+                </div>
+                <div className="space-y-2">
+                  {menuItem(<ShieldCheck className="h-4 w-4" />,activeTab==="admin"?"Close Admin Panel":"Admin Panel","Manage accounts and permissions",()=>setActiveTab(activeTab==="admin"?"contracts":"admin"))}
+                  {menuItem(<FileText className="h-4 w-4" />,"Export CSV","Download a portable backup",handleExportCSV)}
+                  {menuItem(<FileText className="h-4 w-4" />,"Export Excel","Download a spreadsheet backup",handleExportExcel)}
+                  {menuItem(<Upload className="h-4 w-4" />,"Import CSV","Restore compatible Rossie data",()=>csvInputRef.current?.click())}
+                </div>
+              </section>
 
-        {mode !== "view" && <section className="rounded-[26px] border border-[#101828]/10 bg-white p-3 shadow-sm">
-          <div className="flex items-center gap-3 px-2 pb-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#F97316]/10 text-[#F97316]"><Settings size={17}/></div>
-            <div><p className="text-sm font-extrabold">App settings</p><p className="text-[11px] text-[#101828]/65">Application preferences</p></div>
-          </div>
-          <div className="overflow-hidden rounded-2xl border border-[#101828]/10 bg-[#F8FAFC]"><SettingsPanel /></div>
-        </section>}
+              <section className="rounded-3xl border bg-white p-3 shadow-sm" style={{ borderColor: "#E4E7EC" }}>
+                <div className="flex items-center gap-3 px-2 pb-3">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-orange-50 text-orange-500"><Settings className="h-4 w-4" /></div>
+                  <div><h2 className="text-sm font-extrabold">App settings</h2><p className="text-[11px] text-[#667085]">Application preferences</p></div>
+                </div>
+                <div className="overflow-hidden rounded-2xl border bg-[#F8FAFC]" style={{ borderColor: "#E4E7EC" }}><SettingsPanel /></div>
+              </section>
+            </>
+          )}
 
-        <section className="rounded-[26px] border border-red-100 bg-white p-3 shadow-sm">
-          <div className="px-2 pb-3"><p className="text-sm font-extrabold text-[#101828]">Session</p><p className="text-[11px] text-[#101828]/65">Finish using Rossie on this device</p></div>
-          {menuItem(<LogOut size={18}/>,"Logout","Sign out of this Rossie account",logout,true)}
-        </section>
+          <section className="rounded-3xl border border-red-100 bg-white p-3 shadow-sm">
+            <div className="px-2 pb-3"><h2 className="text-sm font-extrabold">Session</h2><p className="text-[11px] text-[#667085]">Finish using Rossie on this device</p></div>
+            {menuItem(<LogOut className="h-4 w-4" />,"Logout","Sign out of this Rossie account",logout,true)}
+          </section>
+        </main>
       </div>
       <input ref={csvInputRef} type="file" accept=".csv" className="hidden" onChange={e=>{const file=e.target.files?.[0];if(file)handleImportCSV(file);e.target.value="";}} />
     </div>
   );
+
 }
