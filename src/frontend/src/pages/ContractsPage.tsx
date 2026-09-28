@@ -277,30 +277,6 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
           </button>
         </div>
 
-
-          <div className="relative flex-1">
-            <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2" style={{ color: "#98A2B3" }} />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search contracts"
-              className="h-12 w-full rounded-2xl border bg-white pl-11 pr-4 text-sm font-medium outline-none transition focus:ring-2"
-              style={{ borderColor: "#E4E7EC", color: NAVY, boxShadow: "0 1px 2px rgba(16,24,40,0.04)" }}
-              data-ocid="contracts.search_input"
-            />
-          </div>
-          <button
-            type="button"
-            onClick={() => setViewMode(viewMode === "card" ? "list" : "card")}
-            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border bg-white"
-            style={{ borderColor: "#E4E7EC", color: NAVY }}
-            aria-label={viewMode === "card" ? "Switch to list view" : "Switch to card view"}
-            data-ocid="contracts.view_toggle"
-          >
-            {viewMode === "card" ? <List className="h-5 w-5" /> : <Grid2X2 className="h-5 w-5" />}
-          </button>
-        </div>
       </header>
 
 
