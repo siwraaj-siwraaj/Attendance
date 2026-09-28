@@ -330,17 +330,13 @@ function AdvancesPage() {
             )}
           </div>
 
-          <div className="relative mt-1.5 rounded-2xl border border-white/10 bg-white/[0.06] p-1.5 shadow-inner">
-            <div className="flex items-center gap-3">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-orange-500/15 text-orange-300"><Wallet size={18} /></span>
-              <span className="min-w-0 flex-1">
-                <span className="block text-[9px] font-bold uppercase tracking-widest text-white/35">Outstanding</span>
-                <span className="mt-0.5 block truncate text-sm font-bold">{money(outstanding)}</span>
-              </span>
-              <span className="text-right">
-                <span className="block text-[9px] font-bold uppercase tracking-widest text-white/35">Records</span>
-                <span className="mt-0.5 block text-sm font-black">{outstandingRows.length}</span>
-              </span>
+          <div className="mt-2 rounded-2xl border border-white/10 bg-white/[0.06] px-4 py-3 shadow-inner">
+            <div className="flex items-end justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-[9px] font-extrabold uppercase tracking-[0.18em] text-white/40">Outstanding amount</p>
+                <p className="mt-1 truncate text-3xl font-black leading-none tracking-tight text-white">{money(outstanding)}</p>
+              </div>
+              <Wallet className="mb-1 h-5 w-5 shrink-0 text-orange-300" />
             </div>
           </div>
         </div>
