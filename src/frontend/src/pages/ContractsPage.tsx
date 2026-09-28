@@ -234,59 +234,50 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
               Manage your work agreements and attendance.
             </p>
           </div>
-          {isAdmin && (
-            <button
-              type="button"
-              onClick={openNew}
-              className="flex h-11 shrink-0 items-center gap-2 rounded-2xl px-4 text-sm font-bold text-white shadow-[0_8px_20px_rgba(249,115,22,0.25)] transition-transform active:scale-95"
-              style={{ background: ORANGE }}
-              data-ocid="contract.add_button"
-            >
-              <Plus className="h-4 w-4" strokeWidth={2.5} />
-              <span className="hidden sm:inline">New contract</span>
-              <span className="sm:hidden">New</span>
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={() => document.querySelector<HTMLInputElement>('input[data-ocid="contracts.search_input"]')?.focus()}
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border text-white transition-transform active:scale-95"
+            style={{ background: "#25364A", borderColor: "#34495E" }}
+            aria-label="Search contracts"
+            data-ocid="contracts.search_button"
+          >
+            <Search className="h-5 w-5" />
+          </button>
         </div>
 
-        <div className="mt-5 grid grid-cols-2 gap-3">
+        <div className="mt-4 grid grid-cols-2 gap-2">
           <button
             type="button"
             onClick={() => setContractFilter("active")}
-            className="rounded-2xl border px-3.5 py-3 text-left transition-all"
+            className="flex h-11 items-center justify-between rounded-xl border px-3 text-left transition-all"
             style={{
-              background: contractFilter === "active" ? "#FFF4EC" : "#FFFFFF",
-              color: NAVY,
-              borderColor: contractFilter === "active" ? "#FDBA74" : "#E4E7EC",
-              boxShadow: contractFilter === "active" ? "0 4px 14px rgba(249,115,22,0.10)" : "none",
+              background: "#25364A",
+              color: "#FFFFFF",
+              borderColor: contractFilter === "active" ? "#F97316" : "#34495E",
+              boxShadow: contractFilter === "active" ? "0 0 0 1px #F97316 inset" : "none",
             }}
           >
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold uppercase tracking-wider opacity-70">Active</span>
-              <span className="h-2.5 w-2.5 rounded-full" style={{ background: "#F97316", boxShadow: "0 0 0 4px #FED7AA" }} />
-            </div>
-            <div className="mt-0.5 text-xl font-extrabold">{activeCount}</div>
+            <span className="text-xs font-bold uppercase tracking-wider">Active <span className="ml-1 text-sm font-extrabold">{activeCount}</span></span>
+            <span className="h-2.5 w-2.5 rounded-full" style={{ background: "#F97316" }} />
           </button>
           <button
             type="button"
             onClick={() => setContractFilter("completed")}
-            className="rounded-2xl border p-4 text-left transition-all"
+            className="flex h-11 items-center justify-between rounded-xl border px-3 text-left transition-all"
             style={{
-              background: contractFilter === "completed" ? "#ECFDF3" : "#FFFFFF",
-              color: NAVY,
-              borderColor: contractFilter === "completed" ? "#86EFAC" : "#E4E7EC",
-              boxShadow: contractFilter === "completed" ? "0 4px 14px rgba(16,185,129,0.10)" : "none",
+              background: "#25364A",
+              color: "#FFFFFF",
+              borderColor: contractFilter === "completed" ? "#22C55E" : "#34495E",
+              boxShadow: contractFilter === "completed" ? "0 0 0 1px #22C55E inset" : "none",
             }}
           >
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold uppercase tracking-wider opacity-70">Completed</span>
-              <CheckCircle2 className="h-4 w-4" style={{ color: "#16A34A" }} />
-            </div>
-            <div className="mt-0.5 text-xl font-extrabold">{completedCount}</div>
+            <span className="text-xs font-bold uppercase tracking-wider">Completed <span className="ml-1 text-sm font-extrabold">{completedCount}</span></span>
+            <CheckCircle2 className="h-4 w-4" style={{ color: "#4ADE80" }} />
           </button>
         </div>
 
-        <div className="mt-3 flex gap-2">
+
           <div className="relative flex-1">
             <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2" style={{ color: "#98A2B3" }} />
             <input
