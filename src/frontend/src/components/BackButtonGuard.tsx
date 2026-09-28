@@ -8,6 +8,12 @@ interface BackButtonGuardProps {
 }
 
 function closeOpenSurface(): boolean {
+  const contractSearchClose = document.querySelector<HTMLElement>('[data-ocid="contracts.search_back_close"]');
+  if (contractSearchClose) {
+    contractSearchClose.click();
+    return true;
+  }
+
   const sidebarClose = document.querySelector<HTMLElement>(
     '[data-ocid="sidebar.close_button"], [aria-label="Close sidebar"]',
   );
