@@ -352,7 +352,7 @@ export default function PaymentsPage({
 
   return (
     <div className="flex flex-col bg-[#F8FAFC] pb-32 text-[#182230]">
-      <header className="app-tab-header flex h-[220px] shrink-0 flex-col justify-between rounded-b-[28px] bg-[#172536] px-4 py-4 text-white sm:px-6">
+      <header className="app-tab-header flex h-[200px] shrink-0 flex-col justify-between rounded-b-[28px] bg-[#172536] px-4 py-4 text-white sm:px-6">
         <div className="mx-auto w-full max-w-5xl">
           <div className="flex items-start justify-between gap-3">
             <div>
