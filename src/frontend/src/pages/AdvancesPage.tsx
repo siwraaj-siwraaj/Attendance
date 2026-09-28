@@ -255,7 +255,7 @@ function AdvancesPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-full bg-[#F8FAFC] pb-28 font-['Figtree',sans-serif] text-[#101828]">
+      <div className="min-h-full bg-[#F8FAFC] pb-32 font-['Figtree',sans-serif] text-[#101828]">
         <header className="app-tab-header flex h-[200px] shrink-0 flex-col justify-between rounded-b-[28px] border-b border-white/10 bg-[#172536] px-4 py-4 text-white shadow-sm sm:px-6">
           <div className="mx-auto w-full max-w-5xl">
             <div className="flex items-start justify-between gap-3">
@@ -333,7 +333,7 @@ function AdvancesPage() {
         </div>
       </div>
 
-      <main className="mx-auto w-full max-w-5xl px-4 pb-32 pt-4 sm:px-6">
+      <main className="mx-auto w-full max-w-5xl px-4 pt-4 sm:px-6">
         <section>
           <div className="mb-3 flex items-center justify-between px-1"><div><h2 className="text-base font-black text-[#101828]">Outstanding advances</h2><p className="mt-0.5 text-xs" style={{ color: MUTED }}>Grouped by labour</p></div><span className="rounded-full bg-orange-50 px-3 py-1 text-xs font-extrabold text-orange-700">{outstandingRows.length}</span></div>
           <Section items={outstandingRows} empty="No outstanding advances found" />
