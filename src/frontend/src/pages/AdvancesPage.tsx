@@ -34,7 +34,6 @@ function AdvancesPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingAdvance, setEditingAdvance] = useState<Advance | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<bigint | null>(null);
-  const [showCleared, setShowCleared] = useState(false);
   const [expandedLabourId, setExpandedLabourId] = useState<string | null>(null);
   const [form, setForm] = useState({ contractId: "", labourId: "", amount: "", note: "" });
   const [error, setError] = useState("");
@@ -93,12 +92,11 @@ function AdvancesPage() {
     });
   }, [advances, filterContractId, query, labourName, contractName]);
 
-  const active = filtered.filter((advance: Advance) => !isSettled(advance.contractId));
-  const cleared = filtered.filter((advance: Advance) => isSettled(advance.contractId));
+  const outstandingRows = filtered.filter((advance: Advance) => !isSettled(advance.contractId));
   const outstanding = advances
     .filter((advance: Advance) => !isSettled(advance.contractId))
     .reduce((sum: number, advance: Advance) => sum + Number(advance.amount || 0), 0);
-  const peopleCount = new Set(active.map((advance: Advance) => advance.labourId.toString())).size;
+  const peopleCount = new Set(outstandingRows.map((advance: Advance) => advance.labourId.toString())).size;
 
   const openAdd = useCallback(() => {
     setEditingAdvance(null);
@@ -243,14 +241,14 @@ function AdvancesPage() {
 
   return (
     <div className="min-h-full bg-[#F8FAFC] font-['Figtree',sans-serif] text-[#101828]">
-      <header className="app-tab-header shrink-0 rounded-b-[28px] border-b border-white/10 bg-[#172536] px-4 pb-2 pt-2 text-white shadow-sm sm:px-6">
+      <header className="app-tab-header h-[200px] shrink-0 rounded-b-[28px] border-b border-white/10 bg-[#172536] px-4 py-3 text-white shadow-sm sm:px-6">
         <div className="mx-auto flex w-full max-w-5xl items-start justify-between gap-3">
           <div className="min-w-0">
             <div className="mb-1 flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-[0.2em] text-orange-300">
               <Wallet className="h-3.5 w-3.5" /> Payroll
             </div>
             <ScrollHeaderTitle title="Advances" className="text-2xl" />
-            <p className="mt-0.5 max-w-xl text-[11px] leading-4 text-white/55">Track money paid to your team before settlement.</p>
+            <p className="mt-0.5 max-w-xl text-[11px] leading-4 text-white/55">Track outstanding money paid to your team before settlement.</p>
           </div>
           {isAdmin && (
             <button type="button" onClick={openAdd} className="flex h-11 shrink-0 items-center gap-2 rounded-2xl bg-orange-500 px-4 text-xs font-extrabold text-white shadow-lg shadow-orange-950/20 transition active:scale-95" data-ocid="advances.add_button">
@@ -258,39 +256,25 @@ function AdvancesPage() {
             </button>
           )}
         </div>
-        <div className="mx-auto mt-1.5 w-full max-w-5xl">
-          <section className="grid grid-cols-3 gap-2">
-            <div className="min-w-0 rounded-xl bg-white/10 p-2 text-white">
-              <div className="flex items-center justify-between gap-2"><p className="truncate text-[8px] font-extrabold uppercase tracking-wide text-white/60">Outstanding</p><Wallet className="h-4 w-4 text-orange-300" /></div>
-              <p className="mt-1 truncate text-base font-black">{money(outstanding)}</p>
-              <p className="mt-0.5 truncate text-[9px] text-white/55">{peopleCount} people with active advances</p>
-            </div>
-            <div className="min-w-0 rounded-xl border border-white/10 bg-white/10 p-2" style={{ borderColor: BORDER }}>
-              <p className="truncate text-[8px] font-extrabold uppercase tracking-wide" style={{ color: MUTED }}>Active advances</p>
-              <p className="mt-1 text-base font-black" style={{ color: NAVY }}>{active.length}</p>
-              <p className="mt-0.5 truncate text-[9px]" style={{ color: MUTED }}>In current view</p>
-            </div>
-            <div className="min-w-0 rounded-xl border border-white/10 bg-white/10 p-2" style={{ borderColor: BORDER }}>
-              <p className="truncate text-[8px] font-extrabold uppercase tracking-wide" style={{ color: MUTED }}>Cleared advances</p>
-              <p className="mt-1 text-base font-black" style={{ color: NAVY }}>{cleared.length}</p>
-              <p className="mt-0.5 truncate text-[9px]" style={{ color: MUTED }}>From settled contracts</p>
-            </div>
-          </section>
+        <div className="mx-auto mt-4 flex w-full max-w-5xl items-center justify-between border-t border-white/10 pt-3">
+          <div>
+            <p className="text-[9px] font-extrabold uppercase tracking-[0.18em] text-white/45">Outstanding</p>
+            <p className="mt-0.5 text-xl font-black text-white">{money(outstanding)}</p>
+          </div>
+          <p className="text-right text-[10px] font-semibold text-white/45">{peopleCount} {peopleCount === 1 ? "person" : "people"} with outstanding advances</p>
         </div>
       </header>
 
       <main className="px-4 pb-28 pt-4 sm:px-6">
         <div className="mx-auto w-full max-w-5xl">
-
-
-          <section className="mt-4 rounded-2xl border bg-white p-3 shadow-sm" style={{ borderColor: BORDER }}>
+          <section className="rounded-2xl border bg-white p-3 shadow-sm" style={{ borderColor: BORDER }}>
             <div className="relative">
               <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2" style={{ color: "#98A2B3" }} />
               <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search labour, contract or note" className="h-11 w-full rounded-xl border bg-[#F8FAFC] pl-10 pr-3 text-sm outline-none focus:border-orange-400" style={{ borderColor: BORDER }} data-ocid="advances.search_input" />
             </div>
             <div className="mt-2">
               <select value={filterContractId} onChange={(event) => setFilterContractId(event.target.value)} className="h-11 w-full rounded-xl border bg-white px-3 text-sm font-semibold outline-none focus:border-orange-400" style={{ borderColor: BORDER }} data-ocid="advances.contract_filter">
-                <option value="all">All contracts</option>
+                <option value="all">All active contracts</option>
                 {contracts.filter((contract: Contract) => !contract.settled && contract.settled !== 1n).map((contract: Contract) => (
                   <option key={contract.id.toString()} value={contract.id.toString()}>{contract.name}</option>
                 ))}
@@ -300,22 +284,16 @@ function AdvancesPage() {
 
           <section className="mt-5">
             <div className="mb-3 flex items-center justify-between">
-              <div><h2 className="text-base font-black">Active advances</h2><p className="mt-0.5 text-xs" style={{ color: MUTED }}>Grouped by labour</p></div>
-              <span className="rounded-full bg-orange-50 px-3 py-1 text-xs font-extrabold text-orange-700">{active.length}</span>
+              <div>
+                <h2 className="text-base font-black">Outstanding advances</h2>
+                <p className="mt-0.5 text-xs" style={{ color: MUTED }}>Grouped by labour</p>
+              </div>
+              <span className="rounded-full bg-orange-50 px-3 py-1 text-xs font-extrabold text-orange-700">{outstandingRows.length}</span>
             </div>
-            <Section items={active} empty="No active advances found" />
-          </section>
-
-          <section className="mt-5">
-            <button type="button" onClick={() => setShowCleared((value) => !value)} className="flex w-full items-center justify-between rounded-2xl border bg-white px-4 py-4 text-left shadow-sm" style={{ borderColor: BORDER }} aria-expanded={showCleared}>
-              <span><span className="block text-sm font-extrabold">Cleared advances</span><span className="mt-0.5 block text-xs" style={{ color: MUTED }}>Advances under settled contracts</span></span>
-              <span className="flex items-center gap-2 text-xs font-extrabold" style={{ color: MUTED }}>{cleared.length}{showCleared ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}</span>
-            </button>
-            {showCleared && <div className="mt-2"><Section items={cleared} empty="No cleared advances found" /></div>}
+            <Section items={outstandingRows} empty="No outstanding advances found" />
           </section>
         </div>
       </main>
-
       {showForm && (
         <div className="fixed inset-0 z-[1000] flex items-end justify-center bg-[#101828]/60 p-0 sm:items-center sm:p-4" onClick={(event) => { if (event.target === event.currentTarget) setShowForm(false); }}>
           <div className="flex max-h-[92dvh] w-full max-w-lg flex-col overflow-hidden rounded-t-[28px] bg-white shadow-2xl sm:rounded-[28px]">
