@@ -94,7 +94,7 @@ export default function MorePage() {
   );
 
   return (
-    <div className="min-h-full bg-[#F8FAFC] pb-36 text-[#101828]">
+    <div className="min-h-full bg-[#F8FAFC] pb-20 text-[#101828]">
       <div className="mx-auto w-full max-w-5xl space-y-4">
         <header className="relative shrink-0 overflow-hidden rounded-b-[28px] bg-[#172536] px-5 pb-5 pt-5 text-white shadow-sm">
           <div className="absolute -right-10 -top-16 h-44 w-44 rounded-full bg-[#F97316]/20 blur-3xl"/>
