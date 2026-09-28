@@ -237,7 +237,7 @@ function AdvancesPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-full bg-[#F8FAFC] font-['Figtree',sans-serif] text-[#101828]">
+      <div className="min-h-full bg-[#F8FAFC] pb-28 font-['Figtree',sans-serif] text-[#101828]">
         <header className="app-tab-header h-[200px] shrink-0 rounded-b-[28px] border-b border-white/10 bg-[#172536] px-4 py-3 text-white shadow-sm sm:px-6">
           <div className="mx-auto w-full max-w-5xl">
             <div className="flex items-start justify-between gap-3">
@@ -259,7 +259,7 @@ function AdvancesPage() {
             </div>
           </div>
         </header>
-        <main className="px-4 pb-28 pt-4 sm:px-6">
+        <main className="px-4 pt-4 sm:px-6">
           <div className="mx-auto w-full max-w-5xl">
             <section className="rounded-2xl border bg-white p-3 shadow-sm" style={{ borderColor: BORDER }}>
               <div className="h-11 animate-pulse rounded-xl bg-[#F2F4F7]" />
