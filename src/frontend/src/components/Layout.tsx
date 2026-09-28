@@ -280,11 +280,6 @@ export default function Layout({ children }: LayoutProps) {
         <div ref={swipeContentRef} className="min-h-full min-w-0 flex flex-col" style={{ width: "100%", touchAction: "pan-y" }}>
           {children}
         </div>
-        <div
-          aria-hidden="true"
-          className="h-28 w-full shrink-0"
-          style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
-        />
       </main>
       {mode && activeTab !== "admin" && activeTab !== "attendance" && <BottomTabBar activeTab={activeTab} onTabChange={onTabChange} />}
       <input ref={csvInputRef} type="file" accept=".csv" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) handleImportCSV(file); e.target.value = ""; }} />
