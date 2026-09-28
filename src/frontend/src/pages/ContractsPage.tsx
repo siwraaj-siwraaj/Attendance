@@ -281,18 +281,8 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
               </button>
             </div>
           </div>
-          <div className="mt-2 flex items-center justify-between gap-3">
-            <div className="flex min-w-0 items-center gap-2 rounded-xl border border-white/10 bg-white/[0.06] px-3 py-2">
-              <span className="text-[9px] font-bold uppercase tracking-widest text-white/40">Active</span>
-              <span className="text-sm font-black">{activeCount}</span>
-              <span className="mx-1 h-3 w-px bg-white/10" />
-              <span className="text-[9px] font-bold uppercase tracking-widest text-white/40">Completed</span>
-              <span className="text-sm font-black">{completedCount}</span>
-            </div>
-            <span className="truncate text-[10px] text-white/35">{filteredContracts.length} shown</span>
-          </div>
         </div>
-        <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-1.5" role="tablist" aria-label="Contract status">
+        <div className="mx-auto w-full max-w-5xl rounded-2xl border border-white/10 bg-white/[0.06] p-1.5" role="tablist" aria-label="Contract status">
           <div className="grid grid-cols-2 gap-1.5">
             <button type="button" role="tab" aria-selected={contractFilter === "active"} onClick={() => setContractFilter("active")} className={`flex min-h-11 items-center justify-between rounded-xl px-4 text-xs font-extrabold transition-all ${contractFilter === "active" ? "bg-white text-[#172536] shadow-sm" : "text-white/65 hover:bg-white/10 hover:text-white"}`} data-ocid="contracts.ongoing_tab">
               <span className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-emerald-400" />Ongoing</span><span className="rounded-lg bg-white/10 px-2 py-1 text-[10px]">{activeCount}</span>
