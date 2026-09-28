@@ -785,7 +785,7 @@ export default function AttendancePage({
       data-ocid="attendance.page"
     >
       {/* Attendance sheet header */}
-      <div className="shrink-0 border-b border-white/10 bg-[#0f1525]/98 backdrop-blur-xl">
+      <div className="app-tab-header flex h-[220px] shrink-0 flex-col justify-center border-b border-white/10 bg-[#0f1525]/98 backdrop-blur-xl">
         <div className="flex items-center gap-3 px-4 py-4">
           <button
             type="button"
