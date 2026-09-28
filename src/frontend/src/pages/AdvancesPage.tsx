@@ -308,56 +308,35 @@ function AdvancesPage() {
         transition: rubberBandY ? "none" : "transform 180ms cubic-bezier(.22,1,.36,1)",
       }}
     >
-      <header className="app-tab-header h-[200px] shrink-0 rounded-b-[28px] border-b border-white/10 bg-[#172536] px-4 py-3 text-white shadow-sm sm:px-6">
-        <div className="mx-auto flex w-full max-w-5xl items-start justify-between gap-3">
-          <div className="min-w-0">
-            <div className="mb-1 flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-[0.2em] text-orange-300">
-              <Wallet className="h-3.5 w-3.5" /> Payroll
+      <header className="app-tab-header flex h-[200px] shrink-0 flex-col justify-between rounded-b-[28px] bg-[#172536] px-4 py-4 text-white shadow-sm sm:px-6">
+        <div className="mx-auto w-full max-w-5xl">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="mb-1 flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-[0.2em] text-orange-300"><Wallet className="h-3.5 w-3.5" /> Payroll</p>
+              <ScrollHeaderTitle title="Advances" className="text-2xl" />
+              <p className="mt-0.5 max-w-xl text-[11px] leading-4 text-white/55">Track money paid before settlement and keep deductions visible.</p>
             </div>
-            <ScrollHeaderTitle title="Advances" className="text-2xl" />
-            <p className="mt-0.5 max-w-xl text-[11px] leading-4 text-white/55">Track outstanding money paid to your team before settlement.</p>
+            {isAdmin && <button type="button" onClick={openAdd} className="flex h-11 shrink-0 items-center gap-2 rounded-2xl bg-orange-500 px-3.5 text-[11px] font-extrabold shadow-lg shadow-orange-950/20 active:scale-95" data-ocid="advances.add_button"><Plus className="h-4 w-4" /><span className="hidden sm:inline">Add advance</span><span className="sm:hidden">Add</span></button>}
           </div>
-          {isAdmin && (
-            <button type="button" onClick={openAdd} className="flex h-11 shrink-0 items-center gap-2 rounded-2xl bg-orange-500 px-4 text-xs font-extrabold text-white shadow-lg shadow-orange-950/20 transition active:scale-95" data-ocid="advances.add_button">
-              <Plus className="h-4 w-4" /><span className="hidden sm:inline">Add advance</span><span className="sm:hidden">Add</span>
-            </button>
-          )}
+          <div className="mt-2 grid grid-cols-3 gap-2">
+            <div className="rounded-xl border border-white/10 bg-white/[0.06] px-2.5 py-2"><p className="text-[8px] font-extrabold uppercase tracking-wider text-white/40">Outstanding</p><p className="mt-0.5 truncate text-sm font-black text-white">{money(outstanding)}</p></div>
+            <div className="rounded-xl border border-white/10 bg-white/[0.06] px-2.5 py-2"><p className="text-[8px] font-extrabold uppercase tracking-wider text-white/40">Records</p><p className="mt-0.5 text-sm font-black text-white">{outstandingRows.length}</p></div>
+            <div className="rounded-xl border border-white/10 bg-white/[0.06] px-2.5 py-2"><p className="text-[8px] font-extrabold uppercase tracking-wider text-white/40">Contracts</p><p className="mt-0.5 text-sm font-black text-white">{formContracts.length}</p></div>
+          </div>
         </div>
-        <div className="mx-auto mt-4 flex w-full max-w-5xl items-center border-t border-white/10 pt-3">
-          <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-white/45">Outstanding</p>
-          <p className="ml-3 text-xl font-black text-white">{money(outstanding)}</p>
+        <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.06] p-1.5">
+          <div className="relative min-w-0 flex-1"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search labour, contract or note" className="h-10 w-full rounded-xl bg-white/5 px-9 text-xs text-white outline-none placeholder:text-white/25" data-ocid="advances.search_input" /></div>
+          <select value={filterContractId} onChange={(event) => setFilterContractId(event.target.value)} className="h-10 max-w-[42%] rounded-xl border border-white/10 bg-[#101d2c] px-2 text-[10px] font-bold text-white outline-none" data-ocid="advances.contract_filter"><option value="all">All active</option>{contracts.filter((contract: Contract) => !contract.settled && contract.settled !== 1n).map((contract: Contract) => <option key={contract.id.toString()} value={contract.id.toString()}>{contract.name}</option>)}</select>
         </div>
       </header>
 
-      <main className="px-4 pb-32 pt-4 sm:px-6">
-        <div className="mx-auto w-full max-w-5xl">
-          <section className="rounded-2xl border bg-white p-3 shadow-sm" style={{ borderColor: BORDER }}>
-            <div className="relative">
-              <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2" style={{ color: "#98A2B3" }} />
-              <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search labour, contract or note" className="h-11 w-full rounded-xl border bg-[#F8FAFC] pl-10 pr-3 text-sm outline-none focus:border-orange-400" style={{ borderColor: BORDER }} data-ocid="advances.search_input" />
-            </div>
-            <div className="mt-2">
-              <select value={filterContractId} onChange={(event) => setFilterContractId(event.target.value)} className="h-11 w-full rounded-xl border bg-white px-3 text-sm font-semibold outline-none focus:border-orange-400" style={{ borderColor: BORDER }} data-ocid="advances.contract_filter">
-                <option value="all">All active contracts</option>
-                {contracts.filter((contract: Contract) => !contract.settled && contract.settled !== 1n).map((contract: Contract) => (
-                  <option key={contract.id.toString()} value={contract.id.toString()}>{contract.name}</option>
-                ))}
-              </select>
-            </div>
-          </section>
-
-          <section className="mt-5">
-            <div className="mx-auto mb-3 flex w-full max-w-3xl items-center justify-between px-1">
-              <div>
-                <h2 className="text-base font-black">Outstanding advances</h2>
-                <p className="mt-0.5 text-xs" style={{ color: MUTED }}>Grouped by labour</p>
-              </div>
-              <span className="rounded-full bg-orange-50 px-3 py-1 text-xs font-extrabold text-orange-700">{outstandingRows.length}</span>
-            </div>
-            <Section items={outstandingRows} empty="No outstanding advances found" />
-          </section>
-        </div>
+      <main className="mx-auto w-full max-w-5xl px-4 pb-32 pt-4 sm:px-6">
+        <section>
+          <div className="mb-3 flex items-center justify-between px-1"><div><h2 className="text-base font-black text-[#101828]">Outstanding advances</h2><p className="mt-0.5 text-xs" style={{ color: MUTED }}>Grouped by labour</p></div><span className="rounded-full bg-orange-50 px-3 py-1 text-xs font-extrabold text-orange-700">{outstandingRows.length}</span></div>
+          <Section items={outstandingRows} empty="No outstanding advances found" />
+        </section>
       </main>
+
       {showForm && (
         <div className="fixed inset-0 z-[1000] flex items-end justify-center bg-[#101828]/60 p-0 sm:items-center sm:p-4" onClick={(event) => { if (event.target === event.currentTarget) setShowForm(false); }}>
           <div className="flex max-h-[92dvh] w-full max-w-lg flex-col overflow-hidden rounded-t-[28px] bg-white shadow-2xl sm:rounded-[28px]">
