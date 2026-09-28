@@ -72,7 +72,9 @@ export default function Layout({ children }: LayoutProps) {
       a.download = `labour-manager-export-${new Date().toISOString().slice(0, 10)}.csv`;
       a.click();
       URL.revokeObjectURL(url);
-    } catch {}
+    } catch {
+      // silently fail
+    }
   };
 
   const handleExportExcel = async () => {
@@ -80,18 +82,45 @@ export default function Layout({ children }: LayoutProps) {
     markBackupDownloaded();
     try {
       const data = await exportData();
-      const json = safeParse<any>(data as string);
+      const json = safeParse<{
+        contracts?: Array<{ id: bigint | number | string; name?: string; multiplier?: number; contractAmount?: number; bedAmount?: number; paperAmount?: number; meshAmount?: number; machineExpenses?: number; createdAt?: bigint | number | string; settled?: boolean }>;
+        labours?: Array<{ id: bigint | number | string; name?: string; employeeId?: string; joinDate?: string; active?: boolean; createdAt?: bigint | number | string }>;
+        advances?: Array<{ id: bigint | number | string; contractId?: bigint | number | string; labourId?: bigint | number | string; amount?: number; note?: string; createdAt?: bigint | number | string; cleared?: boolean }>;
+        attendance?: Array<{ contractId?: bigint | number | string; labourId?: bigint | number | string; columnId?: string; value?: { __kind__?: string; partial?: number }; markedAt?: bigint | number | string }>;
+      }>(data as string);
       const contractMap = new Map<string, string>();
       for (const c of json.contracts || []) contractMap.set(String(c.id), c.name || "");
       const labourMap = new Map<string, string>();
       for (const l of json.labours || []) labourMap.set(String(l.id), l.name || "");
       const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([["Contract Name"], ...(json.contracts || []).map((c: any) => [c.name || ""])]), "Contracts");
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([["Name"], ...(json.labours || []).map((l: any) => [l.name || ""])]), "Labours");
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([["Labour Name", "Contract Name", "Amount"], ...(json.advances || []).map((a: any) => [labourMap.get(String(a.labourId)) || String(a.labourId), contractMap.get(String(a.contractId)) || String(a.contractId), a.amount ?? ""])]), "Advances");
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([["Contract Name", "Labour Name", "Column Name", "Value"], ...(json.attendance || []).map((r: any) => [contractMap.get(String(r.contractId)) || String(r.contractId), labourMap.get(String(r.labourId)) || String(r.labourId), r.columnId || "", r.value?.__kind__ || ""])]), "Attendance");
+      const contractRows = [
+        ["Contract Name", "Multiplier", "Contract Amount", "Bed Amount", "Paper Amount", "Mesh Amount", "Machine Expenses", "Created Date"],
+        ...(json.contracts || []).map((c) => [c.name || "", c.multiplier ?? "", c.contractAmount ?? "", c.bedAmount ?? "", c.paperAmount ?? "", c.meshAmount ?? "", c.machineExpenses ?? "", c.createdAt ? new Date(Number(BigInt(String(c.createdAt)) / BigInt(1_000_000))).toLocaleDateString() : ""]),
+      ];
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(contractRows), "Contracts");
+      const labourRows = [
+        ["Name", "Employee ID", "Join Date", "Status"],
+        ...(json.labours || []).map((l) => [l.name || "", l.employeeId || "", l.joinDate || "", l.active === false ? "Inactive" : "Active"]),
+      ];
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(labourRows), "Labours");
+      const advanceRows = [
+        ["Labour Name", "Contract Name", "Amount", "Note", "Date", "Cleared"],
+        ...(json.advances || []).map((a) => [labourMap.get(String(a.labourId)) || String(a.labourId), contractMap.get(String(a.contractId)) || String(a.contractId), a.amount ?? "", a.note || "", a.createdAt ? new Date(Number(BigInt(String(a.createdAt)) / BigInt(1_000_000))).toLocaleDateString() : "", a.cleared ? "Yes" : "No"]),
+      ];
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(advanceRows), "Advances");
+      const attendanceRows = [
+        ["Contract Name", "Labour Name", "Column Name", "Value", "Date"],
+        ...(json.attendance || []).map((r) => {
+          const kind = r.value?.__kind__;
+          const val = kind === "partial" ? String(r.value?.partial ?? "") : kind || "";
+          return [contractMap.get(String(r.contractId)) || String(r.contractId), labourMap.get(String(r.labourId)) || String(r.labourId), r.columnId || "", val, r.markedAt ? new Date(Number(BigInt(String(r.markedAt)) / BigInt(1_000_000))).toLocaleDateString() : ""];
+        }),
+      ];
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(attendanceRows), "Attendance");
       XLSX.writeFile(wb, `rossie-export-${new Date().toISOString().slice(0, 10)}.xlsx`);
-    } catch {}
+    } catch {
+      // silently fail
+    }
   };
 
   const handleImportCSV = (file: File) => {
@@ -122,29 +151,52 @@ export default function Layout({ children }: LayoutProps) {
         }
         await importData(safeStringify({ contracts, labours, advances, attendance }));
         window.location.reload();
-      } catch {}
+      } catch {
+        // silently fail
+      }
     };
     reader.readAsText(file);
   };
 
   const handleChangePassword = () => {
-    if (newPassword.length < 6) { setPasswordMessage("Password must be at least 6 characters."); return; }
-    if (newPassword !== confirmNewPassword) { setPasswordMessage("Passwords do not match."); return; }
+    if (newPassword.length < 6) {
+      setPasswordMessage("Password must be at least 6 characters.");
+      return;
+    }
+    if (newPassword !== confirmNewPassword) {
+      setPasswordMessage("Passwords do not match.");
+      return;
+    }
     setPasswordMessage(null);
     changePasswordMutation.mutate(newPassword, {
-      onSuccess: () => { setNewPassword(""); setConfirmNewPassword(""); setChangePasswordOpen(false); setPasswordMessage("Password changed successfully."); setTimeout(() => setPasswordMessage(null), 2500); },
+      onSuccess: () => {
+        setNewPassword("");
+        setConfirmNewPassword("");
+        setChangePasswordOpen(false);
+        setPasswordMessage("Password changed successfully.");
+        setTimeout(() => setPasswordMessage(null), 2500);
+      },
       onError: (error: any) => setPasswordMessage(error?.message ?? "Could not change password."),
     });
   };
 
-  const handleLogout = () => { setMenuOpen(false); logout(); };
-  const handleAdminPanel = () => { setActiveTab(activeTab === "admin" ? "contracts" : "admin"); setMenuOpen(false); };
+  const handleLogout = () => {
+    setMenuOpen(false);
+    logout();
+  };
+
+  const handleAdminPanel = () => {
+    setActiveTab(activeTab === "admin" ? "contracts" : "admin");
+    setMenuOpen(false);
+  };
+
   const profileName = name?.trim() || username?.trim() || "User";
   const profileInitial = profileName.charAt(0).toUpperCase();
 
   return (
     <div className="h-[100dvh] min-h-0 flex flex-col bg-[#F8FAFC]">
       <BackButtonGuard enabled={mode !== null} returnToContractsOnly={activeTab === "admin" || activeTab === "attendance"} onReturnToSelection={() => setActiveTab("contracts")} />
+
       {menuOpen && <>
         <div className="fixed inset-0 z-[60] bg-black/55 backdrop-blur-[2px]" onClick={() => setMenuOpen(false)} aria-hidden="true" />
         <aside className="fixed right-0 top-0 z-[70] flex h-[100dvh] w-[min(78vw,320px)] flex-col overflow-hidden border-l" style={{ background: "linear-gradient(180deg, #08111f 0%, #0a1422 45%, #080e18 100%)", borderColor: "rgba(249,115,22,0.28)", boxShadow: "-18px 0 45px rgba(0,0,0,0.42)" }} aria-label="Settings and navigation sidebar">
@@ -152,21 +204,80 @@ export default function Layout({ children }: LayoutProps) {
             <div className="pointer-events-none absolute -right-12 -top-20 h-44 w-44 rounded-full" style={{ background: "radial-gradient(circle, rgba(249,115,22,0.26) 0%, transparent 68%)" }} />
             <div className="relative flex items-center justify-between gap-3">
               <div className="flex min-w-0 items-center gap-3">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full" style={{ background: "linear-gradient(145deg, #17263c, #0d1522)", border: "1px solid rgba(249,115,22,0.60)" }}><span className="text-base font-bold text-white">{profileInitial}</span></div>
-                <div className="min-w-0"><p className="truncate text-base font-bold text-white">{profileName}</p>{role && <p className="mt-0.5 text-xs text-orange-300/80">{roleLabel(role)}</p>}</div>
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full" style={{ background: "linear-gradient(145deg, #17263c, #0d1522)", border: "1px solid rgba(249,115,22,0.60)" }}>
+                  <span className="text-base font-bold text-white">{profileInitial}</span>
+                </div>
+                <div className="min-w-0">
+                  <p className="truncate text-base font-bold text-white">{profileName}</p>
+                  {role && <p className="mt-0.5 text-xs text-orange-300/80">{roleLabel(role)}</p>}
+                </div>
               </div>
               <button type="button" onClick={() => setMenuOpen(false)} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-slate-300 transition-colors hover:bg-white/5" aria-label="Close sidebar" data-ocid="sidebar.close_button"><X size={21} /></button>
             </div>
           </div>
+
           <div className="flex-1 overflow-y-auto px-2.5 py-3">
             <p className="px-2.5 pb-2 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">Account</p>
-            {mode === "view" ? <div className="space-y-2">...</div> : <><p className="px-2.5 pb-2 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">Account & settings</p><div className="space-y-1">...</div></>}
+            {mode === "view" ? (
+              <div className="space-y-2">
+                <div className="rounded-xl border border-white/8 bg-white/[0.025] px-3 py-3">
+                  <p className="text-[10px] uppercase tracking-wider text-slate-500">Mobile number</p>
+                  <p className="mt-1 text-sm font-semibold text-white">{username || "Not available"}</p>
+                </div>
+                <div className="rounded-xl border border-white/8 bg-white/[0.025] px-3 py-3">
+                  <p className="text-[10px] uppercase tracking-wider text-slate-500">Gender</p>
+                  <p className="mt-1 text-sm font-semibold text-white">Not set</p>
+                </div>
+                <button type="button" onClick={() => { setPasswordMessage(null); setChangePasswordOpen(v => !v); }} className="flex w-full items-center gap-3 rounded-xl border border-white/8 bg-white/[0.025] px-3 py-3 text-left text-sm font-semibold text-white hover:bg-white/5" data-ocid="sidebar.change_password">
+                  <KeyRound size={18} className="text-orange-400" />
+                  <span>Change password</span>
+                </button>
+                {changePasswordOpen && (
+                  <div className="rounded-xl border border-orange-400/15 bg-orange-500/[0.04] p-3 space-y-2">
+                    <input type="password" value={newPassword} onChange={e=>setNewPassword(e.target.value)} placeholder="New password" className="w-full rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-sm text-white outline-none focus:border-orange-500/50" autoComplete="new-password" />
+                    <input type="password" value={confirmNewPassword} onChange={e=>setConfirmNewPassword(e.target.value)} placeholder="Confirm password" className="w-full rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-sm text-white outline-none focus:border-orange-500/50" autoComplete="new-password" />
+                    {passwordMessage && <p className="text-[11px] text-orange-200">{passwordMessage}</p>}
+                    <button type="button" onClick={handleChangePassword} disabled={changePasswordMutation.isPending} className="w-full rounded-lg bg-orange-500 py-2 text-xs font-bold text-white disabled:opacity-50">
+                      {changePasswordMutation.isPending ? "Changing…" : "Save password"}
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <>
+                <p className="px-2.5 pb-2 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">Account & settings</p>
+                <div className="space-y-1">
+                  <button type="button" onClick={handleAdminPanel} className={`flex w-full items-center gap-3 rounded-xl px-2.5 py-2.5 text-left text-sm font-medium transition-colors ${activeTab === "admin" ? "bg-orange-500/10 text-orange-200" : "text-white hover:bg-white/5"}`} data-ocid="sidebar.admin_panel">
+                    <ShieldCheck size={18} className="text-orange-400" />
+                    <span>{activeTab === "admin" ? "Close Admin Panel" : "Admin Panel"}</span>
+                  </button>
+                  <button type="button" onClick={handleExportCSV} className="flex w-full items-center gap-3 rounded-xl px-2.5 py-2.5 text-left text-sm font-medium text-white transition-colors hover:bg-white/5" data-ocid="sidebar.export_csv"><FileText size={18} className="text-slate-300" /><span>Export CSV</span></button>
+                  <button type="button" onClick={handleExportExcel} className="flex w-full items-center gap-3 rounded-xl px-2.5 py-2.5 text-left text-sm font-medium text-white transition-colors hover:bg-white/5" data-ocid="sidebar.export_excel"><FileText size={18} className="text-slate-300" /><span>Export Excel</span></button>
+                  <button type="button" onClick={() => { setMenuOpen(false); csvInputRef.current?.click(); }} className="flex w-full items-center gap-3 rounded-xl px-2.5 py-2.5 text-left text-sm font-medium text-white transition-colors hover:bg-white/5" data-ocid="sidebar.import_csv"><Upload size={18} className="text-slate-300" /><span>Import CSV</span></button>
+                </div>
+                <div className="my-3 border-t border-white/10" />
+                <div className="flex items-center gap-2 px-2.5 pb-2"><Settings size={15} className="text-orange-400" /><p className="text-[10px] font-bold uppercase tracking-[0.18em] text-orange-300/80">Settings</p></div>
+                <SettingsPanel onClose={() => setMenuOpen(false)} />
+              </>
+            )}
           </div>
-          <div className="border-t p-2.5 pb-[max(10px,env(safe-area-inset-bottom))]" style={{ borderColor: "rgba(116,143,181,0.18)" }}><button type="button" onClick={handleLogout} className="flex w-full items-center gap-3 rounded-xl px-2.5 py-2.5 text-left text-sm font-semibold text-red-300 transition-colors hover:bg-red-500/10" data-ocid="sidebar.logout"><LogOut size={18} /><span>Logout</span></button></div>
+
+          <div className="border-t p-2.5 pb-[max(10px,env(safe-area-inset-bottom))]" style={{ borderColor: "rgba(116,143,181,0.18)" }}>
+            <button type="button" onClick={handleLogout} className="flex w-full items-center gap-3 rounded-xl px-2.5 py-2.5 text-left text-sm font-semibold text-red-300 transition-colors hover:bg-red-500/10" data-ocid="sidebar.logout">
+              <LogOut size={18} />
+              <span>Logout</span>
+            </button>
+          </div>
         </aside>
       </>}
-      <main ref={mainRef} className={`flex-1 min-h-0 min-w-0 overflow-y-auto overflow-x-hidden flex flex-col overscroll-contain app-scroll-container ${isScrolled ? "is-scrolled" : ""}`} onScroll={handleMainScroll} style={{ touchAction: "auto", WebkitOverflowScrolling: "touch" }}>
-        <div ref={swipeContentRef} className="min-h-full min-w-0 flex flex-col bg-[#F8FAFC]" style={{ width: "100%", touchAction: "pan-y" }}>
+
+      <main
+        ref={mainRef}
+        className={`flex-1 min-h-0 min-w-0 overflow-y-auto overflow-x-hidden flex flex-col overscroll-contain app-scroll-container ${isScrolled ? "is-scrolled" : ""}`}
+        onScroll={handleMainScroll}
+        style={{ touchAction: "auto", WebkitOverflowScrolling: "touch" }}
+      >
+        <div ref={swipeContentRef} className="min-h-full min-w-0 flex flex-col" style={{ width: "100%", touchAction: "pan-y" }}>
           {children}
           <div aria-hidden="true" className="shrink-0 bg-[#F8FAFC]" style={{ height: "calc(5rem + env(safe-area-inset-bottom))" }} />
         </div>
