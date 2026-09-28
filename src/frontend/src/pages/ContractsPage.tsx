@@ -63,8 +63,13 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
     const startY = rubberStartY.current;
     const scrollContainer = document.querySelector(".app-scroll-container") as HTMLElement | null;
     if (startY === null || !scrollContainer || scrollContainer.scrollTop > 1) return;
-    const delta = event.touches[0]?.clientY - startY;
-    if (delta > 0) setRubberBandY(Math.min(delta * 0.22, 18));
+    const currentY = event.touches[0]?.clientY;
+    if (currentY === undefined) return;
+    const delta = currentY - startY;
+    if (delta > 0) {
+      event.preventDefault();
+      setRubberBandY(Math.min(delta * 0.45, 32));
+    }
   }, []);
 
   const handleRubberBandEnd = useCallback(() => {
@@ -236,7 +241,7 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
 
   return (
     <div
-      className="flex flex-col bg-[#F8FAFC] pb-32 font-['Figtree',sans-serif] text-[#182230]"
+      className="min-h-full flex flex-col bg-[#F8FAFC] pb-32 font-['Figtree',sans-serif] text-[#182230]"
       style={{
         background: OFF_WHITE,
         color: NAVY,
