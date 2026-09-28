@@ -48,7 +48,6 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
   const [contractsScrollTop, setContractsScrollTop] = useState(0);
   const [contractsTitleTop, setContractsTitleTop] = useState<number | null>(null);
   const contractsTitleRef = useRef<HTMLHeadingElement>(null);
-  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const getBedBase = () => Number(localStorage.getItem("rossie_bed_base") || "11000") || 11000;
   const getPaperBase = () => Number(localStorage.getItem("rossie_paper_base") || "7000") || 7000;
@@ -202,8 +201,8 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
   }
 
   return (
-    <div className="flex flex-col pb-28 font-['Figtree',sans-serif]" style={{ background: OFF_WHITE, color: NAVY }}>
-      <header className="app-tab-header flex h-[220px] shrink-0 flex-col justify-between rounded-b-[28px] bg-[#172536] px-5 py-5 text-white shadow-sm">
+    <div className="flex flex-col font-['Figtree',sans-serif]" style={{ background: OFF_WHITE, color: NAVY }}>
+      <header className="app-tab-header shrink-0 rounded-b-[28px] bg-[#172536] px-5 pb-5 pt-5 text-white shadow-sm">
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.16em]" style={{ color: "#667085" }}>
@@ -235,106 +234,86 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
               Manage your work agreements and attendance.
             </p>
           </div>
-          <button
-            type="button"
-            onClick={() => {
-              searchInputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-              searchInputRef.current?.focus();
-            }}
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border text-white transition-all hover:bg-[#2D4056] active:scale-95"
-            style={{ background: "#25364A", borderColor: "#41556B" }}
-            aria-label="Search contracts"
-            data-ocid="contracts.search_button"
-          >
-            <Search className="h-5 w-5" />
-          </button>
+          {isAdmin && (
+            <button
+              type="button"
+              onClick={openNew}
+              className="flex h-11 shrink-0 items-center gap-2 rounded-2xl px-4 text-sm font-bold text-white shadow-[0_8px_20px_rgba(249,115,22,0.25)] transition-transform active:scale-95"
+              style={{ background: ORANGE }}
+              data-ocid="contract.add_button"
+            >
+              <Plus className="h-4 w-4" strokeWidth={2.5} />
+              <span className="hidden sm:inline">New contract</span>
+              <span className="sm:hidden">New</span>
+            </button>
+          )}
         </div>
 
-        <div className="mt-3 grid grid-cols-2 gap-2">
+        <div className="mt-5 grid grid-cols-2 gap-3">
           <button
             type="button"
             onClick={() => setContractFilter("active")}
-            className="flex h-10 items-center justify-between rounded-xl border px-3 text-left transition-all"
+            className="rounded-2xl border px-3.5 py-3 text-left transition-all"
             style={{
-              background: contractFilter === "active" ? "#30445A" : "#223247",
-              color: "#FFFFFF",
-              borderColor: contractFilter === "active" ? "#F97316" : "#41556B",
-              boxShadow: contractFilter === "active" ? "0 0 0 1px #F97316 inset" : "none",
+              background: contractFilter === "active" ? "#FFF4EC" : "#FFFFFF",
+              color: NAVY,
+              borderColor: contractFilter === "active" ? "#FDBA74" : "#E4E7EC",
+              boxShadow: contractFilter === "active" ? "0 4px 14px rgba(249,115,22,0.10)" : "none",
             }}
           >
-            <span className="text-xs font-bold uppercase tracking-wider">Active <span className="ml-1 text-sm font-extrabold">{activeCount}</span></span>
-            <span className="h-2.5 w-2.5 rounded-full" style={{ background: "#F97316" }} />
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold uppercase tracking-wider opacity-70">Active</span>
+              <span className="h-2.5 w-2.5 rounded-full" style={{ background: "#F97316", boxShadow: "0 0 0 4px #FED7AA" }} />
+            </div>
+            <div className="mt-0.5 text-xl font-extrabold">{activeCount}</div>
           </button>
           <button
             type="button"
             onClick={() => setContractFilter("completed")}
-            className="flex h-10 items-center justify-between rounded-xl border px-3 text-left transition-all"
+            className="rounded-2xl border p-4 text-left transition-all"
             style={{
-              background: contractFilter === "completed" ? "#30445A" : "#223247",
-              color: "#FFFFFF",
-              borderColor: contractFilter === "completed" ? "#4ADE80" : "#41556B",
-              boxShadow: contractFilter === "completed" ? "0 0 0 1px #4ADE80 inset" : "none",
+              background: contractFilter === "completed" ? "#ECFDF3" : "#FFFFFF",
+              color: NAVY,
+              borderColor: contractFilter === "completed" ? "#86EFAC" : "#E4E7EC",
+              boxShadow: contractFilter === "completed" ? "0 4px 14px rgba(16,185,129,0.10)" : "none",
             }}
           >
-            <span className="text-xs font-bold uppercase tracking-wider">Completed <span className="ml-1 text-sm font-extrabold">{completedCount}</span></span>
-            <CheckCircle2 className="h-4 w-4" style={{ color: "#4ADE80" }} />
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold uppercase tracking-wider opacity-70">Completed</span>
+              <CheckCircle2 className="h-4 w-4" style={{ color: "#16A34A" }} />
+            </div>
+            <div className="mt-0.5 text-xl font-extrabold">{completedCount}</div>
           </button>
         </div>
 
-        <div className="mt-2 flex items-center justify-between gap-2">
-          <div className="flex h-10 flex-1 items-center rounded-xl border p-1" style={{ background: "#223247", borderColor: "#41556B" }}>
-            <button
-              type="button"
-              onClick={() => setViewMode("card")}
-              className="flex h-8 flex-1 items-center justify-center gap-1.5 rounded-lg text-xs font-bold transition-all"
-              style={{
-                background: viewMode === "card" ? "#F97316" : "transparent",
-                color: viewMode === "card" ? "#FFFFFF" : "#B8C5D3",
-              }}
-              aria-label="Card view"
-              aria-pressed={viewMode === "card"}
-              data-ocid="contracts.card_view_button"
-            >
-              <Grid2X2 className="h-4 w-4" /> Cards
-            </button>
-            <button
-              type="button"
-              onClick={() => setViewMode("list")}
-              className="flex h-8 flex-1 items-center justify-center gap-1.5 rounded-lg text-xs font-bold transition-all"
-              style={{
-                background: viewMode === "list" ? "#F97316" : "transparent",
-                color: viewMode === "list" ? "#FFFFFF" : "#B8C5D3",
-              }}
-              aria-label="List view"
-              aria-pressed={viewMode === "list"}
-              data-ocid="contracts.list_view_button"
-            >
-              <List className="h-4 w-4" /> List
-            </button>
+        <div className="mt-3 flex gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2" style={{ color: "#98A2B3" }} />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search contracts"
+              className="h-12 w-full rounded-2xl border bg-white pl-11 pr-4 text-sm font-medium outline-none transition focus:ring-2"
+              style={{ borderColor: "#E4E7EC", color: NAVY, boxShadow: "0 1px 2px rgba(16,24,40,0.04)" }}
+              data-ocid="contracts.search_input"
+            />
           </div>
-          <div className="relative flex h-10 w-11 shrink-0 items-center justify-center rounded-xl border" style={{ background: "#223247", borderColor: "#41556B" }}>
-            <Search className="h-4 w-4" style={{ color: "#B8C5D3" }} />
-          </div>
+          <button
+            type="button"
+            onClick={() => setViewMode(viewMode === "card" ? "list" : "card")}
+            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border bg-white"
+            style={{ borderColor: "#E4E7EC", color: NAVY }}
+            aria-label={viewMode === "card" ? "Switch to list view" : "Switch to card view"}
+            data-ocid="contracts.view_toggle"
+          >
+            {viewMode === "card" ? <List className="h-5 w-5" /> : <Grid2X2 className="h-5 w-5" />}
+          </button>
         </div>
-
       </header>
 
 
-      <main className="px-5">
-        <div className="relative mt-4">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" style={{ color: "#98A2B3" }} />
-          <input
-            ref={searchInputRef}
-            type="search"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search contracts"
-            className="h-11 w-full rounded-xl border bg-white pl-10 pr-4 text-sm font-medium outline-none"
-            style={{ borderColor: "#E4E7EC", color: NAVY }}
-            data-ocid="contracts.search_input"
-            aria-label="Search contracts"
-          />
-        </div>
+      <main className="px-5 pb-28">
         {filteredContracts.length === 0 ? (
           <div className="rounded-3xl border bg-white px-6 py-12 text-center" style={{ borderColor: "#E4E7EC" }}>
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl" style={{ background: "#FFF3EB", color: ORANGE }}>
