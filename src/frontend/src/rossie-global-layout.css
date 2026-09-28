@@ -245,3 +245,18 @@ body:has(.fixed.inset-0[class*="bg-black/"]) main,
 body:has(.fixed.inset-0.z-\[9999\]) main { overflow: hidden !important; }
 body:has(.fixed.inset-0[class*="bg-black/"]) header,
 body:has(.fixed.inset-0.z-\[9999\]) header { visibility: hidden !important; pointer-events: none !important; }
+
+/* Advances uses the same immediate collapsing header model as the tab shell:
+   the header remains pinned while the page content scrolls underneath it. */
+.app-scroll-container.is-scrolled .advances-tab .app-tab-header {
+  height: 92px !important;
+  border-radius: 0 0 22px 22px;
+}
+.app-scroll-container.is-scrolled .advances-tab .advances-header-detail {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-8px);
+}
+.advances-tab .advances-header-detail {
+  transition: opacity 160ms ease, transform 160ms ease;
+}
