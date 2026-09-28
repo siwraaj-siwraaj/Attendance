@@ -286,6 +286,11 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
           </button>
         </div>
 
+
+      </header>
+
+
+      <main className="px-5 pb-28">
         <div className="mt-2 flex gap-2">
           <div className="relative flex-1">
             <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2" style={{ color: "#98A2B3" }} />
@@ -310,10 +315,8 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
             {viewMode === "card" ? <List className="h-5 w-5" /> : <Grid2X2 className="h-5 w-5" />}
           </button>
         </div>
-      </header>
-
-
-      <main className="px-5 pb-28">
+        <div className="mt-4">
+        </div>
         {filteredContracts.length === 0 ? (
           <div className="rounded-3xl border bg-white px-6 py-12 text-center" style={{ borderColor: "#E4E7EC" }}>
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl" style={{ background: "#FFF3EB", color: ORANGE }}>

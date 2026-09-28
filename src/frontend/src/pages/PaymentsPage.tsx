@@ -350,15 +350,15 @@ export default function PaymentsPage({
 
   return (
     <div className="flex flex-col bg-[#f5f7fa] text-[#182230]">
-      <header className="app-tab-header shrink-0 rounded-b-[28px] bg-[#172536] px-4 pb-3 pt-3 text-white sm:px-6">
+      <header className="app-tab-header shrink-0 rounded-b-[28px] bg-[#172536] px-4 pb-2 pt-2 text-white sm:px-6">
         <div className="mx-auto w-full max-w-5xl">
           <div className="flex items-start justify-between gap-3">
             <div>
               <div className="mb-1 flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-[0.2em] text-orange-300">
                 <Wallet size={14} /> Payroll
               </div>
-              <ScrollHeaderTitle title="Payments" className="text-3xl" />
-              <p className="mt-1 max-w-xl text-xs leading-5 text-white/55">
+              <ScrollHeaderTitle title="Payments" className="text-2xl" />
+              <p className="mt-0.5 max-w-xl text-[11px] leading-4 text-white/55">
                 Calculate labour earnings from attendance, account for advances, and prepare payment sheets.
               </p>
             </div>
@@ -368,7 +368,7 @@ export default function PaymentsPage({
             </div>
           </div>
 
-          <div className="mt-2 rounded-xl border border-white/10 bg-white/5 p-2">
+          <div className="mt-1.5 rounded-xl border border-white/10 bg-white/5 p-1.5">
             <div className="flex items-center justify-between gap-3">
               <button
                 type="button"

@@ -78,7 +78,7 @@ function LaboursPage() {
             {isAdmin && <button type="button" onClick={openAdd} className="flex h-11 items-center gap-2 rounded-2xl bg-[#F97316] px-4 text-xs font-extrabold text-white shadow-lg shadow-orange-200 active:scale-95"><UserPlus className="h-4 w-4" />Add</button>}
           </div>
 
-          <div className="mt-2 grid grid-cols-3 overflow-hidden rounded-xl border border-[#101828]/10 bg-[#F8FAFC]">
+          <div className="mt-1.5 grid grid-cols-3 overflow-hidden rounded-xl border border-[#101828]/10 bg-[#F8FAFC]">
             <button type="button" onClick={() => setFilter("all")} className="border-r border-[#101828]/10 px-3 py-2 text-left">
               <p className="text-[10px] font-bold uppercase tracking-wider text-[#101828]/55">Team</p><p className="mt-1 text-xl font-extrabold">{labours.length}</p>
             </button>

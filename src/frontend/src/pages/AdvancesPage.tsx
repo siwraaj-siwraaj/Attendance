@@ -243,14 +243,14 @@ function AdvancesPage() {
 
   return (
     <div className="min-h-full bg-[#F8FAFC] font-['Figtree',sans-serif] text-[#101828]">
-      <header className="app-tab-header shrink-0 rounded-b-[28px] border-b border-white/10 bg-[#172536] px-4 pb-3 pt-3 text-white shadow-sm sm:px-6">
+      <header className="app-tab-header shrink-0 rounded-b-[28px] border-b border-white/10 bg-[#172536] px-4 pb-2 pt-2 text-white shadow-sm sm:px-6">
         <div className="mx-auto flex w-full max-w-5xl items-start justify-between gap-3">
           <div className="min-w-0">
             <div className="mb-1 flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-[0.2em] text-orange-300">
               <Wallet className="h-3.5 w-3.5" /> Payroll
             </div>
-            <ScrollHeaderTitle title="Advances" className="text-3xl" />
-            <p className="mt-1 max-w-xl text-xs leading-5 text-white/55">Track money paid to your team before settlement.</p>
+            <ScrollHeaderTitle title="Advances" className="text-2xl" />
+            <p className="mt-0.5 max-w-xl text-[11px] leading-4 text-white/55">Track money paid to your team before settlement.</p>
           </div>
           {isAdmin && (
             <button type="button" onClick={openAdd} className="flex h-11 shrink-0 items-center gap-2 rounded-2xl bg-orange-500 px-4 text-xs font-extrabold text-white shadow-lg shadow-orange-950/20 transition active:scale-95" data-ocid="advances.add_button">
@@ -258,7 +258,7 @@ function AdvancesPage() {
             </button>
           )}
         </div>
-        <div className="mx-auto mt-2 w-full max-w-5xl">
+        <div className="mx-auto mt-1.5 w-full max-w-5xl">
           <section className="grid grid-cols-3 gap-2">
             <div className="min-w-0 rounded-xl bg-white/10 p-2 text-white">
               <div className="flex items-center justify-between gap-2"><p className="truncate text-[8px] font-extrabold uppercase tracking-wide text-white/60">Outstanding</p><Wallet className="h-4 w-4 text-orange-300" /></div>
