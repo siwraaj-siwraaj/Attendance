@@ -310,101 +310,67 @@ function AdvancesPage() {
   }
 
   return (
-    <div
-      className="min-h-full flex flex-col bg-[#F8FAFC] pb-32 font-['Figtree',sans-serif] text-[#182230]"
-      onTouchStart={handleRubberBandStart}
-      onTouchMove={handleRubberBandMove}
-      onTouchEnd={handleRubberBandEnd}
-      onTouchCancel={handleRubberBandEnd}
-      style={{
-        transform: rubberBandY ? `translate3d(0, ${rubberBandY}px, 0)` : undefined,
-        transition: rubberBandY ? "none" : "transform 420ms cubic-bezier(.16,1,.3,1)",
-        willChange: rubberBandY ? "transform" : undefined,
-      }}
-    >
-      <header className="app-tab-header flex shrink-0 flex-col justify-between rounded-b-[28px] border-b border-white/10 bg-[#101828] px-4 pt-6 pb-5 text-white shadow-sm sm:px-6">
+    <div className="flex flex-col bg-[#F8FAFC] pb-32 text-[#182230]">
+      <header className="app-tab-header flex h-[200px] shrink-0 flex-col justify-between rounded-b-[28px] bg-[#172536] px-4 py-4 text-white sm:px-6">
         <div className="mx-auto w-full max-w-5xl">
-          <div className="flex min-w-0 items-start justify-between gap-3">
-            <div className="min-w-0 pt-0.5">
-              <div className="flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-[0.2em] text-orange-300">
-                <Wallet className="h-3.5 w-3.5" />
-                <span>Payroll</span>
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <div className="mb-1 flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-[0.2em] text-orange-300">
+                <Wallet size={14} /> Payroll
               </div>
-              <ScrollHeaderTitle title="Advances" className="mt-1 text-[30px]" />
-              <p className="mt-1 max-w-[250px] text-[11px] leading-4 text-white/55">
+              <ScrollHeaderTitle title="Advances" className="text-2xl" />
+              <p className="mt-0.5 max-w-xl text-[11px] leading-4 text-white/55">
                 Track money paid before settlement.
               </p>
             </div>
             {isAdmin && (
-              <button
-                type="button"
-                onClick={openAdd}
-                className="flex h-11 shrink-0 items-center gap-2 rounded-2xl bg-orange-500 px-3.5 text-[11px] font-extrabold text-white shadow-lg shadow-orange-950/25 transition-transform active:scale-[.97]"
-                data-ocid="advances.add_button"
-              >
-                <Plus className="h-4 w-4" />
-                <span className="hidden sm:inline">Add advance</span>
-                <span className="sm:hidden">Add</span>
+              <button type="button" onClick={openAdd} className="flex h-11 shrink-0 items-center gap-2 rounded-2xl bg-orange-500 px-3.5 text-[11px] font-extrabold shadow-lg shadow-orange-950/30 active:scale-95" data-ocid="advances.add_button">
+                <Plus size={16} /><span className="hidden sm:inline">Add advance</span><span className="sm:hidden">Add</span>
               </button>
             )}
           </div>
 
-          <div className="mt-2.5 grid grid-cols-3 gap-2">
-            <div className="min-w-0 rounded-2xl border border-orange-300/15 bg-orange-500/[0.09] px-3 py-2.5">
-              <p className="truncate text-[8px] font-extrabold uppercase tracking-[0.14em] text-orange-200/60">Outstanding</p>
-              <p className="mt-1 truncate text-[15px] font-black text-white">{money(outstanding)}</p>
-            </div>
-            <div className="min-w-0 rounded-2xl border border-white/10 bg-white/[0.055] px-3 py-2.5">
-              <p className="truncate text-[8px] font-extrabold uppercase tracking-[0.14em] text-white/40">Records</p>
-              <p className="mt-1 truncate text-[15px] font-black text-white">{outstandingRows.length}</p>
-            </div>
-            <div className="min-w-0 rounded-2xl border border-white/10 bg-white/[0.055] px-3 py-2.5">
-              <p className="truncate text-[8px] font-extrabold uppercase tracking-[0.14em] text-white/40">Contracts</p>
-              <p className="mt-1 truncate text-[15px] font-black text-white">{formContracts.length}</p>
+          <div className="relative mt-1.5 rounded-2xl border border-white/10 bg-white/[0.06] p-1.5 shadow-inner">
+            <div className="flex items-center gap-3">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-orange-500/15 text-orange-300"><Wallet size={18} /></span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-[9px] font-bold uppercase tracking-widest text-white/35">Outstanding</span>
+                <span className="mt-0.5 block truncate text-sm font-bold">{money(outstanding)}</span>
+              </span>
+              <span className="text-right">
+                <span className="block text-[9px] font-bold uppercase tracking-widest text-white/35">Records</span>
+                <span className="mt-0.5 block text-sm font-black">{outstandingRows.length}</span>
+              </span>
             </div>
           </div>
         </div>
       </header>
 
       <div className="mx-auto w-full max-w-5xl px-4 pt-3 sm:px-6">
-        <div className="flex items-center gap-2 rounded-2xl border bg-white p-1.5 shadow-sm" style={{ borderColor: BORDER }}>
+        <div className="flex items-center gap-2 rounded-2xl border bg-white p-1.5 shadow-sm" style={{ borderColor: "#E4E7EC" }}>
           <div className="relative min-w-0 flex-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#98A2B3]" />
-            <input
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search labour, contract or note"
-              className="h-10 w-full rounded-xl bg-[#F8FAFC] px-9 text-xs text-[#101828] outline-none placeholder:text-[#98A2B3]"
-              data-ocid="advances.search_input"
-            />
+            <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search labour, contract or note" className="h-10 w-full rounded-xl bg-[#F8FAFC] px-9 text-xs text-[#101828] outline-none placeholder:text-[#98A2B3]" data-ocid="advances.search_input" />
           </div>
-          <select
-            value={filterContractId}
-            onChange={(event) => setFilterContractId(event.target.value)}
-            className="h-10 max-w-[42%] rounded-xl border bg-white px-2 text-[10px] font-bold text-[#101828] outline-none"
-            style={{ borderColor: BORDER }}
-            data-ocid="advances.contract_filter"
-          >
+          <select value={filterContractId} onChange={(event) => setFilterContractId(event.target.value)} className="h-10 max-w-[42%] rounded-xl border bg-white px-2 text-[10px] font-bold text-[#101828] outline-none" style={{ borderColor: "#E4E7EC" }} data-ocid="advances.contract_filter">
             <option value="all">All active</option>
-            {contracts.filter((contract: Contract) => !contract.settled && contract.settled !== 1n).map((contract: Contract) => (
-              <option key={contract.id.toString()} value={contract.id.toString()}>{contract.name}</option>
-            ))}
+            {contracts.filter((contract: Contract) => !contract.settled && contract.settled !== 1n).map((contract: Contract) => <option key={contract.id.toString()} value={contract.id.toString()}>{contract.name}</option>)}
           </select>
         </div>
       </div>
 
-      <main className="mx-auto w-full max-w-5xl flex-1 px-4 pb-4 pt-4 sm:px-6">
-        <section>
-          <div className="mb-3 flex items-end justify-between px-1">
-            <div>
-              <h2 className="text-base font-black text-[#101828]">Outstanding advances</h2>
-              <p className="mt-0.5 text-xs text-[#667085]">Grouped by labour</p>
-            </div>
-            <span className="rounded-full bg-orange-50 px-3 py-1 text-xs font-extrabold text-orange-700">{outstandingRows.length}</span>
+      <main className="mx-auto w-full max-w-5xl px-4 pt-4 sm:px-6">
+        <div className="mb-3 flex items-center justify-between px-1">
+          <div>
+            <h2 className="text-base font-black text-[#101828]">Outstanding advances</h2>
+            <p className="mt-0.5 text-xs text-[#667085]">Grouped by labour</p>
           </div>
-          <Section items={outstandingRows} empty="No outstanding advances found" />
-        </section>
+          <span className="rounded-full bg-orange-50 px-3 py-1 text-xs font-extrabold text-orange-700">{outstandingRows.length}</span>
+        </div>
+        <Section items={outstandingRows} empty="No outstanding advances found" />
       </main>
+    </div>
+  );
 
       {showForm && (
         <div className="fixed inset-0 z-[1000] flex items-end justify-center bg-[#101828]/60 p-0 sm:items-center sm:p-4" onClick={(event) => { if (event.target === event.currentTarget) setShowForm(false); }}>
