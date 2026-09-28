@@ -25,25 +25,33 @@ function AdvancesPage() {
   const [rubberBandY, setRubberBandY] = useState(0);
   const rubberStartY = useRef<number | null>(null);
 
+  const rubberFrame = useRef<number | null>(null);
+
   const handleRubberBandStart = useCallback((event: React.TouchEvent) => {
+    const scrollContainer = document.querySelector(".app-scroll-container") as HTMLElement | null;
+    if (!scrollContainer || scrollContainer.scrollTop > 0) return;
     rubberStartY.current = event.touches[0]?.clientY ?? null;
   }, []);
 
   const handleRubberBandMove = useCallback((event: React.TouchEvent) => {
     const startY = rubberStartY.current;
     const scrollContainer = document.querySelector(".app-scroll-container") as HTMLElement | null;
-    if (startY === null || !scrollContainer || scrollContainer.scrollTop > 1) return;
+    if (startY === null || !scrollContainer || scrollContainer.scrollTop > 0) return;
+
     const currentY = event.touches[0]?.clientY;
     if (currentY === undefined) return;
     const delta = currentY - startY;
-    if (delta > 0) {
-      event.preventDefault();
-      setRubberBandY(Math.min(delta * 0.45, 32));
-    }
+    if (delta <= 0) return;
+    const eased = Math.min(34, Math.pow(delta, 0.78) * 0.9);
+
+    if (rubberFrame.current !== null) cancelAnimationFrame(rubberFrame.current);
+    rubberFrame.current = requestAnimationFrame(() => setRubberBandY(eased));
   }, []);
 
   const handleRubberBandEnd = useCallback(() => {
     rubberStartY.current = null;
+    if (rubberFrame.current !== null) cancelAnimationFrame(rubberFrame.current);
+    rubberFrame.current = null;
     setRubberBandY(0);
   }, []);
   const { data: contracts = [] } = useContracts();
@@ -309,38 +317,91 @@ function AdvancesPage() {
       onTouchEnd={handleRubberBandEnd}
       onTouchCancel={handleRubberBandEnd}
       style={{
-        transform: rubberBandY ? `translateY(${rubberBandY}px)` : undefined,
-        transition: rubberBandY ? "none" : "transform 180ms cubic-bezier(.22,1,.36,1)",
+        transform: rubberBandY ? `translate3d(0, ${rubberBandY}px, 0)` : undefined,
+        transition: rubberBandY ? "none" : "transform 420ms cubic-bezier(.16,1,.3,1)",
+        willChange: rubberBandY ? "transform" : undefined,
       }}
     >
-      <header className="app-tab-header flex h-[200px] shrink-0 flex-col justify-between rounded-b-[28px] bg-[#172536] px-4 py-4 text-white shadow-sm sm:px-6">
+      <header className="app-tab-header flex shrink-0 flex-col justify-between rounded-b-[28px] border-b border-white/10 bg-[#101828] px-4 pt-6 pb-5 text-white shadow-sm sm:px-6">
         <div className="mx-auto w-full max-w-5xl">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <p className="mb-1 flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-[0.2em] text-orange-300"><Wallet className="h-3.5 w-3.5" /> Payroll</p>
-              <ScrollHeaderTitle title="Advances" className="text-2xl" />
-              <p className="mt-0.5 max-w-xl text-[11px] leading-4 text-white/55">Track money paid before settlement and keep deductions visible.</p>
+          <div className="flex min-w-0 items-start justify-between gap-3">
+            <div className="min-w-0 pt-0.5">
+              <div className="flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-[0.2em] text-orange-300">
+                <Wallet className="h-3.5 w-3.5" />
+                <span>Payroll</span>
+              </div>
+              <ScrollHeaderTitle title="Advances" className="mt-1 text-[30px]" />
+              <p className="mt-1 max-w-[250px] text-[11px] leading-4 text-white/55">
+                Track money paid before settlement.
+              </p>
             </div>
-            {isAdmin && <button type="button" onClick={openAdd} className="flex h-11 shrink-0 items-center gap-2 rounded-2xl bg-orange-500 px-3.5 text-[11px] font-extrabold shadow-lg shadow-orange-950/20 active:scale-95" data-ocid="advances.add_button"><Plus className="h-4 w-4" /><span className="hidden sm:inline">Add advance</span><span className="sm:hidden">Add</span></button>}
+            {isAdmin && (
+              <button
+                type="button"
+                onClick={openAdd}
+                className="flex h-11 shrink-0 items-center gap-2 rounded-2xl bg-orange-500 px-3.5 text-[11px] font-extrabold text-white shadow-lg shadow-orange-950/25 transition-transform active:scale-[.97]"
+                data-ocid="advances.add_button"
+              >
+                <Plus className="h-4 w-4" />
+                <span className="hidden sm:inline">Add advance</span>
+                <span className="sm:hidden">Add</span>
+              </button>
+            )}
           </div>
-          <div className="mt-2 grid grid-cols-3 gap-2">
-            <div className="min-w-0 rounded-xl border border-white/10 bg-white/[0.06] px-3 py-2"><p className="truncate text-[8px] font-extrabold uppercase tracking-wider text-white/40">Outstanding</p><p className="mt-0.5 truncate text-sm font-black text-white">{money(outstanding)}</p></div>
-            <div className="min-w-0 rounded-xl border border-white/10 bg-white/[0.06] px-3 py-2"><p className="truncate text-[8px] font-extrabold uppercase tracking-wider text-white/40">Records</p><p className="mt-0.5 text-sm font-black text-white">{outstandingRows.length}</p></div>
-            <div className="min-w-0 rounded-xl border border-white/10 bg-white/[0.06] px-3 py-2"><p className="truncate text-[8px] font-extrabold uppercase tracking-wider text-white/40">Contracts</p><p className="mt-0.5 text-sm font-black text-white">{formContracts.length}</p></div>
+
+          <div className="mt-2.5 grid grid-cols-3 gap-2">
+            <div className="min-w-0 rounded-2xl border border-orange-300/15 bg-orange-500/[0.09] px-3 py-2.5">
+              <p className="truncate text-[8px] font-extrabold uppercase tracking-[0.14em] text-orange-200/60">Outstanding</p>
+              <p className="mt-1 truncate text-[15px] font-black text-white">{money(outstanding)}</p>
+            </div>
+            <div className="min-w-0 rounded-2xl border border-white/10 bg-white/[0.055] px-3 py-2.5">
+              <p className="truncate text-[8px] font-extrabold uppercase tracking-[0.14em] text-white/40">Records</p>
+              <p className="mt-1 truncate text-[15px] font-black text-white">{outstandingRows.length}</p>
+            </div>
+            <div className="min-w-0 rounded-2xl border border-white/10 bg-white/[0.055] px-3 py-2.5">
+              <p className="truncate text-[8px] font-extrabold uppercase tracking-[0.14em] text-white/40">Contracts</p>
+              <p className="mt-1 truncate text-[15px] font-black text-white">{formContracts.length}</p>
+            </div>
           </div>
         </div>
       </header>
 
       <div className="mx-auto w-full max-w-5xl px-4 pt-3 sm:px-6">
         <div className="flex items-center gap-2 rounded-2xl border bg-white p-1.5 shadow-sm" style={{ borderColor: BORDER }}>
-          <div className="relative min-w-0 flex-1"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#98A2B3]" /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search labour, contract or note" className="h-10 w-full rounded-xl bg-[#F8FAFC] px-9 text-xs text-[#101828] outline-none placeholder:text-[#98A2B3]" data-ocid="advances.search_input" /></div>
-          <select value={filterContractId} onChange={(event) => setFilterContractId(event.target.value)} className="h-10 max-w-[42%] rounded-xl border bg-white px-2 text-[10px] font-bold text-[#101828] outline-none" style={{ borderColor: BORDER }} data-ocid="advances.contract_filter"><option value="all">All active</option>{contracts.filter((contract: Contract) => !contract.settled && contract.settled !== 1n).map((contract: Contract) => <option key={contract.id.toString()} value={contract.id.toString()}>{contract.name}</option>)}</select>
+          <div className="relative min-w-0 flex-1">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#98A2B3]" />
+            <input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Search labour, contract or note"
+              className="h-10 w-full rounded-xl bg-[#F8FAFC] px-9 text-xs text-[#101828] outline-none placeholder:text-[#98A2B3]"
+              data-ocid="advances.search_input"
+            />
+          </div>
+          <select
+            value={filterContractId}
+            onChange={(event) => setFilterContractId(event.target.value)}
+            className="h-10 max-w-[42%] rounded-xl border bg-white px-2 text-[10px] font-bold text-[#101828] outline-none"
+            style={{ borderColor: BORDER }}
+            data-ocid="advances.contract_filter"
+          >
+            <option value="all">All active</option>
+            {contracts.filter((contract: Contract) => !contract.settled && contract.settled !== 1n).map((contract: Contract) => (
+              <option key={contract.id.toString()} value={contract.id.toString()}>{contract.name}</option>
+            ))}
+          </select>
         </div>
       </div>
 
-      <main className="mx-auto w-full max-w-5xl px-4 pt-4 sm:px-6">
+      <main className="mx-auto w-full max-w-5xl flex-1 px-4 pb-4 pt-4 sm:px-6">
         <section>
-          <div className="mb-3 flex items-center justify-between px-1"><div><h2 className="text-base font-black text-[#101828]">Outstanding advances</h2><p className="mt-0.5 text-xs" style={{ color: MUTED }}>Grouped by labour</p></div><span className="rounded-full bg-orange-50 px-3 py-1 text-xs font-extrabold text-orange-700">{outstandingRows.length}</span></div>
+          <div className="mb-3 flex items-end justify-between px-1">
+            <div>
+              <h2 className="text-base font-black text-[#101828]">Outstanding advances</h2>
+              <p className="mt-0.5 text-xs text-[#667085]">Grouped by labour</p>
+            </div>
+            <span className="rounded-full bg-orange-50 px-3 py-1 text-xs font-extrabold text-orange-700">{outstandingRows.length}</span>
+          </div>
           <Section items={outstandingRows} empty="No outstanding advances found" />
         </section>
       </main>
