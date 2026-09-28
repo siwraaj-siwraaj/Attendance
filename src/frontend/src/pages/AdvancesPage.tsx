@@ -319,16 +319,19 @@ function AdvancesPage() {
             {isAdmin && <button type="button" onClick={openAdd} className="flex h-11 shrink-0 items-center gap-2 rounded-2xl bg-orange-500 px-3.5 text-[11px] font-extrabold shadow-lg shadow-orange-950/20 active:scale-95" data-ocid="advances.add_button"><Plus className="h-4 w-4" /><span className="hidden sm:inline">Add advance</span><span className="sm:hidden">Add</span></button>}
           </div>
           <div className="mt-2 grid grid-cols-3 gap-2">
-            <div className="rounded-xl border border-white/10 bg-white/[0.06] px-2.5 py-2"><p className="text-[8px] font-extrabold uppercase tracking-wider text-white/40">Outstanding</p><p className="mt-0.5 truncate text-sm font-black text-white">{money(outstanding)}</p></div>
-            <div className="rounded-xl border border-white/10 bg-white/[0.06] px-2.5 py-2"><p className="text-[8px] font-extrabold uppercase tracking-wider text-white/40">Records</p><p className="mt-0.5 text-sm font-black text-white">{outstandingRows.length}</p></div>
-            <div className="rounded-xl border border-white/10 bg-white/[0.06] px-2.5 py-2"><p className="text-[8px] font-extrabold uppercase tracking-wider text-white/40">Contracts</p><p className="mt-0.5 text-sm font-black text-white">{formContracts.length}</p></div>
+            <div className="min-w-0 rounded-xl border border-white/10 bg-white/[0.06] px-3 py-2"><p className="truncate text-[8px] font-extrabold uppercase tracking-wider text-white/40">Outstanding</p><p className="mt-0.5 truncate text-sm font-black text-white">{money(outstanding)}</p></div>
+            <div className="min-w-0 rounded-xl border border-white/10 bg-white/[0.06] px-3 py-2"><p className="truncate text-[8px] font-extrabold uppercase tracking-wider text-white/40">Records</p><p className="mt-0.5 text-sm font-black text-white">{outstandingRows.length}</p></div>
+            <div className="min-w-0 rounded-xl border border-white/10 bg-white/[0.06] px-3 py-2"><p className="truncate text-[8px] font-extrabold uppercase tracking-wider text-white/40">Contracts</p><p className="mt-0.5 text-sm font-black text-white">{formContracts.length}</p></div>
           </div>
         </div>
-        <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.06] p-1.5">
-          <div className="relative min-w-0 flex-1"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search labour, contract or note" className="h-10 w-full rounded-xl bg-white/5 px-9 text-xs text-white outline-none placeholder:text-white/25" data-ocid="advances.search_input" /></div>
-          <select value={filterContractId} onChange={(event) => setFilterContractId(event.target.value)} className="h-10 max-w-[42%] rounded-xl border border-white/10 bg-[#101d2c] px-2 text-[10px] font-bold text-white outline-none" data-ocid="advances.contract_filter"><option value="all">All active</option>{contracts.filter((contract: Contract) => !contract.settled && contract.settled !== 1n).map((contract: Contract) => <option key={contract.id.toString()} value={contract.id.toString()}>{contract.name}</option>)}</select>
-        </div>
       </header>
+
+      <div className="mx-auto w-full max-w-5xl px-4 pt-3 sm:px-6">
+        <div className="flex items-center gap-2 rounded-2xl border bg-white p-1.5 shadow-sm" style={{ borderColor: BORDER }}>
+          <div className="relative min-w-0 flex-1"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#98A2B3]" /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search labour, contract or note" className="h-10 w-full rounded-xl bg-[#F8FAFC] px-9 text-xs text-[#101828] outline-none placeholder:text-[#98A2B3]" data-ocid="advances.search_input" /></div>
+          <select value={filterContractId} onChange={(event) => setFilterContractId(event.target.value)} className="h-10 max-w-[42%] rounded-xl border bg-white px-2 text-[10px] font-bold text-[#101828] outline-none" style={{ borderColor: BORDER }} data-ocid="advances.contract_filter"><option value="all">All active</option>{contracts.filter((contract: Contract) => !contract.settled && contract.settled !== 1n).map((contract: Contract) => <option key={contract.id.toString()} value={contract.id.toString()}>{contract.name}</option>)}</select>
+        </div>
+      </div>
 
       <main className="mx-auto w-full max-w-5xl px-4 pb-32 pt-4 sm:px-6">
         <section>
