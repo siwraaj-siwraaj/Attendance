@@ -46,7 +46,7 @@ function SettledPage() {
 
   if (isLoading) return <div className="flex h-full items-center justify-center"><LoadingSpinner size="lg"/></div>;
 
-  return <div className="h-full overflow-hidden bg-[#080d1b] text-white font-['Figtree',sans-serif]">
+  return <div className="h-full overflow-hidden bg-[#F8FAFC] text-white font-['Figtree',sans-serif]">
     <div className="h-full overflow-y-auto px-4 pt-4 pb-28" data-page-scroll>
       {/* Dashboard hero */}
       <section className="relative overflow-hidden rounded-b-[28px] border border-orange-400/15 bg-gradient-to-br from-[#172039] via-[#111a2d] to-[#0d1323] p-5 shadow-xl">
