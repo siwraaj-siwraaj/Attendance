@@ -349,7 +349,7 @@ export default function PaymentsPage({
   }
 
   return (
-    <div className="flex flex-col bg-[#F8FAFC] text-[#182230]">
+    <div className="flex flex-col bg-[#F8FAFC] pb-32 text-[#182230]">
       <header className="app-tab-header shrink-0 rounded-b-[28px] bg-[#172536] px-4 pb-2 pt-2 text-white sm:px-6">
         <div className="mx-auto w-full max-w-5xl">
           <div className="flex items-start justify-between gap-3">
@@ -469,7 +469,7 @@ export default function PaymentsPage({
         </div>
       </header>
 
-      <main className="px-4 pb-32 pt-4 sm:px-6">
+      <main className="px-4 pt-4 sm:px-6">
         <div className="mx-auto w-full max-w-5xl">
           {!paymentData ? (
             <div className="py-8 sm:py-12">
