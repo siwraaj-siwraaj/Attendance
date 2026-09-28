@@ -49,6 +49,8 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
   const [contractsScrollTop, setContractsScrollTop] = useState(0);
   const [contractsTitleTop, setContractsTitleTop] = useState<number | null>(null);
   const contractsTitleRef = useRef<HTMLHeadingElement>(null);
+  const searchAreaRef = useRef<HTMLDivElement>(null);
+  const searchToggleRef = useRef<HTMLButtonElement>(null);
 
   const getBedBase = () => Number(localStorage.getItem("rossie_bed_base") || "11000") || 11000;
   const getPaperBase = () => Number(localStorage.getItem("rossie_paper_base") || "7000") || 7000;
@@ -94,6 +96,17 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
       scrollContainer.removeEventListener("scroll", onScroll);
     };
   }, []);
+
+  useEffect(() => {
+    if (!showSearch) return;
+    const handleOutsidePointer = (event: PointerEvent) => {
+      const target = event.target as Node | null;
+      if (!target || searchAreaRef.current?.contains(target) || searchToggleRef.current?.contains(target)) return;
+      setShowSearch(false);
+    };
+    document.addEventListener("pointerdown", handleOutsidePointer, true);
+    return () => document.removeEventListener("pointerdown", handleOutsidePointer, true);
+  }, [showSearch]);
 
   useEffect(() => {
     if (!showForm) return;
@@ -237,6 +250,7 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
           </div>
           <div className="flex shrink-0 items-center gap-2">
             <button
+              ref={searchToggleRef}
               type="button"
               onClick={() => setShowSearch((open) => !open)}
               className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/15 bg-white/10 text-white transition-colors hover:bg-white/15"
@@ -257,8 +271,11 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
           </div>
         </div>
 
-        {showSearch && (
-          <div className="mt-4 relative">
+      </header>
+
+      {showSearch && (
+        <div ref={searchAreaRef} className="px-5 pt-4" data-ocid="contracts.search_area">
+          <div className="relative">
             <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2" style={{ color: "#98A2B3" }} />
             <input
               autoFocus
@@ -271,10 +288,8 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
               data-ocid="contracts.search_input"
             />
           </div>
-        )}
-
-      </header>
-
+        </div>
+      )}
 
       <main className="px-5 pb-28">
         {filteredContracts.length === 0 ? (
