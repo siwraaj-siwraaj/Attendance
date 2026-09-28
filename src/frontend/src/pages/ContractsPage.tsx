@@ -48,6 +48,7 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
   const [contractsScrollTop, setContractsScrollTop] = useState(0);
   const [contractsTitleTop, setContractsTitleTop] = useState<number | null>(null);
   const contractsTitleRef = useRef<HTMLHeadingElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const getBedBase = () => Number(localStorage.getItem("rossie_bed_base") || "11000") || 11000;
   const getPaperBase = () => Number(localStorage.getItem("rossie_paper_base") || "7000") || 7000;
@@ -236,9 +237,12 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
           </div>
           <button
             type="button"
-            onClick={() => document.querySelector<HTMLInputElement>('input[data-ocid="contracts.search_input"]')?.focus()}
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border text-white transition-transform active:scale-95"
-            style={{ background: "#25364A", borderColor: "#34495E" }}
+            onClick={() => {
+              searchInputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+              searchInputRef.current?.focus();
+            }}
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border text-white transition-all hover:bg-[#2D4056] active:scale-95"
+            style={{ background: "#25364A", borderColor: "#41556B" }}
             aria-label="Search contracts"
             data-ocid="contracts.search_button"
           >
@@ -246,15 +250,15 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
           </button>
         </div>
 
-        <div className="mt-4 grid grid-cols-2 gap-2">
+        <div className="mt-3 grid grid-cols-2 gap-2">
           <button
             type="button"
             onClick={() => setContractFilter("active")}
-            className="flex h-11 items-center justify-between rounded-xl border px-3 text-left transition-all"
+            className="flex h-10 items-center justify-between rounded-xl border px-3 text-left transition-all"
             style={{
-              background: "#25364A",
+              background: contractFilter === "active" ? "#30445A" : "#223247",
               color: "#FFFFFF",
-              borderColor: contractFilter === "active" ? "#F97316" : "#34495E",
+              borderColor: contractFilter === "active" ? "#F97316" : "#41556B",
               boxShadow: contractFilter === "active" ? "0 0 0 1px #F97316 inset" : "none",
             }}
           >
@@ -264,12 +268,12 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
           <button
             type="button"
             onClick={() => setContractFilter("completed")}
-            className="flex h-11 items-center justify-between rounded-xl border px-3 text-left transition-all"
+            className="flex h-10 items-center justify-between rounded-xl border px-3 text-left transition-all"
             style={{
-              background: "#25364A",
+              background: contractFilter === "completed" ? "#30445A" : "#223247",
               color: "#FFFFFF",
-              borderColor: contractFilter === "completed" ? "#22C55E" : "#34495E",
-              boxShadow: contractFilter === "completed" ? "0 0 0 1px #22C55E inset" : "none",
+              borderColor: contractFilter === "completed" ? "#4ADE80" : "#41556B",
+              boxShadow: contractFilter === "completed" ? "0 0 0 1px #4ADE80 inset" : "none",
             }}
           >
             <span className="text-xs font-bold uppercase tracking-wider">Completed <span className="ml-1 text-sm font-extrabold">{completedCount}</span></span>
@@ -277,10 +281,60 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
           </button>
         </div>
 
+        <div className="mt-2 flex items-center justify-between gap-2">
+          <div className="flex h-10 flex-1 items-center rounded-xl border p-1" style={{ background: "#223247", borderColor: "#41556B" }}>
+            <button
+              type="button"
+              onClick={() => setViewMode("card")}
+              className="flex h-8 flex-1 items-center justify-center gap-1.5 rounded-lg text-xs font-bold transition-all"
+              style={{
+                background: viewMode === "card" ? "#F97316" : "transparent",
+                color: viewMode === "card" ? "#FFFFFF" : "#B8C5D3",
+              }}
+              aria-label="Card view"
+              aria-pressed={viewMode === "card"}
+              data-ocid="contracts.card_view_button"
+            >
+              <Grid2X2 className="h-4 w-4" /> Cards
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode("list")}
+              className="flex h-8 flex-1 items-center justify-center gap-1.5 rounded-lg text-xs font-bold transition-all"
+              style={{
+                background: viewMode === "list" ? "#F97316" : "transparent",
+                color: viewMode === "list" ? "#FFFFFF" : "#B8C5D3",
+              }}
+              aria-label="List view"
+              aria-pressed={viewMode === "list"}
+              data-ocid="contracts.list_view_button"
+            >
+              <List className="h-4 w-4" /> List
+            </button>
+          </div>
+          <div className="relative flex h-10 w-11 shrink-0 items-center justify-center rounded-xl border" style={{ background: "#223247", borderColor: "#41556B" }}>
+            <Search className="h-4 w-4" style={{ color: "#B8C5D3" }} />
+          </div>
+        </div>
+
       </header>
 
 
       <main className="px-5">
+        <div className="relative mt-4">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" style={{ color: "#98A2B3" }} />
+          <input
+            ref={searchInputRef}
+            type="search"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search contracts"
+            className="h-11 w-full rounded-xl border bg-white pl-10 pr-4 text-sm font-medium outline-none"
+            style={{ borderColor: "#E4E7EC", color: NAVY }}
+            data-ocid="contracts.search_input"
+            aria-label="Search contracts"
+          />
+        </div>
         {filteredContracts.length === 0 ? (
           <div className="rounded-3xl border bg-white px-6 py-12 text-center" style={{ borderColor: "#E4E7EC" }}>
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl" style={{ background: "#FFF3EB", color: ORANGE }}>
