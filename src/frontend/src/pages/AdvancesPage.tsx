@@ -315,11 +315,11 @@ function AdvancesPage() {
         <div className="mx-auto w-full max-w-5xl">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <div className="mb-1 flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-[0.2em] text-orange-300">
+              <div className="advances-header-detail mb-1 flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-[0.2em] text-orange-300">
                 <Wallet size={14} /> Payroll
               </div>
               <ScrollHeaderTitle title="Advances" className="text-2xl" />
-              <p className="mt-0.5 max-w-xl text-[11px] leading-4 text-white/55">
+              <p className="advances-header-detail mt-0.5 max-w-xl text-[11px] leading-4 text-white/55">
                 Track money paid before settlement.
               </p>
             </div>
