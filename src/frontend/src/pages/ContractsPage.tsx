@@ -271,6 +271,32 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
           </div>
         </div>
 
+        <div className="mt-5 rounded-2xl border border-white/10 bg-white/[0.06] p-1.5" role="tablist" aria-label="Contract status">
+          <div className="grid grid-cols-2 gap-1.5">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={contractFilter === "active"}
+              onClick={() => setContractFilter("active")}
+              className={`flex min-h-12 items-center justify-between rounded-xl px-4 text-sm font-semibold transition-all duration-200 ${contractFilter === "active" ? "bg-white text-[#172536] shadow-sm" : "text-white/70 hover:bg-white/10 hover:text-white"}`}
+              data-ocid="contracts.ongoing_tab"
+            >
+              <span className="flex items-center gap-2"><span className={`h-2 w-2 rounded-full ${contractFilter === "active" ? "bg-emerald-500" : "bg-emerald-400"}`} />Ongoing</span>
+              <span className={`min-w-7 rounded-lg px-2 py-1 text-xs tabular-nums ${contractFilter === "active" ? "bg-[#F2F4F7] text-[#344054]" : "bg-white/10 text-white/80"}`}>{activeCount}</span>
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={contractFilter === "completed"}
+              onClick={() => setContractFilter("completed")}
+              className={`flex min-h-12 items-center justify-between rounded-xl px-4 text-sm font-semibold transition-all duration-200 ${contractFilter === "completed" ? "bg-white text-[#172536] shadow-sm" : "text-white/70 hover:bg-white/10 hover:text-white"}`}
+              data-ocid="contracts.completed_tab"
+            >
+              <span className="flex items-center gap-2"><CheckCircle2 className={`h-4 w-4 ${contractFilter === "completed" ? "text-emerald-600" : "text-white/60"}`} />Completed</span>
+              <span className={`min-w-7 rounded-lg px-2 py-1 text-xs tabular-nums ${contractFilter === "completed" ? "bg-[#F2F4F7] text-[#344054]" : "bg-white/10 text-white/80"}`}>{completedCount}</span>
+            </button>
+          </div>
+        </div>
       </header>
 
       {showSearch && (
