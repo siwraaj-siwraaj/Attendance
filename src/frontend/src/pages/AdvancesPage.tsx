@@ -298,7 +298,7 @@ function AdvancesPage() {
 
   return (
     <div
-      className="flex flex-col bg-[#F8FAFC] pb-32 font-['Figtree',sans-serif] text-[#182230]"
+      className="min-h-full flex flex-col bg-[#F8FAFC] pb-32 font-['Figtree',sans-serif] text-[#182230]"
       onTouchStart={handleRubberBandStart}
       onTouchMove={handleRubberBandMove}
       onTouchEnd={handleRubberBandEnd}
