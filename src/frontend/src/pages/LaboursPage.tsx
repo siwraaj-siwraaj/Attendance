@@ -94,7 +94,7 @@ function LaboursPage() {
         <main className="px-4 pt-4">
           <div className="relative">
             <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#101828]/45" />
-            <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search labour, ID or mobile" className="h-12 w-full rounded-2xl border border-[#101828]/10 bg-white pl-11 pr-4 text-sm text-[#101828] shadow-sm outline-none focus:border-[#F97316] focus:ring-2 focus:ring-orange-100" data-ocid="labours.search_input" />
+            <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search labour, ID or mobile" className="h-14 w-full rounded-2xl border border-[#101828]/10 bg-white pl-11 pr-4 text-sm text-[#101828] shadow-sm outline-none focus:border-[#F97316] focus:ring-2 focus:ring-orange-100" data-ocid="labours.search_input" />
           </div>
 
           <div className="mt-3 flex rounded-xl bg-[#101828]/5 p-1">
@@ -103,7 +103,7 @@ function LaboursPage() {
             ))}
           </div>
 
-          <div className="mt-5 flex items-center justify-between">
+          <div className="mt-5 flex items-center gap-4">
             <div><h2 className="text-sm font-extrabold">Team members</h2><p className="mt-0.5 text-[11px] text-[#101828]/50">{filtered.length} shown</p></div>
             {isAdmin && <button type="button" onClick={openAdd} className="text-xs font-bold text-[#F97316]">+ New labour</button>}
           </div>
