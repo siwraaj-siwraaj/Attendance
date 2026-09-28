@@ -216,204 +216,94 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
   }
 
   return (
-    <div
-      className="flex min-h-full flex-col bg-[#F8FAFC] pb-32 font-['Figtree',sans-serif] text-[#182230]"
-      onTouchStart={handleRubberBandStart}
-      onTouchMove={handleRubberBandMove}
-      onTouchEnd={handleRubberBandEnd}
-      onTouchCancel={handleRubberBandEnd}
-      style={{
-        background: OFF_WHITE,
-        color: NAVY,
-        transform: rubberBandY ? `translate3d(0, ${rubberBandY}px, 0)` : undefined,
-        transition: rubberBandY ? "none" : "transform 420ms cubic-bezier(.16,1,.3,1)",
-        willChange: rubberBandY ? "transform" : undefined,
-      }}
-    >
-      <header className="app-tab-header flex shrink-0 flex-col justify-between rounded-b-[28px] border-b border-white/10 bg-[#101828] px-4 pt-6 pb-5 text-white shadow-sm sm:px-6">
+    <div className="flex flex-col bg-[#F8FAFC] pb-32 text-[#182230]">
+      <header className="app-tab-header flex h-[200px] shrink-0 flex-col justify-between rounded-b-[28px] bg-[#172536] px-4 py-4 text-white sm:px-6">
         <div className="mx-auto w-full max-w-5xl">
-          <div className="flex min-w-0 items-start justify-between gap-3">
-            <div className="min-w-0 pt-0.5">
-              <div className="flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-[0.2em] text-orange-300">
-                <FileText className="h-3.5 w-3.5" />
-                <span>Work management</span>
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <div className="mb-1 flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-[0.2em] text-orange-300">
+                <FileText size={14} /> Work management
               </div>
-              <ScrollHeaderTitle title="Contracts" className="mt-1 text-[30px]" />
-              <p className="mt-1 max-w-[250px] text-[11px] leading-4 text-white/55">
-                Manage agreements, rates and attendance.
+              <ScrollHeaderTitle title="Contracts" className="text-2xl" />
+              <p className="mt-0.5 max-w-xl text-[11px] leading-4 text-white/55">
+                Manage contracts, rates and work columns.
               </p>
             </div>
-
-            <div className="flex shrink-0 items-center gap-2 pt-0.5">
-              {canEdit && (
-                <button
-                  type="button"
-                  onClick={openNew}
-                  className="flex h-11 items-center gap-2 rounded-2xl bg-orange-500 px-3.5 text-[11px] font-extrabold text-white shadow-lg shadow-orange-950/25 transition-transform active:scale-[.97]"
-                  data-ocid="contract.add_button"
-                >
-                  <Plus className="h-4 w-4" />
-                  <span className="hidden sm:inline">New contract</span>
-                  <span className="sm:hidden">Add</span>
-                </button>
-              )}
-              <button
-                ref={searchToggleRef}
-                type="button"
-                onClick={() => setShowSearch((open) => !open)}
-                className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.07] text-white/90 transition-colors hover:bg-white/10"
-                aria-label={showSearch ? "Close contract search" : "Search contracts"}
-                data-ocid={showSearch ? "contracts.search_back_close" : "contracts.search_toggle"}
-              >
-                {showSearch ? <X className="h-5 w-5" /> : <Search className="h-5 w-5" />}
+            {canEdit && (
+              <button type="button" onClick={openNew} className="flex h-11 shrink-0 items-center gap-2 rounded-2xl bg-orange-500 px-3.5 text-[11px] font-extrabold shadow-lg shadow-orange-950/30 active:scale-95" data-ocid="contract.add_button">
+                <Plus size={16} /><span className="hidden sm:inline">New contract</span><span className="sm:hidden">Add</span>
               </button>
-              <button
-                type="button"
-                onClick={() => setViewMode(viewMode === "card" ? "list" : "card")}
-                className="hidden h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.07] text-white/90 transition-colors hover:bg-white/10 sm:flex"
-                aria-label="Toggle contract view"
-                data-ocid="contracts.view_toggle"
-              >
-                {viewMode === "card" ? <List className="h-5 w-5" /> : <Grid2X2 className="h-5 w-5" />}
-              </button>
-            </div>
+            )}
           </div>
-        </div>
 
-        <div className="mx-auto w-full max-w-5xl rounded-2xl border border-white/10 bg-white/[0.055] p-1.5" role="tablist" aria-label="Contract status">
-          <div className="grid grid-cols-2 gap-1.5">
-            <button
-              type="button"
-              role="tab"
-              aria-selected={contractFilter === "active"}
-              onClick={() => setContractFilter("active")}
-              className={`flex min-h-11 items-center justify-between rounded-xl px-4 text-xs font-extrabold transition-all ${contractFilter === "active" ? "bg-white text-[#101828] shadow-sm" : "text-white/60 hover:bg-white/10 hover:text-white"}`}
-              data-ocid="contracts.ongoing_tab"
-            >
-              <span className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-emerald-400" />Ongoing</span>
-              <span className={`rounded-lg px-2 py-1 text-[10px] ${contractFilter === "active" ? "bg-[#101828]/[0.07]" : "bg-white/10"}`}>{activeCount}</span>
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={contractFilter === "completed"}
-              onClick={() => setContractFilter("completed")}
-              className={`flex min-h-11 items-center justify-between rounded-xl px-4 text-xs font-extrabold transition-all ${contractFilter === "completed" ? "bg-white text-[#101828] shadow-sm" : "text-white/60 hover:bg-white/10 hover:text-white"}`}
-              data-ocid="contracts.completed_tab"
-            >
-              <span className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4" />Completed</span>
-              <span className={`rounded-lg px-2 py-1 text-[10px] ${contractFilter === "completed" ? "bg-[#101828]/[0.07]" : "bg-white/10"}`}>{completedCount}</span>
-            </button>
+          <div className="relative mt-1.5 rounded-2xl border border-white/10 bg-white/[0.06] p-1.5 shadow-inner">
+            <div className="flex items-center justify-between gap-3">
+              <button type="button" onClick={() => setShowSearch((open) => !open)} className="flex min-w-0 flex-1 items-center gap-3 text-left" data-ocid="contracts.search_toggle">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-orange-500/15 text-orange-300"><Search size={18} /></span>
+                <span className="min-w-0">
+                  <span className="block text-[9px] font-bold uppercase tracking-widest text-white/35">Contract view</span>
+                  <span className="mt-0.5 block truncate text-sm font-bold">{contractFilter === "active" ? "Ongoing contracts" : "Completed contracts"}</span>
+                </span>
+                <ChevronDown className={`ml-auto shrink-0 text-white/40 transition ${showSearch ? "rotate-180" : ""}`} size={18} />
+              </button>
+              <span className="shrink-0 rounded-xl bg-white/10 px-3 py-2.5 text-[11px] font-extrabold text-white/75">{filteredContracts.length} shown</span>
+            </div>
           </div>
         </div>
       </header>
 
       {showSearch && (
-        <div ref={searchAreaRef} className="mx-auto w-full max-w-5xl px-4 pt-3 sm:px-6" data-ocid="contracts.search_area">
+        <div className="mx-auto w-full max-w-5xl px-4 pt-3 sm:px-6" data-ocid="contracts.search_area">
           <div className="relative">
-            <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#98A2B3]" />
-            <input
-              autoFocus
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search contracts"
-              className="h-12 w-full rounded-2xl border bg-white pl-11 pr-4 text-sm font-medium outline-none"
-              style={{ borderColor: "#E4E7EC", color: NAVY }}
-              data-ocid="contracts.search_input"
-            />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#98A2B3]" />
+            <input autoFocus type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search contracts" className="h-11 w-full rounded-xl bg-[#F8FAFC] px-9 text-xs text-[#101828] outline-none ring-1 ring-[#E4E7EC] focus:ring-orange-300" data-ocid="contracts.search_input" />
+          </div>
+          <div className="mt-2 grid grid-cols-2 gap-2">
+            <button type="button" onClick={() => setContractFilter("active")} className={`h-10 rounded-xl text-xs font-extrabold ${contractFilter === "active" ? "bg-[#172536] text-white" : "border bg-white text-[#667085]"}`} data-ocid="contracts.ongoing_tab">Ongoing · {activeCount}</button>
+            <button type="button" onClick={() => setContractFilter("completed")} className={`h-10 rounded-xl text-xs font-extrabold ${contractFilter === "completed" ? "bg-[#172536] text-white" : "border bg-white text-[#667085]"}`} data-ocid="contracts.completed_tab">Completed · {completedCount}</button>
           </div>
         </div>
       )}
 
-      <main className="mx-auto w-full max-w-5xl flex-1 px-4 pb-4 pt-4 sm:px-6">
+      <main className="mx-auto w-full max-w-5xl px-4 pt-4 sm:px-6">
         {filteredContracts.length === 0 ? (
-          <div className="rounded-[26px] border bg-white px-6 py-14 text-center shadow-sm" style={{ borderColor: "#E4E7EC" }}>
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-orange-50 text-orange-500">
-              <FileText className="h-6 w-6" />
-            </div>
-            <h2 className="mt-4 text-lg font-black text-[#101828]">No {contractFilter} contracts</h2>
-            <p className="mt-1 text-sm text-[#667085]">
-              {canEdit && contractFilter === "active" ? "Create a new contract to get started." : "Try another filter or search."}
-            </p>
+          <div className="rounded-2xl border bg-white p-8 text-center shadow-sm" style={{ borderColor: "#E4E7EC" }}>
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-50 text-orange-500"><FileText size={20} /></div>
+            <h2 className="mt-3 text-base font-black text-[#101828]">No {contractFilter} contracts</h2>
+            <p className="mt-1 text-xs text-[#667085]">{canEdit && contractFilter === "active" ? "Create a new contract to get started." : "Try another filter or search."}</p>
           </div>
-        ) : viewMode === "card" ? (
-          <div className="space-y-3">
-            {filteredContracts.map((c: any) => {
+        ) : (
+          <div className="overflow-hidden rounded-2xl border bg-white shadow-sm" style={{ borderColor: "#E4E7EC" }}>
+            {filteredContracts.map((c: any, index: number) => {
               const id = c.id.toString();
               const expanded = expandedContractId === id;
-              const columnCount = c.workColumns?.length ?? 0;
-              const totalPool = Number(c.bedAmount || 0) + Number(c.paperAmount || 0) + Number(c.meshAmount || 0);
               return (
-                <article
-                  key={id}
-                  className="overflow-hidden rounded-[26px] border bg-white shadow-[0_8px_30px_rgba(16,24,40,0.06)]"
-                  style={{ borderColor: "#E4E7EC" }}
-                  data-ocid="contract.card"
-                >
-                  <button
-                    type="button"
-                    className="w-full p-4 text-left sm:p-5"
-                    onClick={() => setExpandedContractId(expanded ? null : id)}
-                    aria-expanded={expanded}
-                    aria-label="Toggle contract details"
-                  >
-                    <div className="flex items-start gap-3.5">
-                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#FFF3EB] text-orange-500">
-                        <FileText className="h-5 w-5" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="min-w-0">
-                            <p className="truncate text-[15px] font-black text-[#101828]">{c.name}</p>
-                            <p className="mt-1 flex items-center gap-1.5 text-[11px] font-medium text-[#98A2B3]">
-                              <CalendarDays className="h-3.5 w-3.5" />{fmtDate(c.createdAt)}<span>·</span>{columnCount} columns
-                            </p>
-                          </div>
-                          <ChevronDown className={`h-5 w-5 shrink-0 text-[#98A2B3] transition-transform duration-200 ${expanded ? "rotate-180" : ""}`} />
-                        </div>
-                        <div className="mt-4 flex items-end justify-between gap-3">
-                          <div className="min-w-0">
-                            <p className="text-[9px] font-extrabold uppercase tracking-[0.16em] text-[#98A2B3]">Contract value</p>
-                            <p className="mt-0.5 truncate text-[26px] font-black tracking-tight text-[#101828]">{fmt(c.contractAmount)}</p>
-                          </div>
-                          <div className="shrink-0 text-right">
-                            <span className={`inline-flex rounded-full px-2.5 py-1 text-[10px] font-extrabold ${c.settled ? "bg-emerald-50 text-emerald-700" : "bg-orange-50 text-orange-700"}`}>
-                              {c.settled ? "Completed" : "Active"}
-                            </span>
-                            <p className="mt-1 text-[10px] font-semibold text-[#98A2B3]">{fmt(totalPool)} work pool</p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+                <article key={id} className={index ? "border-t" : ""} style={{ borderColor: "#EAECF0" }} data-ocid="contract.card">
+                  <button type="button" onClick={() => setExpandedContractId(expanded ? null : id)} className="flex w-full items-center gap-3 px-4 py-4 text-left active:bg-slate-50">
+                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#FFF3EB] text-orange-500"><FileText size={18} /></span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm font-extrabold text-[#101828]">{c.name}</span>
+                      <span className="mt-1 flex items-center gap-2 text-[11px] text-[#667085]"><CalendarDays size={14} />{fmtDate(c.createdAt)}<span>•</span>{c.workColumns?.length ?? 0} work columns</span>
+                    </span>
+                    <span className="shrink-0 text-right">
+                      <span className="block text-base font-black text-orange-500">{fmt(c.contractAmount)}</span>
+                      <span className={`text-[9px] font-bold uppercase tracking-wider ${c.settled ? "text-emerald-600" : "text-orange-600"}`}>{c.settled ? "Completed" : "Active"}</span>
+                    </span>
+                    <ChevronDown className={`h-4 w-4 shrink-0 text-[#98A2B3] transition-transform ${expanded ? "rotate-180" : ""}`} />
                   </button>
-
                   {expanded && (
-                    <div className="border-t bg-[#F8FAFC] px-4 pb-4 pt-3 sm:px-5" style={{ borderColor: "#EAECF0" }}>
+                    <div className="border-t bg-[#F8FAFC] p-3 sm:p-4" style={{ borderColor: "#EAECF0" }}>
                       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                        {[
-                          ["Multiplier", `${c.multiplier}x`],
-                          ["Bed", fmt(c.bedAmount)],
-                          ["Paper", fmt(c.paperAmount)],
-                          ["Mesh", fmt(c.meshAmount ?? 0)],
-                          ["Machine", fmt(c.machineExpenses)],
-                          ["Created", fmtDate(c.createdAt)],
-                        ].map(([label, value]) => (
-                          <div key={label} className="rounded-2xl border bg-white p-3" style={{ borderColor: "#EAECF0" }}>
-                            <p className="text-[9px] font-extrabold uppercase tracking-[0.14em] text-[#98A2B3]">{label}</p>
+                        {[[ "Multiplier", `${c.multiplier}x` ],[ "Bed", fmt(c.bedAmount) ],[ "Paper", fmt(c.paperAmount) ],[ "Mesh", fmt(c.meshAmount ?? 0) ],[ "Machine", fmt(c.machineExpenses) ],[ "Created", fmtDate(c.createdAt) ]].map(([label,value]) => (
+                          <div key={label} className="rounded-xl border bg-white p-3" style={{ borderColor: "#EAECF0" }}>
+                            <p className="text-[9px] font-bold uppercase tracking-wider text-[#98A2B3]">{label}</p>
                             <p className="mt-1 truncate text-sm font-bold text-[#101828]">{value}</p>
                           </div>
                         ))}
                       </div>
                       <div className="mt-3 flex flex-wrap gap-2">
-                        <button type="button" onClick={(e) => { e.stopPropagation(); onViewAttendance?.(c.id); }} className="flex h-10 items-center gap-2 rounded-xl bg-orange-500 px-4 text-sm font-bold text-white" data-ocid="contract.view_attendance_button">
-                          View attendance <ArrowRight className="h-4 w-4" />
-                        </button>
-                        {canEdit && (
-                          <button type="button" onClick={(e) => { e.stopPropagation(); openEdit(c); }} className="flex h-10 items-center gap-2 rounded-xl border bg-white px-4 text-sm font-bold text-[#101828]" style={{ borderColor: "#D0D5DD" }} data-ocid="contract.edit_button">
-                            <Pencil className="h-3.5 w-3.5" />Edit
-                          </button>
-                        )}
+                        <button type="button" onClick={() => onViewAttendance?.(c.id)} className="flex h-10 items-center gap-2 rounded-xl bg-orange-500 px-4 text-xs font-extrabold text-white" data-ocid="contract.view_attendance_button">View attendance <ArrowRight size={15} /></button>
+                        {canEdit && <button type="button" onClick={() => openEdit(c)} className="flex h-10 items-center gap-2 rounded-xl border bg-white px-4 text-xs font-bold text-[#101828]" style={{ borderColor: "#D0D5DD" }} data-ocid="contract.edit_button"><Pencil size={14} />Edit</button>}
                       </div>
                     </div>
                   )}
@@ -421,49 +311,10 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
               );
             })}
           </div>
-        ) : (
-          <div className="overflow-hidden rounded-[26px] border bg-white shadow-sm" style={{ borderColor: "#E4E7EC" }}>
-            {filteredContracts.map((c: any, idx: number) => {
-              const id = c.id.toString();
-              const expanded = expandedContractId === id;
-              return (
-                <div key={id}>
-                  <button type="button" onClick={() => setExpandedContractId(expanded ? null : id)} className={`flex w-full items-center gap-3 p-4 text-left transition-colors hover:bg-slate-50 ${idx ? "border-t" : ""}`} style={{ borderColor: "#EAECF0" }} data-ocid={`contract.item.${idx + 1}`}>
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#FFF3EB] text-orange-500"><FileText className="h-4 w-4" /></div>
-                    <span className="min-w-0 flex-1 truncate text-sm font-bold text-[#101828]">{c.name}</span>
-                    <span className="text-sm font-extrabold text-orange-500">{fmt(c.contractAmount)}</span>
-                    <ChevronDown className={`h-4 w-4 shrink-0 text-[#98A2B3] transition-transform ${expanded ? "rotate-180" : ""}`} />
-                  </button>
-                  {expanded && (
-                    <div className="border-t bg-[#F8FAFC] px-4 pb-4 pt-3" style={{ borderColor: "#EAECF0" }}>
-                      <div className="grid grid-cols-2 gap-3">
-                        <div><p className="text-[10px] font-bold uppercase tracking-wider text-[#98A2B3]">Multiplier</p><p className="text-sm font-bold">{c.multiplier}x</p></div>
-                        <div><p className="text-[10px] font-bold uppercase tracking-wider text-[#98A2B3]">Created</p><p className="text-sm font-bold">{fmtDate(c.createdAt)}</p></div>
-                        <div><p className="text-[10px] font-bold uppercase tracking-wider text-[#98A2B3]">Bed</p><p className="text-sm font-bold">{fmt(c.bedAmount)}</p></div>
-                        <div><p className="text-[10px] font-bold uppercase tracking-wider text-[#98A2B3]">Paper</p><p className="text-sm font-bold">{fmt(c.paperAmount)}</p></div>
-                        <div><p className="text-[10px] font-bold uppercase tracking-wider text-[#98A2B3]">Mesh</p><p className="text-sm font-bold">{fmt(c.meshAmount ?? 0)}</p></div>
-                        <div><p className="text-[10px] font-bold uppercase tracking-wider text-[#98A2B3]">Machine</p><p className="text-sm font-bold">{fmt(c.machineExpenses)}</p></div>
-                      </div>
-                      <div className="mt-3 flex gap-2">
-                        <button type="button" onClick={() => onViewAttendance?.(c.id)} className="flex h-9 items-center gap-1 rounded-xl bg-orange-500 px-3 text-xs font-bold text-white" data-ocid="contract.view_attendance_button">View attendance <ArrowRight className="h-3.5 w-3.5" /></button>
-                        {canEdit && <button type="button" onClick={() => openEdit(c)} className="flex h-9 items-center gap-1 rounded-xl border bg-white px-3 text-xs font-bold" style={{ borderColor: "#D0D5DD" }} data-ocid="contract.edit_button"><Pencil className="h-3.5 w-3.5" />Edit</button>}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
         )}
       </main>
-
-      <div className="h-32 shrink-0" aria-hidden="true" />
-
-      {isAdmin && (
-        <button type="button" onClick={openNew} className="fixed bottom-24 right-5 z-30 flex h-14 w-14 items-center justify-center rounded-full text-white shadow-[0_10px_25px_rgba(249,115,22,0.3)] sm:hidden" style={{ background: ORANGE }} aria-label="Add Contract" data-ocid="contract.add_button">
-          <Plus className="h-6 w-6" strokeWidth={2.5} />
-        </button>
-      )}
+    </div>
+  );
 
       {showForm && (
         <div
