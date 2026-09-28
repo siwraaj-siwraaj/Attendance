@@ -96,8 +96,7 @@ function AdvancesPage() {
   const outstanding = advances
     .filter((advance: Advance) => !isSettled(advance.contractId))
     .reduce((sum: number, advance: Advance) => sum + Number(advance.amount || 0), 0);
-  const peopleCount = new Set(outstandingRows.map((advance: Advance) => advance.labourId.toString())).size;
-
+  
   const openAdd = useCallback(() => {
     setEditingAdvance(null);
     setForm({
@@ -319,7 +318,7 @@ function AdvancesPage() {
           </section>
 
           <section className="mt-5">
-            <div className="mb-3 flex items-center justify-between">
+            <div className="mx-auto mb-3 flex w-full max-w-3xl items-center justify-between px-1">
               <div>
                 <h2 className="text-base font-black">Outstanding advances</h2>
                 <p className="mt-0.5 text-xs" style={{ color: MUTED }}>Grouped by labour</p>
