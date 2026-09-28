@@ -342,14 +342,14 @@ export default function PaymentsPage({
 
   if (contractsLoading || laboursLoading) {
     return (
-      <div className="flex min-h-full items-center justify-center bg-[#f5f7fa]">
+      <div className="flex min-h-full items-center justify-center bg-[#F8FAFC]">
         <LoadingSpinner />
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col bg-[#f5f7fa] text-[#182230]">
+    <div className="flex flex-col bg-[#F8FAFC] text-[#182230]">
       <header className="app-tab-header shrink-0 rounded-b-[28px] bg-[#172536] px-4 pb-2 pt-2 text-white sm:px-6">
         <div className="mx-auto w-full max-w-5xl">
           <div className="flex items-start justify-between gap-3">
