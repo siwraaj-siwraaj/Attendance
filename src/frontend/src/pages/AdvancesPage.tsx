@@ -236,7 +236,46 @@ function AdvancesPage() {
   };
 
   if (isLoading) {
-    return <div className="flex min-h-[50vh] items-center justify-center bg-[#F8FAFC]"><LoadingSpinner size="lg" /></div>;
+    return (
+      <div className="min-h-full bg-[#F8FAFC] font-['Figtree',sans-serif] text-[#101828]">
+        <header className="app-tab-header h-[200px] shrink-0 rounded-b-[28px] border-b border-white/10 bg-[#172536] px-4 py-3 text-white shadow-sm sm:px-6">
+          <div className="mx-auto w-full max-w-5xl">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <div className="mb-1 flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-[0.2em] text-orange-300">
+                  <Wallet className="h-3.5 w-3.5" /> Payroll
+                </div>
+                <ScrollHeaderTitle title="Advances" className="text-2xl" />
+                <p className="mt-0.5 max-w-xl text-[11px] leading-4 text-white/55">Track outstanding money paid to your team before settlement.</p>
+              </div>
+              {isAdmin && <div className="h-11 w-11 shrink-0 animate-pulse rounded-2xl bg-white/10 sm:w-28" />}
+            </div>
+            <div className="mt-4 flex items-center justify-between border-t border-white/10 pt-3">
+              <div>
+                <p className="text-[9px] font-extrabold uppercase tracking-[0.18em] text-white/45">Outstanding</p>
+                <div className="mt-1 h-6 w-24 animate-pulse rounded-lg bg-white/10" />
+              </div>
+              <div className="h-3 w-36 animate-pulse rounded bg-white/10" />
+            </div>
+          </div>
+        </header>
+        <main className="px-4 pb-28 pt-4 sm:px-6">
+          <div className="mx-auto w-full max-w-5xl">
+            <section className="rounded-2xl border bg-white p-3 shadow-sm" style={{ borderColor: BORDER }}>
+              <div className="h-11 animate-pulse rounded-xl bg-[#F2F4F7]" />
+              <div className="mt-2 h-11 animate-pulse rounded-xl bg-[#F2F4F7]" />
+            </section>
+            <section className="mt-5 rounded-2xl border bg-white p-6 shadow-sm" style={{ borderColor: BORDER }}>
+              <div className="flex min-h-[180px] flex-col items-center justify-center text-center">
+                <LoadingSpinner size="lg" />
+                <p className="mt-4 text-sm font-black">Loading advances…</p>
+                <p className="mt-1 text-xs" style={{ color: MUTED }}>Fetching outstanding advances.</p>
+              </div>
+            </section>
+          </div>
+        </main>
+      </div>
+    );
   }
 
   return (
