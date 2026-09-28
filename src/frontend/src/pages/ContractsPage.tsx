@@ -43,6 +43,7 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
   const [isEditing, setIsEditing] = useState(false);
   const [expandedContractId, setExpandedContractId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [showSearch, setShowSearch] = useState(false);
   const [viewMode, setViewMode] = useState<"list" | "card">("card");
   const [contractFilter, setContractFilter] = useState<"active" | "completed">("active");
   const [contractsScrollTop, setContractsScrollTop] = useState(0);
@@ -234,62 +235,33 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
               Manage your work agreements and attendance.
             </p>
           </div>
-          {isAdmin && (
+          <div className="flex shrink-0 items-center gap-2">
             <button
               type="button"
-              onClick={openNew}
-              className="flex h-11 shrink-0 items-center gap-2 rounded-2xl px-4 text-sm font-bold text-white shadow-[0_8px_20px_rgba(249,115,22,0.25)] transition-transform active:scale-95"
-              style={{ background: ORANGE }}
-              data-ocid="contract.add_button"
+              onClick={() => setShowSearch((open) => !open)}
+              className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/15 bg-white/10 text-white transition-colors hover:bg-white/15"
+              aria-label={showSearch ? "Close contract search" : "Search contracts"}
+              data-ocid="contracts.search_toggle"
             >
-              <Plus className="h-4 w-4" strokeWidth={2.5} />
-              <span className="hidden sm:inline">New contract</span>
-              <span className="sm:hidden">New</span>
+              {showSearch ? <X className="h-5 w-5" /> : <Search className="h-5 w-5" />}
             </button>
-          )}
+            <button
+              type="button"
+              onClick={() => setViewMode(viewMode === "card" ? "list" : "card")}
+              className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/15 bg-white/10 text-white transition-colors hover:bg-white/15"
+              aria-label={viewMode === "card" ? "Switch to list view" : "Switch to card view"}
+              data-ocid="contracts.view_toggle"
+            >
+              {viewMode === "card" ? <List className="h-5 w-5" /> : <Grid2X2 className="h-5 w-5" />}
+            </button>
+          </div>
         </div>
 
-        <div className="mt-5 grid grid-cols-2 gap-3">
-          <button
-            type="button"
-            onClick={() => setContractFilter("active")}
-            className="rounded-2xl border px-3.5 py-3 text-left transition-all"
-            style={{
-              background: contractFilter === "active" ? "#FFF4EC" : "#FFFFFF",
-              color: NAVY,
-              borderColor: contractFilter === "active" ? "#FDBA74" : "#E4E7EC",
-              boxShadow: contractFilter === "active" ? "0 4px 14px rgba(249,115,22,0.10)" : "none",
-            }}
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold uppercase tracking-wider opacity-70">Active</span>
-              <span className="h-2.5 w-2.5 rounded-full" style={{ background: "#F97316", boxShadow: "0 0 0 4px #FED7AA" }} />
-            </div>
-            <div className="mt-0.5 text-xl font-extrabold">{activeCount}</div>
-          </button>
-          <button
-            type="button"
-            onClick={() => setContractFilter("completed")}
-            className="rounded-2xl border p-4 text-left transition-all"
-            style={{
-              background: contractFilter === "completed" ? "#ECFDF3" : "#FFFFFF",
-              color: NAVY,
-              borderColor: contractFilter === "completed" ? "#86EFAC" : "#E4E7EC",
-              boxShadow: contractFilter === "completed" ? "0 4px 14px rgba(16,185,129,0.10)" : "none",
-            }}
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold uppercase tracking-wider opacity-70">Completed</span>
-              <CheckCircle2 className="h-4 w-4" style={{ color: "#16A34A" }} />
-            </div>
-            <div className="mt-0.5 text-xl font-extrabold">{completedCount}</div>
-          </button>
-        </div>
-
-        <div className="mt-3 flex gap-2">
-          <div className="relative flex-1">
+        {showSearch && (
+          <div className="mt-4 relative">
             <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2" style={{ color: "#98A2B3" }} />
             <input
+              autoFocus
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -299,17 +271,8 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
               data-ocid="contracts.search_input"
             />
           </div>
-          <button
-            type="button"
-            onClick={() => setViewMode(viewMode === "card" ? "list" : "card")}
-            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border bg-white"
-            style={{ borderColor: "#E4E7EC", color: NAVY }}
-            aria-label={viewMode === "card" ? "Switch to list view" : "Switch to card view"}
-            data-ocid="contracts.view_toggle"
-          >
-            {viewMode === "card" ? <List className="h-5 w-5" /> : <Grid2X2 className="h-5 w-5" />}
-          </button>
-        </div>
+        )}
+
       </header>
 
 
