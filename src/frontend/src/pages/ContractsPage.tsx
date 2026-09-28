@@ -255,7 +255,7 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
               onClick={() => setShowSearch((open) => !open)}
               className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/15 bg-white/10 text-white transition-colors hover:bg-white/15"
               aria-label={showSearch ? "Close contract search" : "Search contracts"}
-              data-ocid="contracts.search_toggle"
+              data-ocid={showSearch ? "contracts.search_back_close" : "contracts.search_toggle"}
             >
               {showSearch ? <X className="h-5 w-5" /> : <Search className="h-5 w-5" />}
             </button>
