@@ -243,7 +243,7 @@ function AdvancesPage() {
 
   return (
     <div className="min-h-full bg-[#F8FAFC] font-['Figtree',sans-serif] text-[#101828]">
-      <header className="app-tab-header shrink-0 rounded-b-[28px] border-b border-white/10 bg-[#172536] px-5 pb-5 pt-5 text-white shadow-sm sm:px-6">
+      <header className="app-tab-header shrink-0 rounded-b-[28px] border-b border-white/10 bg-[#172536] px-4 pb-3 pt-3 text-white shadow-sm sm:px-6">
         <div className="mx-auto flex w-full max-w-5xl items-start justify-between gap-3">
           <div className="min-w-0">
             <div className="mb-1 flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-[0.2em] text-orange-300">
@@ -258,7 +258,7 @@ function AdvancesPage() {
             </button>
           )}
         </div>
-        <div className="mx-auto mt-3 w-full max-w-5xl">
+        <div className="mx-auto mt-2 w-full max-w-5xl">
           <section className="grid grid-cols-3 gap-2">
             <div className="min-w-0 rounded-xl bg-white/10 p-2 text-white">
               <div className="flex items-center justify-between gap-2"><p className="truncate text-[8px] font-extrabold uppercase tracking-wide text-white/60">Outstanding</p><Wallet className="h-4 w-4 text-orange-300" /></div>
@@ -271,9 +271,9 @@ function AdvancesPage() {
               <p className="mt-0.5 truncate text-[9px]" style={{ color: MUTED }}>In current view</p>
             </div>
             <div className="min-w-0 rounded-xl border border-white/10 bg-white/10 p-2" style={{ borderColor: BORDER }}>
-              <p className="text-[10px] font-extrabold uppercase tracking-wider" style={{ color: MUTED }}>Cleared advances</p>
-              <p className="mt-2 text-2xl font-black" style={{ color: NAVY }}>{cleared.length}</p>
-              <p className="mt-1 text-[11px]" style={{ color: MUTED }}>From settled contracts</p>
+              <p className="truncate text-[8px] font-extrabold uppercase tracking-wide" style={{ color: MUTED }}>Cleared advances</p>
+              <p className="mt-1 text-base font-black" style={{ color: NAVY }}>{cleared.length}</p>
+              <p className="mt-0.5 truncate text-[9px]" style={{ color: MUTED }}>From settled contracts</p>
             </div>
           </section>
         </div>

@@ -68,7 +68,7 @@ function LaboursPage() {
   return (
     <div className="min-h-full bg-[#F8FAFC] text-[#101828] font-['Figtree',sans-serif]">
       <div className="pb-28">
-        <header className="app-tab-header shrink-0 rounded-b-[28px] border-b border-white/10 bg-[#172536] px-5 pb-5 pt-5 text-white shadow-sm">
+        <header className="app-tab-header shrink-0 rounded-b-[28px] border-b border-white/10 bg-[#172536] px-4 pb-3 pt-3 text-white shadow-sm">
           <div className="flex items-center justify-between">
             <div>
               <div className="flex items-center gap-2 text-orange-300"><BriefcaseBusiness className="h-4 w-4" /><span className="text-[10px] font-extrabold uppercase tracking-[0.2em]">Workforce</span></div>
@@ -78,14 +78,14 @@ function LaboursPage() {
             {isAdmin && <button type="button" onClick={openAdd} className="flex h-11 items-center gap-2 rounded-2xl bg-[#F97316] px-4 text-xs font-extrabold text-white shadow-lg shadow-orange-200 active:scale-95"><UserPlus className="h-4 w-4" />Add</button>}
           </div>
 
-          <div className="mt-5 grid grid-cols-3 overflow-hidden rounded-2xl border border-[#101828]/10 bg-[#F8FAFC]">
-            <button type="button" onClick={() => setFilter("all")} className="border-r border-[#101828]/10 px-3 py-3 text-left">
+          <div className="mt-2 grid grid-cols-3 overflow-hidden rounded-xl border border-[#101828]/10 bg-[#F8FAFC]">
+            <button type="button" onClick={() => setFilter("all")} className="border-r border-[#101828]/10 px-3 py-2 text-left">
               <p className="text-[10px] font-bold uppercase tracking-wider text-[#101828]/55">Team</p><p className="mt-1 text-xl font-extrabold">{labours.length}</p>
             </button>
             <button type="button" onClick={() => setFilter("active")} className="border-r border-[#101828]/10 px-3 py-3 text-left">
               <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-700">Active</p><p className="mt-1 text-xl font-extrabold text-emerald-700">{activeCount}</p>
             </button>
-            <button type="button" onClick={() => setFilter("inactive")} className="px-3 py-3 text-left">
+            <button type="button" onClick={() => setFilter("inactive")} className="px-3 py-2 text-left">
               <p className="text-[10px] font-bold uppercase tracking-wider text-[#101828]/55">Inactive</p><p className="mt-1 text-xl font-extrabold text-[#101828]/70">{inactiveCount}</p>
             </button>
           </div>

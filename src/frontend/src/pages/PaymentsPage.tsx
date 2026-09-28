@@ -350,7 +350,7 @@ export default function PaymentsPage({
 
   return (
     <div className="flex flex-col bg-[#f5f7fa] text-[#182230]">
-      <header className="app-tab-header shrink-0 rounded-b-[28px] bg-[#172536] px-4 pb-5 pt-5 text-white sm:px-6">
+      <header className="app-tab-header shrink-0 rounded-b-[28px] bg-[#172536] px-4 pb-3 pt-3 text-white sm:px-6">
         <div className="mx-auto w-full max-w-5xl">
           <div className="flex items-start justify-between gap-3">
             <div>
@@ -368,7 +368,7 @@ export default function PaymentsPage({
             </div>
           </div>
 
-          <div className="mt-5 rounded-2xl border border-white/10 bg-white/5 p-3">
+          <div className="mt-2 rounded-xl border border-white/10 bg-white/5 p-2">
             <div className="flex items-center justify-between gap-3">
               <button
                 type="button"
@@ -393,7 +393,7 @@ export default function PaymentsPage({
                 type="button"
                 onClick={calculatePayments}
                 disabled={!selectedContractIds.size}
-                className="flex shrink-0 items-center gap-2 rounded-xl bg-orange-500 px-4 py-3 text-xs font-extrabold shadow-lg shadow-orange-950/30 transition active:scale-95 disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-white/25"
+                className="flex shrink-0 items-center gap-1.5 rounded-xl bg-orange-500 px-3 py-2.5 text-[11px] font-extrabold shadow-lg shadow-orange-950/30 transition active:scale-95 disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-white/25"
                 data-ocid="payments.calculate_button"
               >
                 <Calculator size={16} /> Calculate
