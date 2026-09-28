@@ -329,7 +329,7 @@ function AdvancesPage() {
         </div>
       </header>
 
-      <main className="px-4 pb-32 pt-4 sm:px-6">
+      <main className="px-4 pb-36 pt-4 sm:px-6">
         <div className="mx-auto w-full max-w-5xl">
           <section className="rounded-2xl border bg-white p-3 shadow-sm" style={{ borderColor: BORDER }}>
             <div className="relative">
