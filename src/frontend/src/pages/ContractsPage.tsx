@@ -228,7 +228,7 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
 
   if (isLoading) {
     return (
-      <div className="h-full px-4 pt-5" style={{ background: OFF_WHITE }}>
+      <div className="min-h-full px-4 pt-5" style={{ background: OFF_WHITE }}>
         <SkeletonCardList count={4} />
       </div>
     );
