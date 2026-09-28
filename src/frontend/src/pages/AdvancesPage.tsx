@@ -219,7 +219,7 @@ function AdvancesPage() {
               <button
                 type="button"
                 onClick={() => setExpandedLabourId(expanded ? null : id)}
-                className="flex w-full items-center gap-3 px-4 py-4 text-left transition-colors active:bg-slate-50"
+                className="grid w-full grid-cols-[44px_minmax(0,1fr)_auto_20px] items-center gap-3 px-4 py-4 text-left transition-colors active:bg-slate-50"
                 aria-expanded={expanded}
               >
                 <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#172536] text-white">
@@ -231,9 +231,9 @@ function AdvancesPage() {
                     {list.length} advance{list.length === 1 ? "" : "s"} · {list.length ? dateLabel(list[0].createdAt) : ""}
                   </span>
                 </span>
-                <span className="text-right">
-                  <span className="block text-base font-black" style={{ color: ORANGE }}>{money(total)}</span>
-                  <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: MUTED }}>Total</span>
+                <span className="min-w-[72px] text-right">
+                  <span className="block truncate text-base font-black" style={{ color: ORANGE }}>{money(total)}</span>
+                  <span className="block text-[10px] font-bold uppercase tracking-wider" style={{ color: MUTED }}>Total</span>
                 </span>
                 {expanded ? <ChevronDown className="h-4 w-4 shrink-0" style={{ color: MUTED }} /> : <ChevronRight className="h-4 w-4 shrink-0" style={{ color: MUTED }} />}
               </button>
