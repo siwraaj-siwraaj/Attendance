@@ -313,8 +313,7 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
           </div>
         )}
       </main>
-    </div>
-  );
+
 
       {showForm && (
         <div
