@@ -369,9 +369,6 @@ function AdvancesPage() {
         </div>
         <Section items={outstandingRows} empty="No outstanding advances found" />
       </main>
-    </div>
-  );
-
       {showForm && (
         <div className="fixed inset-0 z-[1000] flex items-end justify-center bg-[#101828]/60 p-0 sm:items-center sm:p-4" onClick={(event) => { if (event.target === event.currentTarget) setShowForm(false); }}>
           <div className="flex max-h-[92dvh] w-full max-w-lg flex-col overflow-hidden rounded-t-[28px] bg-white shadow-2xl sm:rounded-[28px]">
