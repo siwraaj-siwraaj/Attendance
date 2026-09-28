@@ -277,8 +277,9 @@ export default function Layout({ children }: LayoutProps) {
         onScroll={handleMainScroll}
         style={{ touchAction: "auto", WebkitOverflowScrolling: "touch" }}
       >
-        <div ref={swipeContentRef} className="min-h-full min-w-0 flex flex-col" style={{ width: "100%", touchAction: "pan-y", paddingBottom: "calc(5rem + env(safe-area-inset-bottom))" }}>
+        <div ref={swipeContentRef} className="min-h-full min-w-0 flex flex-col" style={{ width: "100%", touchAction: "pan-y" }}>
           {children}
+          <div aria-hidden="true" className="shrink-0 bg-[#0a0f1e]" style={{ height: "calc(5rem + env(safe-area-inset-bottom))" }} />
         </div>
       </main>
       {mode && activeTab !== "admin" && activeTab !== "attendance" && <BottomTabBar activeTab={activeTab} onTabChange={onTabChange} />}
