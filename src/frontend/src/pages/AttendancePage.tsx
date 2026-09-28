@@ -781,7 +781,7 @@ export default function AttendancePage({
 
   return (
     <div
-      className="flex flex-col h-full overflow-hidden"
+      className="flex flex-col h-full overflow-hidden bg-[#F8FAFC]"
       data-ocid="attendance.page"
     >
       {/* Attendance sheet header */}
