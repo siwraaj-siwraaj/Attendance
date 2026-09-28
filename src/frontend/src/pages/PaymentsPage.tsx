@@ -215,6 +215,8 @@ export default function PaymentsPage({
     });
 
     setPaymentData(result);
+    setContractPickerOpen(false);
+    setContractSearch("");
   };
 
   const visibleRows = useMemo(
@@ -368,7 +370,7 @@ export default function PaymentsPage({
             </div>
           </div>
 
-          <div className="mt-1.5 rounded-xl border border-white/10 bg-white/5 p-1.5">
+          <div className="relative mt-1.5 rounded-2xl border border-white/10 bg-white/[0.06] p-1.5 shadow-inner">
             <div className="flex items-center justify-between gap-3">
               <button
                 type="button"
@@ -401,7 +403,7 @@ export default function PaymentsPage({
             </div>
 
             {contractPickerOpen && (
-              <div className="mt-3 overflow-hidden rounded-xl border border-white/10 bg-[#0f1b2a]" data-ocid="payments.contract_select_dropdown">
+              <div className="absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded-2xl border border-white/10 bg-[#101d2c] shadow-2xl shadow-black/30" data-ocid="payments.contract_select_dropdown">
                 <div className="border-b border-white/10 p-3">
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-white/25" size={15} />
