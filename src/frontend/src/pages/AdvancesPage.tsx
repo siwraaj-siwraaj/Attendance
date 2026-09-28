@@ -22,6 +22,25 @@ type Labour = any;
 
 function AdvancesPage() {
   const { isAdmin } = useAuth();
+  const [rubberBandY, setRubberBandY] = useState(0);
+  const rubberStartY = useRef<number | null>(null);
+
+  const handleRubberBandStart = useCallback((event: React.TouchEvent) => {
+    rubberStartY.current = event.touches[0]?.clientY ?? null;
+  }, []);
+
+  const handleRubberBandMove = useCallback((event: React.TouchEvent) => {
+    const startY = rubberStartY.current;
+    const scrollContainer = document.querySelector(".app-scroll-container") as HTMLElement | null;
+    if (startY === null || !scrollContainer || scrollContainer.scrollTop > 1) return;
+    const delta = event.touches[0]?.clientY - startY;
+    if (delta > 0) setRubberBandY(Math.min(delta * 0.22, 18));
+  }, []);
+
+  const handleRubberBandEnd = useCallback(() => {
+    rubberStartY.current = null;
+    setRubberBandY(0);
+  }, []);
   const { data: contracts = [] } = useContracts();
   const { data: labours = [] } = useLabours();
   const { data: advances = [], isLoading } = useAdvances();
@@ -278,7 +297,17 @@ function AdvancesPage() {
   }
 
   return (
-    <div className="min-h-full bg-[#F8FAFC] font-['Figtree',sans-serif] text-[#101828]">
+    <div
+      className="min-h-full bg-[#F8FAFC] font-['Figtree',sans-serif] text-[#101828]"
+      onTouchStart={handleRubberBandStart}
+      onTouchMove={handleRubberBandMove}
+      onTouchEnd={handleRubberBandEnd}
+      onTouchCancel={handleRubberBandEnd}
+      style={{
+        transform: rubberBandY ? `translateY(${rubberBandY}px)` : undefined,
+        transition: rubberBandY ? "none" : "transform 180ms cubic-bezier(.22,1,.36,1)",
+      }}
+    >
       <header className="app-tab-header h-[200px] shrink-0 rounded-b-[28px] border-b border-white/10 bg-[#172536] px-4 py-3 text-white shadow-sm sm:px-6">
         <div className="mx-auto flex w-full max-w-5xl items-start justify-between gap-3">
           <div className="min-w-0">
@@ -300,7 +329,7 @@ function AdvancesPage() {
         </div>
       </header>
 
-      <main className="px-4 pb-28 pt-4 sm:px-6">
+      <main className="px-4 pb-32 pt-4 sm:px-6">
         <div className="mx-auto w-full max-w-5xl">
           <section className="rounded-2xl border bg-white p-3 shadow-sm" style={{ borderColor: BORDER }}>
             <div className="relative">
