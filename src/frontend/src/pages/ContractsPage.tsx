@@ -202,7 +202,7 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
 
   return (
     <div className="flex flex-col font-['Figtree',sans-serif]" style={{ background: OFF_WHITE, color: NAVY }}>
-      <header className="app-tab-header shrink-0 rounded-b-[28px] bg-[#172536] px-4 pb-3 pt-3 text-white shadow-sm">
+      <header className="app-tab-header shrink-0 rounded-b-[28px] bg-[#172536] px-5 pb-5 pt-5 text-white shadow-sm">
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.16em]" style={{ color: "#667085" }}>
@@ -249,11 +249,11 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
           )}
         </div>
 
-        <div className="mt-2 grid grid-cols-2 gap-2">
+        <div className="mt-5 grid grid-cols-2 gap-3">
           <button
             type="button"
             onClick={() => setContractFilter("active")}
-            className="rounded-xl border px-3 py-2 text-left transition-all"
+            className="rounded-2xl border px-3.5 py-3 text-left transition-all"
             style={{
               background: contractFilter === "active" ? "#FFF4EC" : "#FFFFFF",
               color: NAVY,
@@ -270,7 +270,7 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
           <button
             type="button"
             onClick={() => setContractFilter("completed")}
-            className="rounded-xl border px-3 py-2 text-left transition-all"
+            className="rounded-2xl border p-4 text-left transition-all"
             style={{
               background: contractFilter === "completed" ? "#ECFDF3" : "#FFFFFF",
               color: NAVY,
@@ -286,12 +286,7 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
           </button>
         </div>
 
-
-      </header>
-
-
-      <main className="px-5 pb-28">
-        <div className="mt-2 flex gap-2">
+        <div className="mt-3 flex gap-2">
           <div className="relative flex-1">
             <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2" style={{ color: "#98A2B3" }} />
             <input
@@ -299,7 +294,7 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search contracts"
-              className="h-9 w-full rounded-xl border bg-white pl-10 pr-3 text-sm font-medium outline-none transition focus:ring-2"
+              className="h-12 w-full rounded-2xl border bg-white pl-11 pr-4 text-sm font-medium outline-none transition focus:ring-2"
               style={{ borderColor: "#E4E7EC", color: NAVY, boxShadow: "0 1px 2px rgba(16,24,40,0.04)" }}
               data-ocid="contracts.search_input"
             />
@@ -307,7 +302,7 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
           <button
             type="button"
             onClick={() => setViewMode(viewMode === "card" ? "list" : "card")}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border bg-white"
+            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border bg-white"
             style={{ borderColor: "#E4E7EC", color: NAVY }}
             aria-label={viewMode === "card" ? "Switch to list view" : "Switch to card view"}
             data-ocid="contracts.view_toggle"
@@ -315,8 +310,10 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
             {viewMode === "card" ? <List className="h-5 w-5" /> : <Grid2X2 className="h-5 w-5" />}
           </button>
         </div>
-        <div className="mt-4">
-        </div>
+      </header>
+
+
+      <main className="px-5 pb-28">
         {filteredContracts.length === 0 ? (
           <div className="rounded-3xl border bg-white px-6 py-12 text-center" style={{ borderColor: "#E4E7EC" }}>
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl" style={{ background: "#FFF3EB", color: ORANGE }}>
