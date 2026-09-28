@@ -374,6 +374,8 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
         )}
       </main>
 
+      <div className="h-32 shrink-0" aria-hidden="true" />
+
       {isAdmin && (
         <button type="button" onClick={openNew} className="fixed bottom-24 right-5 z-30 flex h-14 w-14 items-center justify-center rounded-full text-white shadow-[0_10px_25px_rgba(249,115,22,0.3)] sm:hidden" style={{ background: ORANGE }} aria-label="Add Contract" data-ocid="contract.add_button">
           <Plus className="h-6 w-6" strokeWidth={2.5} />
