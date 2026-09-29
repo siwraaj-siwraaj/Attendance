@@ -48,16 +48,11 @@ public class MainActivity extends BridgeActivity {
         controller.setAppearanceLightStatusBars(false);
         controller.setAppearanceLightNavigationBars(false);
 
-        // Android 15 enforces edge-to-edge for apps targeting recent SDKs.
-        // Keep the WebView content below the status bar while retaining the
-        // dark Rossie background behind the system bar.
+        // Keep the WebView content edge-to-edge so the header controls its
+        // own internal spacing; the status-bar area remains steel blue.
         final View content = findViewById(android.R.id.content);
         if (content != null) {
-            ViewCompat.setOnApplyWindowInsetsListener(content, (view, insets) -> {
-                final int top = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top;
-                view.setPadding(view.getPaddingLeft(), top, view.getPaddingRight(), view.getPaddingBottom());
-                return insets;
-            });
+            ViewCompat.setOnApplyWindowInsetsListener(content, (view, insets) -> insets);
             ViewCompat.requestApplyInsets(content);
         }
     }
