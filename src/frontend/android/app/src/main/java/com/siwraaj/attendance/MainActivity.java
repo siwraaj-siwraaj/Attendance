@@ -33,7 +33,7 @@ public class MainActivity extends BridgeActivity {
         // Draw the WebView behind both system bars so the Rossie header is
         // visually continuous with the Android status-bar area.
         WindowCompat.setDecorFitsSystemWindows(window, false);
-        window.setStatusBarColor(Color.TRANSPARENT);
+        window.setStatusBarColor(Color.rgb(23, 37, 54));
         window.setNavigationBarColor(Color.rgb(7, 11, 22));
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
