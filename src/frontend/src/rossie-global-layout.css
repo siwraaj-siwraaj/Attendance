@@ -14,7 +14,7 @@ body,
 #root { width: 100%; min-width: 0; height: 100%; min-height: 100%; margin: 0; background: #040913; }
 body { overflow: hidden; overscroll-behavior: none; }
 .min-h-screen:has(> header) { height: 100dvh; min-height: 100dvh; max-height: 100dvh; overflow: hidden; }
-body:has([data-ocid="bottom_tab_bar"]) main { flex: 1 1 auto; min-width: 0; min-height: 0; width: 100%; max-width: 100%; overflow-y: auto; overflow-x: hidden; padding: 0 !important; -webkit-overflow-scrolling: touch; touch-action: auto; }
+body:has([data-ocid="bottom_tab_bar"]) main { flex: 1 1 auto; min-width: 0; min-height: 0; width: 100%; max-width: 100%; overflow-y: auto; overflow-x: hidden; padding: 0 0 var(--rossie-nav-clearance) !important; -webkit-overflow-scrolling: touch; touch-action: auto; }
 body:has([data-ocid="bottom_tab_bar"]) main > div { min-width: 0; min-height: 0; max-width: 100%; }
 /* Single native page scroll container: the shell is fixed, while each page is allowed to grow to its content height. */
 body:has([data-ocid="bottom_tab_bar"]) main > div { height: auto !important; min-height: 100% !important; overflow: visible !important; }
@@ -246,17 +246,4 @@ body:has(.fixed.inset-0.z-\[9999\]) main { overflow: hidden !important; }
 body:has(.fixed.inset-0[class*="bg-black/"]) header,
 body:has(.fixed.inset-0.z-\[9999\]) header { visibility: hidden !important; pointer-events: none !important; }
 
-/* Advances uses the same immediate collapsing header model as the tab shell:
-   the header remains pinned while the page content scrolls underneath it. */
-.app-scroll-container.is-scrolled .advances-tab .app-tab-header {
-  height: 92px !important;
-  border-radius: 0 0 22px 22px;
-}
-.app-scroll-container.is-scrolled .advances-tab .advances-header-detail {
-  opacity: 0;
-  pointer-events: none;
-  transform: translateY(-8px);
-}
-.advances-tab .advances-header-detail {
-  transition: opacity 160ms ease, transform 160ms ease;
-}
+/* Contracts and Advances use the same ScrollHeaderTitle behavior as Payments. */
