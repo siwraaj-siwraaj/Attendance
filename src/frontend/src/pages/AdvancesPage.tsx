@@ -280,7 +280,7 @@ function AdvancesPage() {
             </div>
           </div>
         </header>
-        <main className="mx-auto w-full max-w-5xl px-4 pt-4 pb-20 sm:px-6">
+        <div className="mx-auto w-full max-w-5xl px-4 pt-4 pb-20 sm:px-6">
           <div className="rounded-2xl border bg-white p-3 shadow-sm" style={{ borderColor: BORDER }}>
             <div className="h-11 animate-pulse rounded-xl bg-[#F2F4F7]" />
           </div>
@@ -288,7 +288,7 @@ function AdvancesPage() {
             <LoadingSpinner size="lg" />
             <p className="mt-4 text-sm font-black">Loading advances…</p>
           </div>
-        </main>
+        </div>
       </div>
     );
   }
@@ -337,7 +337,7 @@ function AdvancesPage() {
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-5xl px-4 pt-3 pb-4 sm:px-6">
+      <div className="mx-auto w-full max-w-5xl px-4 pt-3 pb-4 sm:px-6">
         <section className="rounded-2xl border bg-white p-1.5 shadow-sm" style={{ borderColor: BORDER }}>
           <div className="flex items-center gap-2">
             <div className="relative min-w-0 flex-1">
@@ -493,7 +493,7 @@ function AdvancesPage() {
             </div>
           )}
         </section>
-      </main>
+      </div>
 
       {showForm && (
         <div
