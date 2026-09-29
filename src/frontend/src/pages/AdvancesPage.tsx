@@ -1,144 +1,172 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  ChevronDown, ChevronRight, CircleDollarSign, Pencil, Plus, Search,
-  Trash2, UserRound, Wallet, X,
+  CircleDollarSign,
+  ChevronDown,
+  ChevronRight,
+  Pencil,
+  Plus,
+  Search,
+  Trash2,
+  UserRound,
+  Wallet,
+  X,
 } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import {
-  useAddAdvance, useAdvances, useContracts, useDeleteAdvance,
-  useLabours, useUpdateAdvance,
+  useAddAdvance,
+  useAdvances,
+  useContracts,
+  useDeleteAdvance,
+  useLabours,
+  useUpdateAdvance,
 } from "../hooks/useBackend";
 import LoadingSpinner from "../components/LoadingSpinner";
 import ScrollHeaderTitle from "../components/ScrollHeaderTitle";
-
-const NAVY = "#101828";
-const ORANGE = "#F97316";
-const MUTED = "#667085";
-const BORDER = "#E4E7EC";
 
 type Advance = any;
 type Contract = any;
 type Labour = any;
 
+const NAVY = "#172536";
+const TEXT = "#101828";
+const MUTED = "#667085";
+const BORDER = "#E4E7EC";
+const ORANGE = "#F97316";
+
+const money = (value: number) =>
+  `₹${Math.round(Number(value) || 0).toLocaleString("en-IN")}`;
+
+const isContractSettled = (contract: Contract) =>
+  contract?.settled === true || contract?.settled === 1n;
+
+const dateLabel = (timestamp: bigint) => {
+  try {
+    return new Date(Number(timestamp) / 1e6).toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  } catch {
+    return "";
+  }
+};
+
 function AdvancesPage() {
   const { isAdmin } = useAuth();
-  const [rubberBandY, setRubberBandY] = useState(0);
-  const [headerCollapsed, setHeaderCollapsed] = useState(false);
+  const { data: contracts = [], isLoading: contractsLoading } = useContracts();
+  const { data: labours = [], isLoading: laboursLoading } = useLabours();
+  const { data: advances = [], isLoading: advancesLoading } = useAdvances();
 
-  useEffect(() => {
-    const scrollContainer = document.querySelector<HTMLElement>(".app-scroll-container");
-    if (!scrollContainer) return;
-    const updateHeader = () => setHeaderCollapsed(scrollContainer.scrollTop > 24);
-    updateHeader();
-    scrollContainer.addEventListener("scroll", updateHeader, { passive: true });
-    return () => scrollContainer.removeEventListener("scroll", updateHeader);
-  }, []);
-  const rubberStartY = useRef<number | null>(null);
-
-  const rubberFrame = useRef<number | null>(null);
-
-  const handleRubberBandStart = useCallback((event: React.TouchEvent) => {
-    const scrollContainer = document.querySelector(".app-scroll-container") as HTMLElement | null;
-    if (!scrollContainer || scrollContainer.scrollTop > 0) return;
-    rubberStartY.current = event.touches[0]?.clientY ?? null;
-  }, []);
-
-  const handleRubberBandMove = useCallback((event: React.TouchEvent) => {
-    const startY = rubberStartY.current;
-    const scrollContainer = document.querySelector(".app-scroll-container") as HTMLElement | null;
-    if (startY === null || !scrollContainer || scrollContainer.scrollTop > 0) return;
-
-    const currentY = event.touches[0]?.clientY;
-    if (currentY === undefined) return;
-    const delta = currentY - startY;
-    if (delta <= 0) return;
-    const eased = Math.min(34, Math.pow(delta, 0.78) * 0.9);
-
-    if (rubberFrame.current !== null) cancelAnimationFrame(rubberFrame.current);
-    rubberFrame.current = requestAnimationFrame(() => setRubberBandY(eased));
-  }, []);
-
-  const handleRubberBandEnd = useCallback(() => {
-    rubberStartY.current = null;
-    if (rubberFrame.current !== null) cancelAnimationFrame(rubberFrame.current);
-    rubberFrame.current = null;
-    setRubberBandY(0);
-  }, []);
-  const { data: contracts = [] } = useContracts();
-  const { data: labours = [] } = useLabours();
-  const { data: advances = [], isLoading } = useAdvances();
   const addAdvance = useAddAdvance();
   const updateAdvance = useUpdateAdvance();
   const deleteAdvance = useDeleteAdvance();
 
-  const [filterContractId, setFilterContractId] = useState("all");
   const [query, setQuery] = useState("");
+  const [filterContractId, setFilterContractId] = useState("all");
+  const [expandedLabourId, setExpandedLabourId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [editingAdvance, setEditingAdvance] = useState<Advance | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<bigint | null>(null);
-  const [expandedLabourId, setExpandedLabourId] = useState<string | null>(null);
-  const [form, setForm] = useState({ contractId: "", labourId: "", amount: "", note: "" });
   const [error, setError] = useState("");
+  const [form, setForm] = useState({
+    contractId: "",
+    labourId: "",
+    amount: "",
+    note: "",
+  });
   const amountRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    if (!showForm) return;
-    const timer = setTimeout(() => amountRef.current?.focus(), 50);
-    return () => clearTimeout(timer);
-  }, [showForm]);
-
-  const isSettled = useCallback(
-    (id: bigint) => {
-      const contract = contracts.find((item: Contract) => item.id === id);
-      return contract?.settled === true || contract?.settled === 1n;
-    },
+  const activeContracts = useMemo(
+    () => contracts.filter((contract: Contract) => !isContractSettled(contract)),
     [contracts],
   );
+
   const formContracts = useMemo(() => {
-    const activeContracts = contracts.filter((contract: Contract) => !contract.settled && contract.settled !== 1n);
     if (!editingAdvance) return activeContracts;
-    const attached = contracts.find((contract: Contract) => contract.id === editingAdvance.contractId);
-    return attached && !activeContracts.some((contract: Contract) => contract.id === attached.id)
-      ? [...activeContracts, attached]
-      : activeContracts;
-  }, [contracts, editingAdvance]);
+    const attached = contracts.find(
+      (contract: Contract) => contract.id === editingAdvance.contractId,
+    );
+    if (!attached || activeContracts.some((contract: Contract) => contract.id === attached.id)) {
+      return activeContracts;
+    }
+    return [...activeContracts, attached];
+  }, [activeContracts, contracts, editingAdvance]);
 
   const labourName = useCallback(
-    (id: bigint) => labours.find((labour: Labour) => labour.id === id)?.name || "Unknown labour",
+    (id: bigint) =>
+      labours.find((labour: Labour) => labour.id === id)?.name || "Unknown labour",
     [labours],
   );
+
   const contractName = useCallback(
-    (id: bigint) => contracts.find((contract: Contract) => contract.id === id)?.name || "Unknown contract",
+    (id: bigint) =>
+      contracts.find((contract: Contract) => contract.id === id)?.name || "Unknown contract",
     [contracts],
   );
-  const money = (value: number) => `₹${Number(value || 0).toLocaleString("en-IN", { maximumFractionDigits: 0 })}`;
-  const dateLabel = (timestamp: bigint) => {
-    try {
-      return new Date(Number(timestamp) / 1e6).toLocaleDateString("en-IN", {
-        day: "2-digit", month: "short", year: "numeric",
-      });
-    } catch {
-      return "";
-    }
-  };
+
+  const outstandingAdvances = useMemo(
+    () =>
+      advances.filter(
+        (advance: Advance) => !isContractSettled(
+          contracts.find((contract: Contract) => contract.id === advance.contractId),
+        ),
+      ),
+    [advances, contracts],
+  );
+
+  const outstandingAmount = useMemo(
+    () =>
+      outstandingAdvances.reduce(
+        (sum: number, advance: Advance) => sum + Number(advance.amount || 0),
+        0,
+      ),
+    [outstandingAdvances],
+  );
 
   const filtered = useMemo(() => {
     const search = query.trim().toLowerCase();
-    return advances.filter((advance: Advance) => {
-      const matchesContract = filterContractId === "all" || advance.contractId.toString() === filterContractId;
-      const matchesSearch = !search ||
+    return outstandingAdvances.filter((advance: Advance) => {
+      const contractMatches =
+        filterContractId === "all" ||
+        advance.contractId.toString() === filterContractId;
+      if (!contractMatches) return false;
+      if (!search) return true;
+      return (
         labourName(advance.labourId).toLowerCase().includes(search) ||
         contractName(advance.contractId).toLowerCase().includes(search) ||
-        String(advance.note || "").toLowerCase().includes(search);
-      return matchesContract && matchesSearch;
+        String(advance.note || "").toLowerCase().includes(search)
+      );
     });
-  }, [advances, filterContractId, query, labourName, contractName]);
+  }, [
+    outstandingAdvances,
+    filterContractId,
+    query,
+    labourName,
+    contractName,
+  ]);
 
-  const outstandingRows = filtered.filter((advance: Advance) => !isSettled(advance.contractId));
-  const outstanding = advances
-    .filter((advance: Advance) => !isSettled(advance.contractId))
-    .reduce((sum: number, advance: Advance) => sum + Number(advance.amount || 0), 0);
-  
+  const grouped = useMemo(() => {
+    const groups = new Map<string, Advance[]>();
+    for (const advance of filtered) {
+      const key = advance.labourId.toString();
+      const list = groups.get(key) || [];
+      list.push(advance);
+      groups.set(key, list);
+    }
+    return Array.from(groups.entries());
+  }, [filtered]);
+
+  const labourCount = useMemo(
+    () => new Set(outstandingAdvances.map((advance: Advance) => advance.labourId.toString())).size,
+    [outstandingAdvances],
+  );
+
+  useEffect(() => {
+    if (!showForm) return;
+    const timer = window.setTimeout(() => amountRef.current?.focus(), 80);
+    return () => window.clearTimeout(timer);
+  }, [showForm]);
+
   const openAdd = useCallback(() => {
     setEditingAdvance(null);
     setForm({
@@ -163,156 +191,102 @@ function AdvancesPage() {
     setShowForm(true);
   }, []);
 
+  const closeForm = useCallback(() => {
+    if (addAdvance.isPending || updateAdvance.isPending) return;
+    setShowForm(false);
+    setError("");
+  }, [addAdvance.isPending, updateAdvance.isPending]);
+
   const save = useCallback(() => {
+    const amount = Number(form.amount);
     if (!form.contractId || !form.labourId) {
       setError("Select a contract and labour.");
       return;
     }
-    if (!form.amount.trim() || !Number.isFinite(Number(form.amount)) || Number(form.amount) <= 0) {
+    if (!form.amount.trim() || !Number.isFinite(amount) || amount <= 0) {
       setError("Enter an amount greater than zero.");
       return;
     }
 
-    const amount = Number(form.amount);
-    const note = form.note.trim();
     const onError = (cause: unknown) => {
-      setError(cause instanceof Error ? cause.message : "Could not save the advance. Please try again.");
+      setError(
+        cause instanceof Error
+          ? cause.message
+          : "Could not save the advance. Please try again.",
+      );
     };
+
     if (editingAdvance) {
       updateAdvance.mutate(
-        { id: editingAdvance.id, amount, note },
-        { onSuccess: () => setShowForm(false), onError },
+        { id: editingAdvance.id, amount, note: form.note.trim() },
+        {
+          onSuccess: () => {
+            setShowForm(false);
+            setError("");
+          },
+          onError,
+        },
       );
-    } else {
-      addAdvance.mutate(
-        { contractId: BigInt(form.contractId), labourId: BigInt(form.labourId), amount, note },
-        { onSuccess: () => setShowForm(false), onError },
-      );
-    }
-  }, [form, editingAdvance, updateAdvance, addAdvance]);
-
-  const remove = (id: bigint) => deleteAdvance.mutate(id, {
-    onSuccess: () => setConfirmDelete(null),
-  });
-
-  const grouped = (items: Advance[]) => {
-    const groups = new Map<string, Advance[]>();
-    items.forEach((advance) => {
-      const key = advance.labourId.toString();
-      if (!groups.has(key)) groups.set(key, []);
-      groups.get(key)!.push(advance);
-    });
-    return groups;
-  };
-
-  const Section = ({ items, empty }: { items: Advance[]; empty: string }) => {
-    if (!items.length) {
-      return (
-        <div className="rounded-2xl border border-dashed bg-white px-5 py-9 text-center" style={{ borderColor: BORDER }}>
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-50 text-orange-500">
-            <CircleDollarSign className="h-5 w-5" />
-          </div>
-          <p className="mt-3 text-sm font-bold" style={{ color: NAVY }}>{empty}</p>
-          <p className="mt-1 text-xs" style={{ color: MUTED }}>Advances will appear here when they are recorded.</p>
-        </div>
-      );
+      return;
     }
 
-    return (
-      <div className="overflow-hidden rounded-2xl border bg-white shadow-sm" style={{ borderColor: BORDER }}>
-        {Array.from(grouped(items).entries()).map(([id, list], index) => {
-          const name = labourName(BigInt(id));
-          const total = list.reduce((sum, advance) => sum + Number(advance.amount || 0), 0);
-          const expanded = expandedLabourId === id;
-          return (
-            <article key={id} className={index ? "border-t" : ""} style={{ borderColor: "#EAECF0" }}>
-              <button
-                type="button"
-                onClick={() => setExpandedLabourId(expanded ? null : id)}
-                className="grid w-full grid-cols-[44px_minmax(0,1fr)_auto_20px] items-center gap-3 px-4 py-4 text-left transition-colors active:bg-slate-50"
-                aria-expanded={expanded}
-              >
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#172536] text-white">
-                  <UserRound className="h-5 w-5" />
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm font-extrabold" style={{ color: NAVY }}>{name}</span>
-                  <span className="mt-1 block text-xs" style={{ color: MUTED }}>
-                    {list.length} advance{list.length === 1 ? "" : "s"} · {list.length ? dateLabel(list[0].createdAt) : ""}
-                  </span>
-                </span>
-                <span className="min-w-[72px] text-right">
-                  <span className="block truncate text-base font-black" style={{ color: ORANGE }}>{money(total)}</span>
-                  <span className="block text-[10px] font-bold uppercase tracking-wider" style={{ color: MUTED }}>Total</span>
-                </span>
-                {expanded ? <ChevronDown className="h-4 w-4 shrink-0" style={{ color: MUTED }} /> : <ChevronRight className="h-4 w-4 shrink-0" style={{ color: MUTED }} />}
-              </button>
-              {expanded && (
-                <div className="space-y-2 border-t bg-[#F8FAFC] p-3 sm:p-4" style={{ borderColor: "#EAECF0" }}>
-                  {list.map((advance) => (
-                    <div key={advance.id.toString()} className="rounded-xl border bg-white p-3 sm:p-4" style={{ borderColor: BORDER }}>
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0 flex-1">
-                          <p className="text-lg font-black" style={{ color: NAVY }}>{money(advance.amount)}</p>
-                          <p className="mt-1 text-xs font-semibold" style={{ color: MUTED }}>{contractName(advance.contractId)}</p>
-                          {advance.note && <p className="mt-2 break-words text-sm" style={{ color: "#475467" }}>{advance.note}</p>}
-                          <p className="mt-2 text-[11px]" style={{ color: "#98A2B3" }}>{dateLabel(advance.createdAt)}</p>
-                        </div>
-                        {isAdmin && (
-                          <div className="flex shrink-0 gap-1.5">
-                            <button type="button" onClick={() => openEdit(advance)} aria-label="Edit advance" className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-700"><Pencil className="h-4 w-4" /></button>
-                            <button type="button" onClick={() => setConfirmDelete(advance.id)} aria-label="Delete advance" className="flex h-9 w-9 items-center justify-center rounded-xl bg-red-50 text-red-600"><Trash2 className="h-4 w-4" /></button>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </article>
-          );
-        })}
-      </div>
+    addAdvance.mutate(
+      {
+        contractId: BigInt(form.contractId),
+        labourId: BigInt(form.labourId),
+        amount,
+        note: form.note.trim(),
+      },
+      {
+        onSuccess: () => {
+          setShowForm(false);
+          setError("");
+        },
+        onError,
+      },
     );
-  };
+  }, [form, editingAdvance, addAdvance, updateAdvance]);
 
-  if (isLoading) {
+  const remove = useCallback(
+    (id: bigint) => {
+      deleteAdvance.mutate(id, {
+        onSuccess: () => setConfirmDelete(null),
+      });
+    },
+    [deleteAdvance],
+  );
+
+  const loading = contractsLoading || laboursLoading || advancesLoading;
+
+  if (loading) {
     return (
-      <div className="min-h-full bg-[#F8FAFC] pb-32 font-['Figtree',sans-serif] text-[#101828]">
-        <header className="app-tab-header flex h-[200px] shrink-0 flex-col justify-between rounded-b-[28px] border-b border-white/10 bg-[#172536] px-4 py-4 text-white shadow-sm sm:px-6">
+      <div className="flex min-h-full flex-col bg-[#F8FAFC] text-[#101828]">
+        <header className="app-tab-header flex h-[200px] shrink-0 flex-col justify-between rounded-b-[28px] bg-[#172536] px-4 py-4 text-white sm:px-6">
           <div className="mx-auto w-full max-w-5xl">
             <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <div className={`advances-header-detail mb-1 flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-[0.2em] text-orange-300 ${headerCollapsed ? "hidden" : ""}`}>
-                  <Wallet className="h-3.5 w-3.5" /> Payroll
+              <div>
+                <div className="mb-1 flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-[0.2em] text-orange-300">
+                  <Wallet size={14} /> Payroll
                 </div>
                 <ScrollHeaderTitle title="Advances" className="text-2xl" />
-                <p className="mt-0.5 max-w-xl text-[11px] leading-4 text-white/55">Track outstanding money paid to your team before settlement.</p>
+                <p className="mt-0.5 text-[11px] text-white/55">Manage money paid before settlement.</p>
               </div>
-              {isAdmin && <div className="h-11 w-11 shrink-0 animate-pulse rounded-2xl bg-white/10 sm:w-28" />}
+              {isAdmin && <div className="h-11 w-24 animate-pulse rounded-2xl bg-white/10" />}
             </div>
-            <div className="mt-4 flex items-center justify-between border-t border-white/10 pt-3">
-              <div>
-                <p className="text-[9px] font-extrabold uppercase tracking-[0.18em] text-white/45">Outstanding</p>
-                <div className="mt-1 h-6 w-24 animate-pulse rounded-lg bg-white/10" />
-              </div>
-              <div className="h-3 w-36 animate-pulse rounded bg-white/10" />
+            <div className="mt-3 grid grid-cols-3 gap-2">
+              {[1, 2, 3].map((item) => (
+                <div key={item} className="h-[58px] animate-pulse rounded-2xl bg-white/[0.06]" />
+              ))}
             </div>
           </div>
         </header>
-        <main className="px-4 pt-4 sm:px-6">
-          <div className="mx-auto w-full max-w-5xl">
-            <section className="rounded-2xl border bg-white p-3 shadow-sm" style={{ borderColor: BORDER }}>
-              <div className="h-11 animate-pulse rounded-xl bg-[#F2F4F7]" />
-              <div className="mt-2 h-11 animate-pulse rounded-xl bg-[#F2F4F7]" />
-            </section>
-            <section className="mt-5 rounded-2xl border bg-white p-6 shadow-sm" style={{ borderColor: BORDER }}>
-              <div className="flex min-h-[180px] flex-col items-center justify-center text-center">
-                <LoadingSpinner size="lg" />
-                <p className="mt-4 text-sm font-black">Loading advances…</p>
-                <p className="mt-1 text-xs" style={{ color: MUTED }}>Fetching outstanding advances.</p>
-              </div>
-            </section>
+        <main className="mx-auto w-full max-w-5xl px-4 pt-4 sm:px-6">
+          <div className="rounded-2xl border bg-white p-3 shadow-sm" style={{ borderColor: BORDER }}>
+            <div className="h-11 animate-pulse rounded-xl bg-[#F2F4F7]" />
+          </div>
+          <div className="flex min-h-[220px] flex-col items-center justify-center">
+            <LoadingSpinner size="lg" />
+            <p className="mt-4 text-sm font-black">Loading advances…</p>
           </div>
         </main>
       </div>
@@ -320,76 +294,335 @@ function AdvancesPage() {
   }
 
   return (
-    <div className="advances-tab flex flex-col bg-[#F8FAFC] pb-32 text-[#182230]">
-      <header className={`app-tab-header sticky top-0 z-40 flex ${headerCollapsed ? "h-[76px] rounded-b-2xl" : "h-[200px] rounded-b-[28px]"} shrink-0 flex-col justify-start overflow-hidden bg-[#172536] px-4 py-3 text-white transition-[height,border-radius] duration-200 ease-out sm:px-6`}>
-        <div className="mx-auto w-full max-w-5xl">
+    <div className="flex min-h-full flex-col bg-[#F8FAFC] pb-32 text-[#182230]">
+      <header className="app-tab-header flex h-[200px] shrink-0 flex-col justify-between rounded-b-[28px] bg-[#172536] px-4 py-3.5 text-white sm:px-6">
+        <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <div className={`advances-header-detail mb-1 flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-[0.2em] text-orange-300 ${headerCollapsed ? "hidden" : ""}`}>
+              <div className="mb-0.5 flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-[0.2em] text-orange-300">
                 <Wallet size={14} /> Payroll
               </div>
               <ScrollHeaderTitle title="Advances" className="text-2xl" />
-              <p className={`advances-header-detail mt-0.5 max-w-xl text-[11px] leading-4 text-white/55 ${headerCollapsed ? "hidden" : ""}`}>
-                Track money paid before settlement.
+              <p className="mt-0.5 max-w-xl text-[11px] leading-4 text-white/55">
+                Track money paid to your team before settlement.
               </p>
             </div>
             {isAdmin && (
-              <button type="button" onClick={openAdd} className={`advances-header-detail flex h-11 shrink-0 items-center gap-2 rounded-2xl bg-orange-500 px-3.5 text-[11px] font-extrabold shadow-lg shadow-orange-950/30 active:scale-95 ${headerCollapsed ? "hidden" : ""}`} data-ocid="advances.add_button">
-                <Plus size={16} /><span className="hidden sm:inline">Add advance</span><span className="sm:hidden">Add</span>
+              <button
+                type="button"
+                onClick={openAdd}
+                className="flex h-10 shrink-0 items-center gap-1.5 rounded-xl bg-orange-500 px-3 text-[11px] font-extrabold shadow-lg shadow-orange-950/30 active:scale-95"
+                data-ocid="advances.add_button"
+              >
+                <Plus size={16} />
+                <span>Add advance</span>
               </button>
             )}
           </div>
 
-          <div className={`advances-header-detail mt-3 rounded-2xl border border-white/10 bg-white/[0.06] px-4 py-3 shadow-inner ${headerCollapsed ? "hidden" : ""}`}>
-            <div className="flex items-end justify-between gap-3">
-              <div className="min-w-0">
-                <p className="text-[9px] font-extrabold uppercase tracking-[0.18em] text-white/40">Outstanding amount</p>
-                <p className="mt-1 truncate text-3xl font-black leading-none tracking-tight text-white">{money(outstanding)}</p>
-              </div>
-              <Wallet className="mb-1 h-5 w-5 shrink-0 text-orange-300" />
+          <div className="mt-auto grid grid-cols-3 gap-2">
+            <div className="min-w-0 rounded-2xl border border-white/10 bg-white/[0.06] px-3 py-2.5">
+              <p className="truncate text-[8px] font-extrabold uppercase tracking-[0.15em] text-white/40">Outstanding</p>
+              <p className="mt-1 truncate text-lg font-black leading-none text-white">{money(outstandingAmount)}</p>
+            </div>
+            <div className="min-w-0 rounded-2xl border border-white/10 bg-white/[0.06] px-3 py-2.5">
+              <p className="truncate text-[8px] font-extrabold uppercase tracking-[0.15em] text-white/40">Records</p>
+              <p className="mt-1 text-lg font-black leading-none text-white">{outstandingAdvances.length}</p>
+            </div>
+            <div className="min-w-0 rounded-2xl border border-white/10 bg-white/[0.06] px-3 py-2.5">
+              <p className="truncate text-[8px] font-extrabold uppercase tracking-[0.15em] text-white/40">Labours</p>
+              <p className="mt-1 text-lg font-black leading-none text-white">{labourCount}</p>
             </div>
           </div>
         </div>
       </header>
 
-      <div className="mx-auto w-full max-w-5xl px-4 pt-3 sm:px-6">
-        <div className="flex items-center gap-2 rounded-2xl border bg-white p-1.5 shadow-sm" style={{ borderColor: "#E4E7EC" }}>
-          <div className="relative min-w-0 flex-1">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#98A2B3]" />
-            <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search labour, contract or note" className="h-10 w-full rounded-xl bg-[#F8FAFC] px-9 text-xs text-[#101828] outline-none placeholder:text-[#98A2B3]" data-ocid="advances.search_input" />
+      <main className="mx-auto w-full max-w-5xl px-4 pt-3 sm:px-6">
+        <section className="rounded-2xl border bg-white p-1.5 shadow-sm" style={{ borderColor: BORDER }}>
+          <div className="flex items-center gap-2">
+            <div className="relative min-w-0 flex-1">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#98A2B3]" />
+              <input
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Search labour, contract or note"
+                className="h-10 w-full rounded-xl bg-[#F8FAFC] px-9 text-xs text-[#101828] outline-none placeholder:text-[#98A2B3]"
+                data-ocid="advances.search_input"
+              />
+            </div>
+            <select
+              value={filterContractId}
+              onChange={(event) => setFilterContractId(event.target.value)}
+              className="h-10 max-w-[40%] rounded-xl border bg-white px-2 text-[10px] font-bold text-[#101828] outline-none"
+              style={{ borderColor: BORDER }}
+              data-ocid="advances.contract_filter"
+            >
+              <option value="all">All active</option>
+              {activeContracts.map((contract: Contract) => (
+                <option key={contract.id.toString()} value={contract.id.toString()}>
+                  {contract.name}
+                </option>
+              ))}
+            </select>
           </div>
-          <select value={filterContractId} onChange={(event) => setFilterContractId(event.target.value)} className="h-10 max-w-[42%] rounded-xl border bg-white px-2 text-[10px] font-bold text-[#101828] outline-none" style={{ borderColor: "#E4E7EC" }} data-ocid="advances.contract_filter">
-            <option value="all">All active</option>
-            {contracts.filter((contract: Contract) => !contract.settled && contract.settled !== 1n).map((contract: Contract) => <option key={contract.id.toString()} value={contract.id.toString()}>{contract.name}</option>)}
-          </select>
-        </div>
-      </div>
+        </section>
 
-      <main className="mx-auto w-full max-w-5xl px-4 pt-4 sm:px-6">
-        <div className="mb-3 flex items-center justify-between px-1">
-          <div>
-            <h2 className="text-base font-black text-[#101828]">Outstanding advances</h2>
-            <p className="mt-0.5 text-xs text-[#667085]">Grouped by labour</p>
+        <section className="pt-4">
+          <div className="mb-3 flex items-end justify-between px-1">
+            <div>
+              <h2 className="text-base font-black" style={{ color: TEXT }}>Outstanding advances</h2>
+              <p className="mt-0.5 text-xs" style={{ color: MUTED }}>Grouped by labour · tap a person for details</p>
+            </div>
+            <span className="rounded-full bg-orange-50 px-2.5 py-1 text-xs font-extrabold text-orange-700">
+              {filtered.length}
+            </span>
           </div>
-          <span className="rounded-full bg-orange-50 px-3 py-1 text-xs font-extrabold text-orange-700">{outstandingRows.length}</span>
-        </div>
-        <Section items={outstandingRows} empty="No outstanding advances found" />
+
+          {!grouped.length ? (
+            <div className="rounded-2xl border border-dashed bg-white px-5 py-12 text-center" style={{ borderColor: BORDER }}>
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-orange-50 text-orange-500">
+                <CircleDollarSign size={25} />
+              </div>
+              <p className="mt-4 text-sm font-black" style={{ color: TEXT }}>
+                {outstandingAdvances.length ? "No matching advances" : "No outstanding advances"}
+              </p>
+              <p className="mt-1 text-xs" style={{ color: MUTED }}>
+                {outstandingAdvances.length
+                  ? "Try a different search or contract filter."
+                  : "Recorded advances will appear here until their contract is settled."}
+              </p>
+            </div>
+          ) : (
+            <div className="overflow-hidden rounded-2xl border bg-white shadow-sm" style={{ borderColor: BORDER }}>
+              {grouped.map(([labourId, list], index) => {
+                const expanded = expandedLabourId === labourId;
+                const total = list.reduce(
+                  (sum, advance) => sum + Number(advance.amount || 0),
+                  0,
+                );
+                const labour = labourName(BigInt(labourId));
+
+                return (
+                  <article
+                    key={labourId}
+                    className={index ? "border-t" : ""}
+                    style={{ borderColor: BORDER }}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => setExpandedLabourId(expanded ? null : labourId)}
+                      className="flex w-full items-center gap-3 px-4 py-3.5 text-left active:bg-slate-50"
+                      aria-expanded={expanded}
+                    >
+                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#172536] text-white">
+                        <UserRound size={19} />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-sm font-extrabold" style={{ color: TEXT }}>
+                          {labour}
+                        </span>
+                        <span className="mt-0.5 block text-[11px]" style={{ color: MUTED }}>
+                          {list.length} advance{list.length === 1 ? "" : "s"} · {dateLabel(list[0]?.createdAt)}
+                        </span>
+                      </span>
+                      <span className="text-right">
+                        <span className="block text-base font-black text-orange-600">{money(total)}</span>
+                        <span className="block text-[9px] font-extrabold uppercase tracking-wider" style={{ color: MUTED }}>
+                          Total
+                        </span>
+                      </span>
+                      {expanded ? (
+                        <ChevronDown size={17} className="shrink-0 text-[#98A2B3]" />
+                      ) : (
+                        <ChevronRight size={17} className="shrink-0 text-[#98A2B3]" />
+                      )}
+                    </button>
+
+                    {expanded && (
+                      <div className="space-y-2 border-t bg-[#F8FAFC] p-3" style={{ borderColor: BORDER }}>
+                        {list.map((advance: Advance) => (
+                          <div
+                            key={advance.id.toString()}
+                            className="rounded-xl border bg-white p-3"
+                            style={{ borderColor: BORDER }}
+                          >
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="min-w-0 flex-1">
+                                <p className="text-lg font-black" style={{ color: TEXT }}>
+                                  {money(advance.amount)}
+                                </p>
+                                <p className="mt-1 truncate text-xs font-semibold" style={{ color: MUTED }}>
+                                  {contractName(advance.contractId)}
+                                </p>
+                                {advance.note && (
+                                  <p className="mt-2 break-words text-sm text-[#475467]">{advance.note}</p>
+                                )}
+                                <p className="mt-2 text-[10px] text-[#98A2B3]">{dateLabel(advance.createdAt)}</p>
+                              </div>
+
+                              {isAdmin && (
+                                <div className="flex shrink-0 gap-1.5">
+                                  <button
+                                    type="button"
+                                    onClick={() => openEdit(advance)}
+                                    className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-700 active:scale-95"
+                                    aria-label="Edit advance"
+                                    data-ocid="advances.edit_button"
+                                  >
+                                    <Pencil size={15} />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => setConfirmDelete(advance.id)}
+                                    className="flex h-9 w-9 items-center justify-center rounded-xl bg-red-50 text-red-600 active:scale-95"
+                                    aria-label="Delete advance"
+                                    data-ocid="advances.delete_button"
+                                  >
+                                    <Trash2 size={15} />
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </article>
+                );
+              })}
+            </div>
+          )}
+        </section>
       </main>
+
       {showForm && (
-        <div className="fixed inset-0 z-[1000] flex items-end justify-center bg-[#101828]/60 p-0 sm:items-center sm:p-4" onClick={(event) => { if (event.target === event.currentTarget) setShowForm(false); }}>
+        <div
+          className="fixed inset-0 z-[1000] flex items-end justify-center bg-[#101828]/60 sm:items-center sm:p-4"
+          onClick={(event) => {
+            if (event.target === event.currentTarget) closeForm();
+          }}
+        >
           <div className="flex max-h-[92dvh] w-full max-w-lg flex-col overflow-hidden rounded-t-[28px] bg-white shadow-2xl sm:rounded-[28px]">
-            <div className="flex items-center justify-between border-b px-5 py-4" style={{ borderColor: "#EAECF0" }}>
-              <div><p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-orange-500">{editingAdvance ? "Update record" : "New record"}</p><h2 className="mt-1 text-xl font-black">{editingAdvance ? "Edit advance" : "Add advance"}</h2></div>
-              <button type="button" onClick={() => setShowForm(false)} className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100" aria-label="Close form"><X className="h-4 w-4" /></button>
+            <div className="flex items-center justify-between border-b px-5 py-4" style={{ borderColor: BORDER }}>
+              <div>
+                <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-orange-500">
+                  {editingAdvance ? "Update record" : "New record"}
+                </p>
+                <h2 className="mt-1 text-xl font-black">
+                  {editingAdvance ? "Edit advance" : "Add advance"}
+                </h2>
+              </div>
+              <button
+                type="button"
+                onClick={closeForm}
+                className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100"
+                aria-label="Close form"
+              >
+                <X size={17} />
+              </button>
             </div>
+
             <div className="space-y-4 overflow-y-auto px-5 py-5">
-              <div><label htmlFor="adv-contract" className="mb-1.5 block text-xs font-bold text-slate-700">Contract</label><select id="adv-contract" value={form.contractId} onChange={(event) => setForm((previous) => ({ ...previous, contractId: event.target.value }))} className="h-12 w-full rounded-xl border bg-white px-3 text-sm outline-none focus:border-orange-400" style={{ borderColor: "#D0D5DD" }}><option value="">Choose contract…</option>{formContracts.map((contract: Contract) => <option key={contract.id.toString()} value={contract.id.toString()}>{contract.name}</option>)}</select></div>
-              <div><label htmlFor="adv-labour" className="mb-1.5 block text-xs font-bold text-slate-700">Labour</label><select id="adv-labour" value={form.labourId} onChange={(event) => setForm((previous) => ({ ...previous, labourId: event.target.value }))} className="h-12 w-full rounded-xl border bg-white px-3 text-sm outline-none focus:border-orange-400" style={{ borderColor: "#D0D5DD" }}><option value="">Choose labour…</option>{labours.map((labour: Labour) => <option key={labour.id.toString()} value={labour.id.toString()}>{labour.name}</option>)}</select></div>
-              <div><label htmlFor="adv-amount" className="mb-1.5 block text-xs font-bold text-slate-700">Amount (₹)</label><input ref={amountRef} id="adv-amount" type="number" min="1" inputMode="decimal" value={form.amount} onChange={(event) => setForm((previous) => ({ ...previous, amount: event.target.value }))} placeholder="Enter amount" className="h-12 w-full rounded-xl border bg-white px-3 text-sm font-semibold outline-none focus:border-orange-400" style={{ borderColor: "#D0D5DD" }} /></div>
-              <div><label htmlFor="adv-note" className="mb-1.5 block text-xs font-bold text-slate-700">Note <span className="font-normal text-slate-400">(optional)</span></label><input id="adv-note" value={form.note} onChange={(event) => setForm((previous) => ({ ...previous, note: event.target.value }))} placeholder="Add a note" className="h-12 w-full rounded-xl border bg-white px-3 text-sm outline-none focus:border-orange-400" style={{ borderColor: "#D0D5DD" }} /></div>
-              {error && <p role="alert" className="rounded-xl bg-red-50 px-3 py-2.5 text-sm font-semibold text-red-600">{error}</p>}
+              <label className="block">
+                <span className="mb-1.5 block text-xs font-bold text-slate-700">Contract</span>
+                <select
+                  value={form.contractId}
+                  onChange={(event) =>
+                    setForm((previous) => ({ ...previous, contractId: event.target.value }))
+                  }
+                  className="h-12 w-full rounded-xl border bg-white px-3 text-sm outline-none focus:border-orange-400"
+                  style={{ borderColor: "#D0D5DD" }}
+                >
+                  <option value="">Choose contract…</option>
+                  {formContracts.map((contract: Contract) => (
+                    <option key={contract.id.toString()} value={contract.id.toString()}>
+                      {contract.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="block">
+                <span className="mb-1.5 block text-xs font-bold text-slate-700">Labour</span>
+                <select
+                  value={form.labourId}
+                  onChange={(event) =>
+                    setForm((previous) => ({ ...previous, labourId: event.target.value }))
+                  }
+                  className="h-12 w-full rounded-xl border bg-white px-3 text-sm outline-none focus:border-orange-400"
+                  style={{ borderColor: "#D0D5DD" }}
+                >
+                  <option value="">Choose labour…</option>
+                  {labours.map((labour: Labour) => (
+                    <option key={labour.id.toString()} value={labour.id.toString()}>
+                      {labour.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="block">
+                <span className="mb-1.5 block text-xs font-bold text-slate-700">Amount (₹)</span>
+                <input
+                  ref={amountRef}
+                  type="number"
+                  min="1"
+                  inputMode="decimal"
+                  value={form.amount}
+                  onChange={(event) =>
+                    setForm((previous) => ({ ...previous, amount: event.target.value }))
+                  }
+                  placeholder="Enter amount"
+                  className="h-12 w-full rounded-xl border bg-white px-3 text-sm font-semibold outline-none focus:border-orange-400"
+                  style={{ borderColor: "#D0D5DD" }}
+                />
+              </label>
+
+              <label className="block">
+                <span className="mb-1.5 block text-xs font-bold text-slate-700">
+                  Note <span className="font-normal text-slate-400">(optional)</span>
+                </span>
+                <input
+                  value={form.note}
+                  onChange={(event) =>
+                    setForm((previous) => ({ ...previous, note: event.target.value }))
+                  }
+                  placeholder="Add a note"
+                  className="h-12 w-full rounded-xl border bg-white px-3 text-sm outline-none focus:border-orange-400"
+                  style={{ borderColor: "#D0D5DD" }}
+                />
+              </label>
+
+              {error && (
+                <p role="alert" className="rounded-xl bg-red-50 px-3 py-2.5 text-sm font-semibold text-red-600">
+                  {error}
+                </p>
+              )}
             </div>
-            <div className="flex gap-3 border-t px-5 py-4" style={{ borderColor: "#EAECF0" }}><button type="button" onClick={() => setShowForm(false)} className="h-12 flex-1 rounded-xl border text-sm font-bold" style={{ borderColor: "#D0D5DD" }}>Cancel</button><button type="button" onClick={save} disabled={addAdvance.isPending || updateAdvance.isPending} className="h-12 flex-1 rounded-xl bg-orange-500 text-sm font-extrabold text-white disabled:opacity-50">{addAdvance.isPending || updateAdvance.isPending ? "Saving…" : editingAdvance ? "Save changes" : "Add advance"}</button></div>
+
+            <div className="flex gap-3 border-t px-5 py-4" style={{ borderColor: BORDER }}>
+              <button
+                type="button"
+                onClick={closeForm}
+                className="h-12 flex-1 rounded-xl border text-sm font-bold"
+                style={{ borderColor: "#D0D5DD" }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={save}
+                disabled={addAdvance.isPending || updateAdvance.isPending}
+                className="h-12 flex-1 rounded-xl bg-orange-500 text-sm font-extrabold text-white disabled:opacity-50"
+                data-ocid="advances.save_button"
+              >
+                {addAdvance.isPending || updateAdvance.isPending
+                  ? "Saving…"
+                  : editingAdvance
+                    ? "Save changes"
+                    : "Add advance"}
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -397,9 +630,30 @@ function AdvancesPage() {
       {confirmDelete !== null && (
         <div className="fixed inset-0 z-[1100] flex items-center justify-center bg-[#101828]/60 p-4">
           <div className="w-full max-w-sm rounded-3xl bg-white p-6 shadow-2xl">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-red-50 text-red-600"><Trash2 className="h-5 w-5" /></div>
-            <h2 className="mt-4 text-lg font-black">Delete this advance?</h2><p className="mt-1 text-sm" style={{ color: MUTED }}>This action cannot be undone.</p>
-            <div className="mt-5 flex gap-3"><button type="button" onClick={() => setConfirmDelete(null)} className="h-11 flex-1 rounded-xl border text-sm font-bold" style={{ borderColor: "#D0D5DD" }}>Cancel</button><button type="button" onClick={() => remove(confirmDelete)} disabled={deleteAdvance.isPending} className="h-11 flex-1 rounded-xl bg-red-600 text-sm font-extrabold text-white disabled:opacity-50" data-ocid="advances.confirm_delete_button">{deleteAdvance.isPending ? "Deleting…" : "Delete"}</button></div>
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-red-50 text-red-600">
+              <Trash2 size={19} />
+            </div>
+            <h2 className="mt-4 text-lg font-black">Delete this advance?</h2>
+            <p className="mt-1 text-sm" style={{ color: MUTED }}>This action cannot be undone.</p>
+            <div className="mt-5 flex gap-3">
+              <button
+                type="button"
+                onClick={() => setConfirmDelete(null)}
+                className="h-11 flex-1 rounded-xl border text-sm font-bold"
+                style={{ borderColor: "#D0D5DD" }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => remove(confirmDelete)}
+                disabled={deleteAdvance.isPending}
+                className="h-11 flex-1 rounded-xl bg-red-600 text-sm font-extrabold text-white disabled:opacity-50"
+                data-ocid="advances.confirm_delete_button"
+              >
+                {deleteAdvance.isPending ? "Deleting…" : "Delete"}
+              </button>
+            </div>
           </div>
         </div>
       )}
