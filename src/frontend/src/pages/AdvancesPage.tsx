@@ -329,7 +329,7 @@ function AdvancesPage() {
                 <Wallet size={14} /> Payroll
               </div>
               <ScrollHeaderTitle title="Advances" className="text-2xl" />
-              <p className={`advances-header-detail mt-0.5 max-w-xl text-[11px] leading-4 text-white/55 ${headerCollapsed ? "hidden" : ""}`>
+              <p className={`advances-header-detail mt-0.5 max-w-xl text-[11px] leading-4 text-white/55 ${headerCollapsed ? "hidden" : ""}` }
                 Track money paid before settlement.
               </p>
             </div>
