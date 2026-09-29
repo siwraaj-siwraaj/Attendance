@@ -12,27 +12,8 @@ export default function ScrollHeaderTitle({ title, className = "" }: ScrollHeade
 
   useEffect(() => {
     const titleElement = titleRef.current;
-    if (!titleElement) return;
-
-    // Prefer the app's shared page scroller so every tab listens to the same
-    // vertical scroll source. Fall back to the nearest scrollable ancestor.
-    let node: HTMLElement | null = titleElement.parentElement;
-    let nearestScrollContainer: HTMLElement | null = null;
-
-    while (node) {
-      const style = window.getComputedStyle(node);
-      if (style.overflowY === "auto" || style.overflowY === "scroll") {
-        nearestScrollContainer = node;
-        break;
-      }
-      node = node.parentElement;
-    }
-
-    const scrollContainer =
-      document.querySelector<HTMLElement>(".app-scroll-container") ??
-      nearestScrollContainer;
-
-    if (!scrollContainer) return;
+    const scrollContainer = document.querySelector<HTMLElement>(".app-scroll-container");
+    if (!titleElement || !scrollContainer) return;
 
     const measure = () => {
       const rect = titleElement.getBoundingClientRect();
@@ -40,9 +21,13 @@ export default function ScrollHeaderTitle({ title, className = "" }: ScrollHeade
       setScrollTop(scrollContainer.scrollTop);
     };
 
-    const onScroll = () => setScrollTop(scrollContainer.scrollTop);
-    const frame = requestAnimationFrame(measure);
+    const onScroll = () => {
+      setScrollTop(scrollContainer.scrollTop);
+    };
 
+    // Measure after the page has painted, so Contracts/Advances get the
+    // same starting position as Payments without changing their layout.
+    const frame = requestAnimationFrame(measure);
     scrollContainer.addEventListener("scroll", onScroll, { passive: true });
 
     return () => {
