@@ -80,7 +80,7 @@ function LaboursPage() {
 
           <div className="mt-1.5 grid grid-cols-3 overflow-hidden rounded-xl border border-[#101828]/10 bg-[#F8FAFC]">
             <button type="button" onClick={() => setFilter("all")} className="border-r border-[#101828]/10 px-3 py-2 text-left">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-[#101828]/55">Team</p><p className="mt-1 text-xl font-extrabold">{labours.length}</p>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-[#101828]/55">Team</p><p className="mt-1 text-xl font-extrabold text-[#101828]">{labours.length}</p>
             </button>
             <button type="button" onClick={() => setFilter("active")} className="border-r border-[#101828]/10 px-3 py-3 text-left">
               <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-700">Active</p><p className="mt-1 text-xl font-extrabold text-emerald-700">{activeCount}</p>
