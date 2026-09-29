@@ -233,20 +233,20 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
             <p className="mt-1 text-xs text-[#667085]">{canEdit && contractFilter === "active" ? "Create a new contract to get started." : "Try another filter or search."}</p>
           </div>
         ) : (
-          <div className="overflow-hidden rounded-2xl border bg-white shadow-sm" style={{ borderColor: "#E4E7EC" }}>
+          <div className={viewMode === "card" ? "grid grid-cols-1 gap-3 sm:grid-cols-2" : "overflow-hidden rounded-2xl border bg-white shadow-sm"} style={viewMode === "list" ? { borderColor: "#E4E7EC" } : undefined}>
             {filteredContracts.map((c: any, index: number) => {
               const id = c.id.toString();
               const expanded = expandedContractId === id;
               return (
-                <article key={id} className={index ? "border-t" : ""} style={{ borderColor: "#EAECF0" }} data-ocid="contract.card">
-                  <button type="button" onClick={() => setExpandedContractId(expanded ? null : id)} className="flex w-full items-center gap-3 px-4 py-2 text-left active:bg-slate-50">
-                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#FFF3EB] text-orange-500"><FileText size={18} /></span>
+                <article key={id} className={viewMode === "card" ? "overflow-hidden rounded-2xl border bg-white shadow-sm" : index ? "border-t" : ""} style={{ borderColor: "#EAECF0" }} data-ocid="contract.card">
+                  <button type="button" onClick={() => setExpandedContractId(expanded ? null : id)} className={viewMode === "card" ? "flex w-full items-center gap-3 px-3.5 py-3 text-left active:bg-slate-50" : "flex w-full items-center gap-3 px-4 py-2 text-left active:bg-slate-50"}>
+                    <span className={viewMode === "card" ? "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#FFF3EB] text-orange-500" : "flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#FFF3EB] text-orange-500"}><FileText size={18} /></span>
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-sm font-extrabold text-[#101828]">{c.name}</span>
                       <span className="mt-1 flex items-center gap-2 text-[11px] text-[#667085]"><CalendarDays size={14} />{fmtDate(c.createdAt)}<span>•</span>{c.workColumns?.length ?? 0} work columns</span>
                     </span>
                     <span className="shrink-0 text-right">
-                      <span className="block text-base font-black text-orange-500">{fmt(c.contractAmount)}</span>
+                      <span className="block text-sm font-black text-orange-500">{fmt(c.contractAmount)}</span>
                       <span className={`text-[9px] font-bold uppercase tracking-wider ${c.settled ? "text-emerald-600" : "text-orange-600"}`}>{c.settled ? "Completed" : "Active"}</span>
                     </span>
                     <ChevronDown className={`h-4 w-4 shrink-0 text-[#98A2B3] transition-transform ${expanded ? "rotate-180" : ""}`} />
