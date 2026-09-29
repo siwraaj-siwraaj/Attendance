@@ -1,4 +1,4 @@
-import { type ReactNode, type UIEvent, useRef, useState } from "react";
+import { type ReactNode, type TouchEvent, type UIEvent, useRef, useState } from "react";
 import * as XLSX from "xlsx";
 import { FileText, KeyRound, LogOut, Settings, ShieldCheck, Upload, UserCircle, X } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
@@ -28,6 +28,9 @@ export default function Layout({ children }: LayoutProps) {
   const [passwordMessage, setPasswordMessage] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [pullOffset, setPullOffset] = useState(0);
+  const pullStartYRef = useRef<number | null>(null);
+  const pullingRef = useRef(false);
   const swipeContentRef = useRef<HTMLDivElement | null>(null);
   const mainRef = useRef<HTMLElement | null>(null);
   const csvInputRef = useRef<HTMLInputElement>(null);
@@ -36,6 +39,41 @@ export default function Layout({ children }: LayoutProps) {
 
   const handleMainScroll = (event: UIEvent<HTMLElement>) => {
     setIsScrolled(event.currentTarget.scrollTop > 24);
+  };
+
+  const handleTouchStart = (event: TouchEvent<HTMLElement>) => {
+    const main = event.currentTarget;
+    if (main.scrollTop <= 0) {
+      pullStartYRef.current = event.touches[0]?.clientY ?? null;
+      pullingRef.current = false;
+    } else {
+      pullStartYRef.current = null;
+      pullingRef.current = false;
+    }
+  };
+
+  const handleTouchMove = (event: TouchEvent<HTMLElement>) => {
+    const startY = pullStartYRef.current;
+    if (startY === null || event.currentTarget.scrollTop > 0) return;
+    const currentY = event.touches[0]?.clientY;
+    if (currentY === undefined) return;
+    const delta = currentY - startY;
+    if (delta <= 0) return;
+
+    const target = event.target as HTMLElement | null;
+    if (target?.closest("input, textarea, select, button, [data-no-pull]")) return;
+
+    pullingRef.current = true;
+    const resistance = 0.42;
+    setPullOffset(Math.min(110, delta * resistance));
+    event.preventDefault();
+  };
+
+  const handleTouchEnd = () => {
+    pullStartYRef.current = null;
+    if (!pullingRef.current) return;
+    pullingRef.current = false;
+    setPullOffset(0);
   };
 
   const handleExportCSV = async () => {
@@ -273,11 +311,15 @@ export default function Layout({ children }: LayoutProps) {
 
       <main
         ref={mainRef}
-        className={`flex-1 min-h-0 min-w-0 overflow-y-auto overflow-x-hidden flex flex-col overscroll-contain app-scroll-container ${isScrolled ? "is-scrolled" : ""}`}
+        className={`flex-1 min-h-0 min-w-0 overflow-y-auto overflow-x-hidden flex flex-col overscroll-y-auto app-scroll-container ${isScrolled ? "is-scrolled" : ""}`}
         onScroll={handleMainScroll}
-        style={{ touchAction: "auto", WebkitOverflowScrolling: "touch", paddingBottom: "var(--rossie-nav-clearance)" }}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onTouchCancel={handleTouchEnd}
+        style={{ touchAction: "pan-y", WebkitOverflowScrolling: "touch", paddingBottom: "var(--rossie-nav-clearance)" }}
       >
-        <div ref={swipeContentRef} className="min-h-full min-w-0 flex flex-col" style={{ width: "100%", touchAction: "pan-y" }}>
+        <div ref={swipeContentRef} className="min-h-full min-w-0 flex flex-col" style={{ width: "100%", touchAction: "pan-y", transform: pullOffset ? `translateY(${pullOffset}px)` : undefined, transition: pullOffset ? "none" : "transform 260ms cubic-bezier(0.22, 1, 0.36, 1)", willChange: "transform" }}>
           {children}
         </div>
       </main>
