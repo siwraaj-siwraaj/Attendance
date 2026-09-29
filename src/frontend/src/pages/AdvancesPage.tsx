@@ -294,7 +294,7 @@ function AdvancesPage() {
   }
 
   return (
-    <div className="flex min-h-full flex-col bg-[#F8FAFC] text-[#182230]">
+    <div className="flex min-h-full flex-col bg-[#F8FAFC] text-[#182230]" style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
       <header className="app-tab-header flex h-[200px] shrink-0 flex-col justify-between rounded-b-[28px] bg-[#172536] px-4 py-3.5 text-white sm:px-6">
         <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col">
           <div className="flex items-start justify-between gap-3">
