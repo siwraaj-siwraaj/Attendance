@@ -4,7 +4,6 @@ import {
   ArrowRight,
   CalendarDays,
   CheckCircle2,
-  ChevronDown,
   FileText,
   Grid2X2,
   List,
@@ -229,11 +228,19 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
                 Manage contracts, rates and work columns.
               </p>
             </div>
-            {canEdit && (
-              <button type="button" onClick={openNew} className="flex h-11 shrink-0 items-center gap-2 rounded-2xl bg-orange-500 px-3.5 text-[11px] font-extrabold shadow-lg shadow-orange-950/30 active:scale-95" data-ocid="contract.add_button">
-                <Plus size={16} /><span className="hidden sm:inline">New contract</span><span className="sm:hidden">Add</span>
+            <div className="flex shrink-0 items-center gap-1.5">
+              <button ref={searchToggleRef} type="button" onClick={() => setShowSearch((open) => !open)} className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/[0.06] text-white/70 active:scale-95" aria-label="Search contracts" data-ocid="contracts.search_toggle">
+                <Search size={16} />
               </button>
-            )}
+              <button type="button" onClick={() => setViewMode((mode) => (mode === "card" ? "list" : "card"))} className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/[0.06] text-white/70 active:scale-95" aria-label={viewMode === "card" ? "Switch to list view" : "Switch to card view"} data-ocid="contracts.view_toggle">
+                {viewMode === "card" ? <List size={16} /> : <Grid2X2 size={16} />}
+              </button>
+              {canEdit && (
+                <button type="button" onClick={openNew} className="flex h-10 shrink-0 items-center gap-2 rounded-xl bg-orange-500 px-3 text-[11px] font-extrabold shadow-lg shadow-orange-950/30 active:scale-95" data-ocid="contract.add_button">
+                  <Plus size={16} /><span className="hidden sm:inline">New contract</span><span className="sm:hidden">Add</span>
+                </button>
+              )}
+            </div>
           </div>
 
           <div className="mt-2 grid grid-cols-2 gap-2">
@@ -248,9 +255,6 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
               <span className="mt-1 block text-[10px] font-semibold text-white/45">Settled contracts</span>
             </button>
           </div>
-          <button type="button" onClick={() => setShowSearch((open) => !open)} className="mt-2 flex h-9 w-full items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.05] text-[10px] font-extrabold text-white/60" data-ocid="contracts.search_toggle">
-            <Search size={14} /> Search contracts <ChevronDown className={`text-white/40 transition ${showSearch ? "rotate-180" : ""}`} size={15} />
-          </button>
         </div>
       </header>
 
@@ -267,7 +271,7 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
         </div>
       )}
 
-      <main className="mx-auto w-full max-w-5xl px-4 pt-4 sm:px-6">
+      <main className="mx-auto w-full max-w-5xl px-4 pt-3 sm:px-6">
         {filteredContracts.length === 0 ? (
           <div className="rounded-2xl border bg-white p-8 text-center shadow-sm" style={{ borderColor: "#E4E7EC" }}>
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-50 text-orange-500"><FileText size={20} /></div>
