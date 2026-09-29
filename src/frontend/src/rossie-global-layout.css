@@ -1,7 +1,7 @@
 /* Rossie — global mobile layout contract */
 
 :root {
-  --rossie-nav-clearance: calc(64px + env(safe-area-inset-bottom, 0px));
+  --rossie-nav-clearance: calc(72px + env(safe-area-inset-bottom, 0px));
   --rossie-header-height: calc(92px + env(safe-area-inset-top, 0px));
   --rossie-dialog-range-top: var(--rossie-header-height);
   --rossie-dialog-range-bottom: var(--rossie-nav-clearance);
