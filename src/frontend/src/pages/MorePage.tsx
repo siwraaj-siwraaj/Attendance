@@ -96,7 +96,7 @@ export default function MorePage() {
   return (
     <div className="flex flex-col bg-[#F8FAFC] pb-32 text-[#101828]">
       <div className="mx-auto w-full max-w-5xl">
-        <header className="relative overflow-hidden rounded-b-[28px] bg-[#172536] px-4 py-5 text-white shadow-sm sm:px-6">
+        <header className="app-tab-header relative overflow-hidden rounded-b-[28px] bg-[#172536] px-4 py-5 text-white shadow-sm sm:px-6">
           <div className="absolute -right-12 -top-16 h-48 w-48 rounded-full bg-orange-500/15 blur-3xl" />
           <div className="relative flex items-start justify-between gap-4">
             <div className="min-w-0">
