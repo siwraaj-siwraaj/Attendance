@@ -218,10 +218,6 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#98A2B3]" />
             <input autoFocus type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search contracts" className="h-11 w-full rounded-xl bg-[#F8FAFC] px-9 text-xs text-[#101828] outline-none ring-1 ring-[#E4E7EC] focus:ring-orange-300" data-ocid="contracts.search_input" />
           </div>
-          <div className="mt-2 grid grid-cols-2 gap-2">
-            <button type="button" onClick={() => setContractFilter("active")} className={`h-10 rounded-xl text-xs font-extrabold ${contractFilter === "active" ? "bg-[#172536] text-white" : "border bg-white text-[#667085]"}`} data-ocid="contracts.ongoing_tab">Ongoing · {activeCount}</button>
-            <button type="button" onClick={() => setContractFilter("completed")} className={`h-10 rounded-xl text-xs font-extrabold ${contractFilter === "completed" ? "bg-[#172536] text-white" : "border bg-white text-[#667085]"}`} data-ocid="contracts.completed_tab">Completed · {completedCount}</button>
-          </div>
         </div>
       )}
 
