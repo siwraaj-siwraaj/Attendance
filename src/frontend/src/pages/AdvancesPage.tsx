@@ -261,7 +261,7 @@ function AdvancesPage() {
   if (loading) {
     return (
       <div className="flex min-h-full flex-col bg-[#F8FAFC] text-[#101828]">
-        <header className="app-tab-header flex h-[200px] shrink-0 flex-col justify-between rounded-b-[28px] bg-[#172536] px-4 py-4 text-white sm:px-6">
+        <header className="app-tab-header flex h-[200px] shrink-0 flex-col justify-between rounded-b-[28px] bg-[#172536] px-4 py-2 text-white sm:px-6">
           <div className="mx-auto w-full max-w-5xl">
             <div className="flex items-start justify-between gap-3">
               <div>
@@ -295,7 +295,7 @@ function AdvancesPage() {
 
   return (
     <div className="flex min-h-full flex-col bg-[#F8FAFC] text-[#182230]">
-      <header className="app-tab-header flex h-[200px] shrink-0 flex-col justify-between rounded-b-[28px] bg-[#172536] px-4 py-4 text-white sm:px-6">
+      <header className="app-tab-header flex h-[200px] shrink-0 flex-col justify-between rounded-b-[28px] bg-[#172536] px-4 py-2 text-white sm:px-6">
         <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
@@ -503,7 +503,7 @@ function AdvancesPage() {
           }}
         >
           <div className="flex max-h-[92dvh] w-full max-w-lg flex-col overflow-hidden rounded-t-[28px] bg-white shadow-2xl sm:rounded-[28px]">
-            <div className="flex items-center justify-between border-b px-5 py-4" style={{ borderColor: BORDER }}>
+            <div className="flex items-center justify-between border-b px-5 py-2" style={{ borderColor: BORDER }}>
               <div>
                 <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-orange-500">
                   {editingAdvance ? "Update record" : "New record"}
@@ -600,7 +600,7 @@ function AdvancesPage() {
               )}
             </div>
 
-            <div className="flex gap-3 border-t px-5 py-4" style={{ borderColor: BORDER }}>
+            <div className="flex gap-3 border-t px-5 py-2" style={{ borderColor: BORDER }}>
               <button
                 type="button"
                 onClick={closeForm}
