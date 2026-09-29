@@ -248,4 +248,14 @@ body:has(.fixed.inset-0.z-\[9999\]) main { overflow: hidden !important; }
 body:has(.fixed.inset-0[class*="bg-black/"]) header,
 body:has(.fixed.inset-0.z-\[9999\]) header { visibility: hidden !important; pointer-events: none !important; }
 
-/* Contracts and Advances use the same ScrollHeaderTitle behavior as Payments. */
+/* A compact ScrollHeaderTitle is the only visible part of a tab header while
+   the page is scrolled. This prevents the original header controls/content from
+   showing through or above the fixed collapsed title. */
+body:has(.scroll-header-title.is-compact) header.app-tab-header > * {
+  visibility: hidden !important;
+}
+body:has(.scroll-header-title.is-compact) header.app-tab-header .scroll-header-title.is-compact {
+  visibility: visible !important;
+  pointer-events: auto !important;
+}
+
