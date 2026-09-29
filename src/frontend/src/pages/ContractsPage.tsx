@@ -3,8 +3,6 @@ import { format } from "date-fns";
 import {
   ArrowRight,
   CalendarDays,
-  CheckCircle2,
-  ChevronDown,
   FileText,
   Grid2X2,
   List,
@@ -34,7 +32,7 @@ const ORANGE = "#F97316";
 const OFF_WHITE = "#F8FAFC";
 
 function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) => void }) {
-  const { canEdit, isAdmin, username, name } = useAuth();
+  const { canEdit } = useAuth();
   const { data: contracts = [], isLoading } = useContracts();
   const addContract = useAddContract();
   const updateContract = useUpdateContract();
@@ -47,42 +45,7 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
   const [showSearch, setShowSearch] = useState(false);
   const [viewMode, setViewMode] = useState<"list" | "card">("card");
   const [contractFilter, setContractFilter] = useState<"active" | "completed">("active");
-  const searchAreaRef = useRef<HTMLDivElement>(null);
   const searchToggleRef = useRef<HTMLButtonElement>(null);
-  const [rubberBandY, setRubberBandY] = useState(0);
-  const rubberStartY = useRef<number | null>(null);
-
-  const rubberFrame = useRef<number | null>(null);
-
-  const handleRubberBandStart = useCallback((event: React.TouchEvent) => {
-    const scrollContainer = document.querySelector(".app-scroll-container") as HTMLElement | null;
-    if (!scrollContainer || scrollContainer.scrollTop > 0) return;
-    rubberStartY.current = event.touches[0]?.clientY ?? null;
-  }, []);
-
-  const handleRubberBandMove = useCallback((event: React.TouchEvent) => {
-    const startY = rubberStartY.current;
-    const scrollContainer = document.querySelector(".app-scroll-container") as HTMLElement | null;
-    if (startY === null || !scrollContainer || scrollContainer.scrollTop > 0) return;
-
-    const currentY = event.touches[0]?.clientY;
-    if (currentY === undefined) return;
-    const delta = currentY - startY;
-
-    if (delta <= 0) return;
-    const eased = Math.min(34, Math.pow(delta, 0.78) * 0.9);
-
-    if (rubberFrame.current !== null) cancelAnimationFrame(rubberFrame.current);
-    rubberFrame.current = requestAnimationFrame(() => setRubberBandY(eased));
-  }, []);
-
-  const handleRubberBandEnd = useCallback(() => {
-    rubberStartY.current = null;
-    if (rubberFrame.current !== null) cancelAnimationFrame(rubberFrame.current);
-    rubberFrame.current = null;
-    setRubberBandY(0);
-  }, []);
-
   const getBedBase = () => Number(localStorage.getItem("rossie_bed_base") || "11000") || 11000;
   const getPaperBase = () => Number(localStorage.getItem("rossie_paper_base") || "7000") || 7000;
 
@@ -216,44 +179,33 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
   }
 
   return (
-    <div className="flex flex-col bg-[#F8FAFC] pb-32 text-[#182230]">
-      <header className="app-tab-header flex h-[200px] shrink-0 flex-col justify-between rounded-b-[28px] bg-[#172536] px-4 py-4 text-white sm:px-6">
-        <div className="mx-auto w-full max-w-5xl">
+    <div className="flex min-h-full flex-col bg-[#F8FAFC] text-[#182230]">
+      <header className="app-tab-header flex h-[200px] shrink-0 flex-col rounded-b-[28px] bg-[#172536] px-4 py-3.5 text-white sm:px-6">
+        <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <div className="mb-1 flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-[0.2em] text-orange-300">
+              <div className="mb-0.5 flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-[0.2em] text-orange-300">
                 <FileText size={14} /> Work management
               </div>
               <ScrollHeaderTitle title="Contracts" className="text-2xl" />
-              <p className="mt-0.5 max-w-xl text-[11px] leading-4 text-white/55">
-                Manage contracts, rates and work columns.
-              </p>
+              <p className="mt-0.5 max-w-xl text-[11px] leading-4 text-white/55">Manage contracts, rates and work columns.</p>
             </div>
             <div className="flex shrink-0 items-center gap-1.5">
-              <button ref={searchToggleRef} type="button" onClick={() => setShowSearch((open) => !open)} className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/[0.06] text-white/70 active:scale-95" aria-label="Search contracts" data-ocid="contracts.search_toggle">
-                <Search size={16} />
-              </button>
-              <button type="button" onClick={() => setViewMode((mode) => (mode === "card" ? "list" : "card"))} className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/[0.06] text-white/70 active:scale-95" aria-label={viewMode === "card" ? "Switch to list view" : "Switch to card view"} data-ocid="contracts.view_toggle">
-                {viewMode === "card" ? <List size={16} /> : <Grid2X2 size={16} />}
-              </button>
-              {canEdit && (
-                <button type="button" onClick={openNew} className="flex h-10 shrink-0 items-center gap-2 rounded-xl bg-orange-500 px-3 text-[11px] font-extrabold shadow-lg shadow-orange-950/30 active:scale-95" data-ocid="contract.add_button">
-                  <Plus size={16} /><span className="hidden sm:inline">New contract</span><span className="sm:hidden">Add</span>
-                </button>
-              )}
+              <button ref={searchToggleRef} type="button" onClick={() => setShowSearch((open) => !open)} className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/[0.06] text-white/70 active:scale-95" aria-label="Search contracts" data-ocid="contracts.search_toggle"><Search size={16} /></button>
+              <button type="button" onClick={() => setViewMode((mode) => (mode === "card" ? "list" : "card"))} className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/[0.06] text-white/70 active:scale-95" aria-label={viewMode === "card" ? "Switch to list view" : "Switch to card view"} data-ocid="contracts.view_toggle">{viewMode === "card" ? <List size={16} /> : <Grid2X2 size={16} />}</button>
+              {canEdit && <button type="button" onClick={openNew} className="flex h-10 shrink-0 items-center gap-1.5 rounded-xl bg-orange-500 px-3 text-[11px] font-extrabold shadow-lg shadow-orange-950/30 active:scale-95" data-ocid="contract.add_button"><Plus size={16} /><span>Add</span></button>}
             </div>
           </div>
-
-          <div className="mt-2 grid grid-cols-2 gap-2">
-            <button type="button" onClick={() => setContractFilter("active")} className={`min-w-0 rounded-2xl border p-3 text-left transition ${contractFilter === "active" ? "border-orange-400/40 bg-white/[0.11]" : "border-white/10 bg-white/[0.05]"}`} data-ocid="contracts.ongoing_card">
-              <span className="block text-[9px] font-extrabold uppercase tracking-[0.16em] text-white/40">Ongoing</span>
-              <span className="mt-0.5 block text-2xl font-black leading-none text-white">{activeCount}</span>
-              <span className="mt-1 block text-[10px] font-semibold text-white/45">Active contracts</span>
+          <div className="mt-auto grid grid-cols-2 gap-2">
+            <button type="button" onClick={() => setContractFilter("active")} className={`min-w-0 rounded-2xl border px-3 py-2.5 text-left transition ${contractFilter === "active" ? "border-orange-400/40 bg-white/[0.11]" : "border-white/10 bg-white/[0.06]"}`} data-ocid="contracts.ongoing_card">
+              <p className="truncate text-[8px] font-extrabold uppercase tracking-[0.16em] text-white/40">Ongoing</p>
+              <p className="mt-1 text-lg font-black leading-none text-white">{activeCount}</p>
+              <p className="mt-1 text-[10px] font-semibold text-white/45">Active contracts</p>
             </button>
-            <button type="button" onClick={() => setContractFilter("completed")} className={`min-w-0 rounded-2xl border p-3 text-left transition ${contractFilter === "completed" ? "border-emerald-400/30 bg-white/[0.11]" : "border-white/10 bg-white/[0.05]"}`} data-ocid="contracts.completed_card">
-              <span className="block text-[9px] font-extrabold uppercase tracking-[0.16em] text-white/40">Completed</span>
-              <span className="mt-0.5 block text-2xl font-black leading-none text-white">{completedCount}</span>
-              <span className="mt-1 block text-[10px] font-semibold text-white/45">Settled contracts</span>
+            <button type="button" onClick={() => setContractFilter("completed")} className={`min-w-0 rounded-2xl border px-3 py-2.5 text-left transition ${contractFilter === "completed" ? "border-emerald-400/30 bg-white/[0.11]" : "border-white/10 bg-white/[0.06]"}`} data-ocid="contracts.completed_card">
+              <p className="truncate text-[8px] font-extrabold uppercase tracking-[0.16em] text-white/40">Completed</p>
+              <p className="mt-1 text-lg font-black leading-none text-white">{completedCount}</p>
+              <p className="mt-1 text-[10px] font-semibold text-white/45">Settled contracts</p>
             </button>
           </div>
         </div>
