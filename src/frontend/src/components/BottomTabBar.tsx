@@ -33,7 +33,7 @@ export default function BottomTabBar({ activeTab, onTabChange }: LayoutProps) {
 
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-50 border-t border-white/10 bg-[#0c1322]/98 backdrop-blur-xl"
+      className="fixed inset-x-0 bottom-0 z-50 border-t border-white/10 bg-[#0c1322]/75 backdrop-blur-xl"
       data-ocid="bottom_tab_bar"
       style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
       aria-label="Primary navigation"
