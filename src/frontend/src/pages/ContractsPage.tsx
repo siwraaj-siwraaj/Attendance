@@ -181,7 +181,7 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
 
   return (
     <div className="flex min-h-full flex-col bg-[#F8FAFC] text-[#182230]">
-      <header className="app-tab-header flex h-[200px] shrink-0 flex-col rounded-b-[28px] bg-[#172536] px-4 py-4 text-white sm:px-6">
+      <header className="app-tab-header flex h-[200px] shrink-0 flex-col rounded-b-[28px] bg-[#172536] px-4 py-2 text-white sm:px-6">
         <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
@@ -239,7 +239,7 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
               const expanded = expandedContractId === id;
               return (
                 <article key={id} className={index ? "border-t" : ""} style={{ borderColor: "#EAECF0" }} data-ocid="contract.card">
-                  <button type="button" onClick={() => setExpandedContractId(expanded ? null : id)} className="flex w-full items-center gap-3 px-4 py-4 text-left active:bg-slate-50">
+                  <button type="button" onClick={() => setExpandedContractId(expanded ? null : id)} className="flex w-full items-center gap-3 px-4 py-2 text-left active:bg-slate-50">
                     <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#FFF3EB] text-orange-500"><FileText size={18} /></span>
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-sm font-extrabold text-[#101828]">{c.name}</span>
@@ -283,7 +283,7 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
           role="presentation"
         >
           <div className="flex max-h-[92vh] w-full max-w-lg flex-col overflow-hidden rounded-t-[28px] bg-white shadow-2xl sm:rounded-[28px]">
-            <div className="flex items-center justify-between border-b px-5 py-4" style={{ borderColor: "#EAECF0" }}>
+            <div className="flex items-center justify-between border-b px-5 py-2" style={{ borderColor: "#EAECF0" }}>
               <div>
                 <p className="text-xs font-bold uppercase tracking-wider" style={{ color: ORANGE }}>{isEditing ? "Update" : "Create"}</p>
                 <h2 className="mt-0.5 text-xl font-extrabold" style={{ color: NAVY }}>{isEditing ? "Edit contract" : "New contract"}</h2>
@@ -373,7 +373,7 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
               {isSaving && <p className="text-xs font-semibold" style={{ color: ORANGE }}>Saving contract…</p>}
             </div>
 
-            <div className="flex gap-3 border-t bg-white px-5 py-4 pb-safe" style={{ borderColor: "#EAECF0" }}>
+            <div className="flex gap-3 border-t bg-white px-5 py-2 pb-safe" style={{ borderColor: "#EAECF0" }}>
               <button type="button" onClick={closeForm} className="h-11 flex-1 rounded-xl border text-sm font-bold" style={{ borderColor: "#D0D5DD", color: NAVY }} data-ocid="contract.cancel_button">Cancel</button>
               <button type="button" onClick={handleSave} disabled={isSaving || !form.name.trim()} className="h-11 flex-1 rounded-xl text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50" style={{ background: ORANGE }} data-ocid="contract.save_button">
                 {isSaving ? "Saving…" : isEditing ? "Save changes" : "Create contract"}
