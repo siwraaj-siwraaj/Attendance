@@ -14,7 +14,7 @@ body,
 #root { width: 100%; min-width: 0; height: 100%; min-height: 100%; margin: 0; background: #040913; }
 body { overflow: hidden; overscroll-behavior: none; }
 .min-h-screen:has(> header) { height: 100dvh; min-height: 100dvh; max-height: 100dvh; overflow: hidden; }
-body:has([data-ocid="bottom_tab_bar"]) main { flex: 1 1 auto; min-width: 0; min-height: 0; width: 100%; max-width: 100%; overflow-y: auto; overflow-x: hidden; padding: 0 0 var(--rossie-nav-clearance) !important; -webkit-overflow-scrolling: touch; touch-action: auto; }
+body:has([data-ocid="bottom_tab_bar"]) main { flex: 1 1 auto; min-width: 0; min-height: 0; width: 100%; max-width: 100%; overflow-y: auto; overflow-x: hidden; padding: 0 !important; -webkit-overflow-scrolling: touch; touch-action: auto; }
 body:has([data-ocid="bottom_tab_bar"]) main > div { min-width: 0; min-height: 0; max-width: 100%; }
 /* Single native page scroll container: the shell is fixed, while each page is allowed to grow to its content height. */
 body:has([data-ocid="bottom_tab_bar"]) main > div { height: auto !important; min-height: 100% !important; overflow: visible !important; }
