@@ -317,7 +317,7 @@ export default function Layout({ children }: LayoutProps) {
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
         onTouchCancel={handleTouchEnd}
-        style={{ touchAction: "pan-y", WebkitOverflowScrolling: "touch", paddingBottom: "var(--rossie-nav-clearance)" }}
+        style={{ touchAction: "pan-y", WebkitOverflowScrolling: "touch", paddingBottom: "var(--rossie-nav-clearance)", ["--rossie-pull-offset" as string]: `${pullOffset}px` }}
       >
         <div ref={swipeContentRef} className="min-h-full min-w-0 flex flex-col" style={{ width: "100%", touchAction: "pan-y", transform: pullOffset ? `translateY(${pullOffset}px)` : undefined, transition: pullOffset ? "none" : "transform 260ms cubic-bezier(0.22, 1, 0.36, 1)", willChange: "transform" }}>
           {children}
