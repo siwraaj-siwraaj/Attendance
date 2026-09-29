@@ -225,7 +225,7 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
         </div>
       )}
 
-      <main className="mx-auto w-full max-w-5xl px-4 pt-3 sm:px-6">
+      <div className="mx-auto w-full max-w-5xl px-4 pt-3 sm:px-6">
         {filteredContracts.length === 0 ? (
           <div className="rounded-2xl border bg-white p-8 text-center shadow-sm" style={{ borderColor: "#E4E7EC" }}>
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-50 text-orange-500"><FileText size={20} /></div>
@@ -272,7 +272,7 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
             })}
           </div>
         )}
-      </main>
+      </div>
 
 
       {showForm && (
