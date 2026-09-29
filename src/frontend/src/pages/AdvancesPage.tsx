@@ -325,7 +325,7 @@ function AdvancesPage() {
         <div className="mx-auto w-full max-w-5xl">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <div className="advances-header-detail mb-1 flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-[0.2em] text-orange-300">
+              <div className={`advances-header-detail mb-1 flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-[0.2em] text-orange-300 ${headerCollapsed ? "hidden" : ""}`}>
                 <Wallet size={14} /> Payroll
               </div>
               <ScrollHeaderTitle title="Advances" className="text-2xl" />
@@ -340,7 +340,7 @@ function AdvancesPage() {
             )}
           </div>
 
-          <div className={`advances-header-detail mt-3 rounded-2xl border border-white/10 bg-white/[0.06] px-4 py-3 shadow-inner">
+          <div className={`advances-header-detail mt-3 rounded-2xl border border-white/10 bg-white/[0.06] px-4 py-3 shadow-inner ${headerCollapsed ? "hidden" : ""}`}>
             <div className="flex items-end justify-between gap-3">
               <div className="min-w-0">
                 <p className="text-[9px] font-extrabold uppercase tracking-[0.18em] text-white/40">Outstanding amount</p>
