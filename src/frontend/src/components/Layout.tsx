@@ -275,7 +275,7 @@ export default function Layout({ children }: LayoutProps) {
         ref={mainRef}
         className={`flex-1 min-h-0 min-w-0 overflow-y-auto overflow-x-hidden flex flex-col overscroll-contain app-scroll-container ${isScrolled ? "is-scrolled" : ""}`}
         onScroll={handleMainScroll}
-        style={{ touchAction: "auto", WebkitOverflowScrolling: "touch", paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+        style={{ touchAction: "auto", WebkitOverflowScrolling: "touch", paddingBottom: "var(--rossie-nav-clearance)" }}
       >
         <div ref={swipeContentRef} className="min-h-full min-w-0 flex flex-col" style={{ width: "100%", touchAction: "pan-y" }}>
           {children}
