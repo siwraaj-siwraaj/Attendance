@@ -14,35 +14,40 @@ export default function ScrollHeaderTitle({ title, className = "" }: ScrollHeade
     const titleElement = titleRef.current;
     if (!titleElement) return;
 
+    // Prefer the app's shared page scroller so every tab listens to the same
+    // vertical scroll source. Fall back to the nearest scrollable ancestor.
     let node: HTMLElement | null = titleElement.parentElement;
-    let scrollContainer: HTMLElement | null = null;
+    let nearestScrollContainer: HTMLElement | null = null;
 
     while (node) {
       const style = window.getComputedStyle(node);
       if (style.overflowY === "auto" || style.overflowY === "scroll") {
-        scrollContainer = node;
+        nearestScrollContainer = node;
         break;
       }
       node = node.parentElement;
     }
 
-    scrollContainer ??= document.querySelector<HTMLElement>(".app-scroll-container");
+    const scrollContainer =
+      document.querySelector<HTMLElement>(".app-scroll-container") ??
+      nearestScrollContainer;
+
     if (!scrollContainer) return;
 
     const measure = () => {
       const rect = titleElement.getBoundingClientRect();
-      setTitleTop(rect.top + scrollContainer!.scrollTop);
-      setScrollTop(scrollContainer!.scrollTop);
+      setTitleTop(rect.top + scrollContainer.scrollTop);
+      setScrollTop(scrollContainer.scrollTop);
     };
 
-    const onScroll = () => setScrollTop(scrollContainer!.scrollTop);
+    const onScroll = () => setScrollTop(scrollContainer.scrollTop);
     const frame = requestAnimationFrame(measure);
 
     scrollContainer.addEventListener("scroll", onScroll, { passive: true });
 
     return () => {
       cancelAnimationFrame(frame);
-      scrollContainer?.removeEventListener("scroll", onScroll);
+      scrollContainer.removeEventListener("scroll", onScroll);
     };
   }, []);
 
