@@ -18,7 +18,7 @@ body:has([data-ocid="bottom_tab_bar"]) main { flex: 1 1 auto; min-width: 0; min-
 body:has([data-ocid="bottom_tab_bar"]) main > div { min-width: 0; min-height: 0; max-width: 100%; }
 /* Single native page scroll container: the shell is fixed, while each page is allowed to grow to its content height. */
 body:has([data-ocid="bottom_tab_bar"]) main > div { height: auto !important; min-height: calc(100% - var(--rossie-nav-clearance)) !important; overflow: visible !important; }
-body:has([data-ocid="bottom_tab_bar"]) main > div > * { min-height: 100%; height: auto !important; max-height: none !important; overflow: visible !important; }
+body:has([data-ocid="bottom_tab_bar"]) main > div > * { min-height: 0; height: auto !important; max-height: none !important; overflow: visible !important; }
 body:has([data-ocid="bottom_tab_bar"]) main [class*="overflow-y-auto"] { min-width: 0; min-height: 0; overscroll-behavior-y: auto; scroll-padding-top: 8px; scroll-padding-bottom: var(--rossie-nav-clearance); -webkit-overflow-scrolling: touch; touch-action: auto; }
 
 body:has([data-ocid="contracts.search_input"]) main [class*="overflow-y-auto"] { height: auto !important; max-height: none !important; }
