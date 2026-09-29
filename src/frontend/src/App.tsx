@@ -10,6 +10,7 @@ import AttendancePage from "./pages/AttendancePage";
 import AdvancesPage from "./pages/AdvancesPage";
 import PaymentsPage from "./pages/PaymentsPage";
 import LaboursPage from "./pages/LaboursPage";
+import LabourDetailsPage from "./pages/LabourDetailsPage";
 import AdminPanel from "./pages/AdminPanel";
 import MorePage from "./pages/MorePage";
 
@@ -57,6 +58,7 @@ function AppContent() {
   const [selectedContractIds, setSelectedContractIds] = useState<Set<string>>(() => new Set());
   const [paymentData, setPaymentData] = useState<any[] | null>(null);
   const [openColumnPickerFor, setOpenColumnPickerFor] = useState<bigint | null>(null);
+  const [selectedLabour, setSelectedLabour] = useState<any | null>(null);
   const handleViewAttendance = (contractId: bigint) => {
     setSelectedContractId(contractId);
     setAttendanceContractId(contractId);
@@ -66,6 +68,7 @@ function AppContent() {
   if (isInitializing) return <OpeningRossie />;
   if (!isAuthenticated) return <div className="fixed inset-0 flex items-center justify-center" style={{ background: "#0d1220" }}><div className="ambient-glow-1" aria-hidden="true" /><div className="ambient-glow-2" aria-hidden="true" /><LoginPage /></div>;
   if (status !== "approved") return <PendingApproval />;
+  if (selectedLabour && activeTab === "labours") return <Layout><div className="flex flex-col min-h-full"><ErrorBoundary tabName="labours"><LabourDetailsPage labour={selectedLabour} onBack={() => setSelectedLabour(null)} /></ErrorBoundary></div></Layout>;
   return <Layout><div className="flex flex-col min-h-full"><ErrorBoundary tabName={activeTab} key={activeTab}>
     {activeTab === "admin" && <AdminPanel key="admin" />}
     {mode === "view" && activeTab === "attendance" && <AttendancePage key="attendance" selectedContractId={selectedContractId ?? attendanceContractId} openColumnPickerFor={openColumnPickerFor} onContractChange={setAttendanceContractId} onColumnPickerOpened={() => setOpenColumnPickerFor(null)} onBackToContracts={handleAttendanceBack} />}
@@ -74,7 +77,7 @@ function AppContent() {
     {mode === "edit" && activeTab === "attendance" && <AttendancePage key="attendance-edit" selectedContractId={selectedContractId ?? attendanceContractId} onContractChange={setAttendanceContractId} openColumnPickerFor={openColumnPickerFor} onColumnPickerOpened={() => setOpenColumnPickerFor(null)} onBackToContracts={handleAttendanceBack} />}
     {(mode === "edit" || mode === "view") && activeTab === "advances" && <AdvancesPage key="advances" />}
     {(mode === "edit" || mode === "view") && activeTab === "payments" && <PaymentsPage key="payments" selectedContractIds={selectedContractIds} setSelectedContractIds={setSelectedContractIds} paymentData={paymentData} setPaymentData={setPaymentData} />}
-    {(mode === "edit" || mode === "view") && activeTab === "labours" && <LaboursPage key="labours" />}
+    {(mode === "edit" || mode === "view") && activeTab === "labours" && <LaboursPage key="labours" onSelectLabour={setSelectedLabour} />}
     {(mode === "edit" || mode === "view") && activeTab === "more" && <MorePage key="more" />}
 
   </ErrorBoundary></div></Layout>;
