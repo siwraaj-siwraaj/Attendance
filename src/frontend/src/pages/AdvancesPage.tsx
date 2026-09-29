@@ -337,7 +337,7 @@ function AdvancesPage() {
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-5xl px-4 pt-3 sm:px-6">
+      <main className="mx-auto w-full max-w-5xl px-4 pt-3 pb-20 sm:px-6">
         <section className="rounded-2xl border bg-white p-1.5 shadow-sm" style={{ borderColor: BORDER }}>
           <div className="flex items-center gap-2">
             <div className="relative min-w-0 flex-1">
