@@ -42,7 +42,7 @@ export default function ScrollHeaderTitle({ title, className = "" }: ScrollHeade
     <>
       <h1
         ref={titleRef}
-        className={`z-40 font-black tracking-tight text-white transition-[top,left,width,height,font-size,padding,background-color,box-shadow] duration-150 ease-out ${className}`}
+        className={`scroll-header-title ${compact ? "is-compact" : ""} z-50 font-black tracking-tight text-white transition-[top,left,width,height,font-size,padding,background-color,box-shadow] duration-150 ease-out ${className}`}
         style={{
           position: titleTop === null ? "relative" : "fixed",
           top: compact ? "env(safe-area-inset-top, 0px)" : `${Math.max(0, (titleTop ?? 0) - scrollTop)}px`,
