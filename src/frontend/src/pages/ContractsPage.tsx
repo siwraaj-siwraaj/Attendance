@@ -197,11 +197,11 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
               {canEdit && <button type="button" onClick={openNew} className="flex h-10 shrink-0 items-center gap-1.5 rounded-xl bg-orange-500 px-3 text-[11px] font-extrabold shadow-lg shadow-orange-950/30 active:scale-95" data-ocid="contract.add_button"><Plus size={16} /><span>Add</span></button>}
             </div>
           </div>
-          <div className="mt-auto grid grid-cols-2 gap-2">
-            <button type="button" onClick={() => setContractFilter("active")} className={`min-w-0 rounded-2xl border px-3 py-2.5 text-left transition ${contractFilter === "active" ? "border-orange-400/40 bg-white/[0.11]" : "border-white/10 bg-white/[0.06]"}`} data-ocid="contracts.ongoing_card">
+          <div className="mt-auto grid grid-cols-2 gap-1.5">
+            <button type="button" onClick={() => setContractFilter("active")} className={`min-w-0 rounded-xl border px-2.5 py-1.5 text-left transition ${contractFilter === "active" ? "border-orange-400/40 bg-white/[0.11]" : "border-white/10 bg-white/[0.06]"}`} data-ocid="contracts.ongoing_card">
               <p className="truncate text-[8px] font-extrabold uppercase tracking-[0.16em] text-white/40">Ongoing</p>
-              <p className="mt-1 text-lg font-black leading-none text-white">{activeCount}</p>
-              <p className="mt-1 text-[10px] font-semibold text-white/45">Active contracts</p>
+              <p className="mt-0.5 text-base font-black leading-none text-white">{activeCount}</p>
+              <p className="mt-0.5 text-[9px] font-semibold text-white/45">Active contracts</p>
             </button>
             <button type="button" onClick={() => setContractFilter("completed")} className={`min-w-0 rounded-2xl border px-3 py-2.5 text-left transition ${contractFilter === "completed" ? "border-emerald-400/30 bg-white/[0.11]" : "border-white/10 bg-white/[0.06]"}`} data-ocid="contracts.completed_card">
               <p className="truncate text-[8px] font-extrabold uppercase tracking-[0.16em] text-white/40">Completed</p>
