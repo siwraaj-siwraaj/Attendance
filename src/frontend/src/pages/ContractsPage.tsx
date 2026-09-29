@@ -180,7 +180,7 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
   }
 
   return (
-    <div className="flex min-h-full flex-col bg-[#F8FAFC] pb-[var(--rossie-nav-clearance)] text-[#182230]">
+    <div className="flex min-h-full flex-col bg-[#F8FAFC] text-[#182230]">
       <header className="app-tab-header flex h-[200px] shrink-0 flex-col rounded-b-[28px] bg-[#172536] px-4 pt-0 pb-2 text-white sm:px-6">
         <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col">
           <div className="flex items-start justify-between gap-3">
@@ -270,6 +270,7 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
         )}
       </div>
 
+      <div aria-hidden="true" className="h-[var(--rossie-nav-clearance)] shrink-0" />
 
       {showForm && (
         <div
