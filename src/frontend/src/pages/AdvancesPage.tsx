@@ -280,7 +280,7 @@ function AdvancesPage() {
             </div>
           </div>
         </header>
-        <main className="mx-auto w-full max-w-5xl px-4 pt-4 sm:px-6">
+        <main className="mx-auto w-full max-w-5xl px-4 pt-4 pb-20 sm:px-6">
           <div className="rounded-2xl border bg-white p-3 shadow-sm" style={{ borderColor: BORDER }}>
             <div className="h-11 animate-pulse rounded-xl bg-[#F2F4F7]" />
           </div>
