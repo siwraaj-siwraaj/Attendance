@@ -23,6 +23,16 @@ type Labour = any;
 function AdvancesPage() {
   const { isAdmin } = useAuth();
   const [rubberBandY, setRubberBandY] = useState(0);
+  const [headerCollapsed, setHeaderCollapsed] = useState(false);
+
+  useEffect(() => {
+    const scrollContainer = document.querySelector<HTMLElement>(".app-scroll-container");
+    if (!scrollContainer) return;
+    const updateHeader = () => setHeaderCollapsed(scrollContainer.scrollTop > 24);
+    updateHeader();
+    scrollContainer.addEventListener("scroll", updateHeader, { passive: true });
+    return () => scrollContainer.removeEventListener("scroll", updateHeader);
+  }, []);
   const rubberStartY = useRef<number | null>(null);
 
   const rubberFrame = useRef<number | null>(null);
@@ -273,7 +283,7 @@ function AdvancesPage() {
           <div className="mx-auto w-full max-w-5xl">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <div className="advances-header-detail mb-1 flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-[0.2em] text-orange-300">
+                <div className={`advances-header-detail mb-1 flex items-center gap-2 ${headerCollapsed ? "hidden" : ""}` text-[10px] font-extrabold uppercase tracking-[0.2em] text-orange-300">
                   <Wallet className="h-3.5 w-3.5" /> Payroll
                 </div>
                 <ScrollHeaderTitle title="Advances" className="text-2xl" />
@@ -311,7 +321,7 @@ function AdvancesPage() {
 
   return (
     <div className="advances-tab flex flex-col bg-[#F8FAFC] pb-32 text-[#182230]">
-      <header className="app-tab-header sticky top-0 z-40 flex h-[200px] shrink-0 flex-col justify-start rounded-b-[28px] bg-[#172536] px-4 py-4 text-white transition-[height,border-radius] duration-200 ease-out sm:px-6">
+      <header className={`app-tab-header sticky top-0 z-40 flex ${headerCollapsed ? "h-[76px] rounded-b-2xl" : "h-[200px] rounded-b-[28px]"} shrink-0 flex-col justify-start overflow-hidden bg-[#172536] px-4 py-3 text-white transition-[height,border-radius] duration-200 ease-out sm:px-6`}>
         <div className="mx-auto w-full max-w-5xl">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
@@ -319,18 +329,18 @@ function AdvancesPage() {
                 <Wallet size={14} /> Payroll
               </div>
               <ScrollHeaderTitle title="Advances" className="text-2xl" />
-              <p className="advances-header-detail mt-0.5 max-w-xl text-[11px] leading-4 text-white/55">
+              <p className={`advances-header-detail mt-0.5 max-w-xl text-[11px] leading-4 text-white/55 ${headerCollapsed ? "hidden" : ""}`>
                 Track money paid before settlement.
               </p>
             </div>
             {isAdmin && (
-              <button type="button" onClick={openAdd} className="advances-header-detail flex h-11 shrink-0 items-center gap-2 rounded-2xl bg-orange-500 px-3.5 text-[11px] font-extrabold shadow-lg shadow-orange-950/30 active:scale-95" data-ocid="advances.add_button">
+              <button type="button" onClick={openAdd} className={`advances-header-detail flex h-11 shrink-0 items-center gap-2 rounded-2xl bg-orange-500 px-3.5 text-[11px] font-extrabold shadow-lg shadow-orange-950/30 active:scale-95 ${headerCollapsed ? "hidden" : ""}`} data-ocid="advances.add_button">
                 <Plus size={16} /><span className="hidden sm:inline">Add advance</span><span className="sm:hidden">Add</span>
               </button>
             )}
           </div>
 
-          <div className="advances-header-detail mt-3 rounded-2xl border border-white/10 bg-white/[0.06] px-4 py-3 shadow-inner">
+          <div className={`advances-header-detail mt-3 rounded-2xl border border-white/10 bg-white/[0.06] px-4 py-3 shadow-inner">
             <div className="flex items-end justify-between gap-3">
               <div className="min-w-0">
                 <p className="text-[9px] font-extrabold uppercase tracking-[0.18em] text-white/40">Outstanding amount</p>
