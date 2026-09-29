@@ -259,3 +259,22 @@ body:has(.scroll-header-title.is-compact) header.app-tab-header .scroll-header-t
   pointer-events: auto !important;
 }
 
+
+
+/* Tab headers stay fixed while only the tab content scrolls. */
+body:has([data-ocid="bottom_tab_bar"]) .app-scroll-container .app-tab-header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+}
+
+/* Preserve the pull-down rubber-band visually on content, not the fixed header. */
+.app-scroll-container > div > .app-tab-header ~ * {
+  transform: translateY(var(--rossie-pull-offset, 0px));
+  transition: transform 260ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+
+.app-scroll-container > div > .app-tab-header ~ *:has(.app-tab-header) {
+  transform: none;
+}
