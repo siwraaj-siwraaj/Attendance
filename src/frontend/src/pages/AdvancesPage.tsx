@@ -493,6 +493,7 @@ function AdvancesPage() {
             </div>
           )}
         </section>
+        <div aria-hidden="true" className="h-28 shrink-0" />
       </main>
 
       {showForm && (
