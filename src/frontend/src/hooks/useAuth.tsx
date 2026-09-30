@@ -19,7 +19,8 @@ import { useBackendActor } from "./useBackend";
 import { registerPushTokenForCurrentUser, deletePushToken } from "./pushNotifications";
 
 const REMEMBER_ME_KEY = "rossie.rememberMe";
-const RESTORE_TIMEOUT_MS = 10000;
+const RESTORE_TIMEOUT_MS = 5000;
+const CACHED_AUTH_KEY = "rossie.cachedAuth";
 
 interface AuthContextType {
   isInitializing: boolean;
@@ -56,10 +57,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [roles, setRoles] = useState<Role[]>([]);
   const [loginNotice, setLoginNotice] = useState<{ type: "pending"; name: string; phone: string; message: string; requestToken?: string } | null>(null);
   const [isInitializing, setIsInitializing] = useState(true);
-  const [activeTab, setActiveTabState] = useState<Tab>("contracts");
-  const [attendanceContractId, setAttendanceContractId] = useState<bigint | null>(null);
+  const [activeTab, setActiveTabState] = useState<Tab>(() => {
+    try { return (localStorage.getItem("rossie.activeTab") as Tab | null) ?? "contracts"; } catch { return "contracts"; }
+  });
+  const [attendanceContractId, setAttendanceContractId] = useState<bigint | null>(() => {
+    try { const saved = localStorage.getItem("rossie.attendanceContractId"); return saved ? BigInt(saved) : null; } catch { return null; }
+  });
 
   const isAuthenticated = username !== null;
+
+  const readCachedAuth = useCallback(() => {
+    try { const raw = localStorage.getItem(CACHED_AUTH_KEY); return raw ? JSON.parse(raw) : null; } catch { return null; }
+  }, []);
 
   const registerCurrentDeviceForPush = useCallback(async () => {
     if (!actor) return;
@@ -76,6 +85,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setStatus(result.status);
     setRole(result.role);
     setRoles((result as { roles?: Role[]; role: Role }).roles ?? [result.role]);
+    try { localStorage.setItem(CACHED_AUTH_KEY, JSON.stringify({ username: result.username, name: result.name ?? null, status: result.status, role: result.role, roles: (result as { roles?: Role[] }).roles ?? [result.role] })); } catch { /* cache only accelerates startup */ }
   }, []);
 
   useEffect(() => {
@@ -88,8 +98,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const restore = async () => {
       try {
-        // Supabase persists and refreshes its session in local storage. Restore it
-        // directly instead of requiring the user to enter credentials again.
+        const cached = readCachedAuth();
+        if (cached?.username) {
+          applyLoginResult(cached);
+          finishInitialization();
+        }
+
         const result = await Promise.race([
           actor?.restoreSession(),
           new Promise<null>((resolve) => {
@@ -100,11 +114,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (result) {
           applyLoginResult(result);
           void registerCurrentDeviceForPush();
+        } else if (!cached?.username) {
+          finishInitialization();
         }
       } catch {
-        // If the saved session is invalid or offline, show sign-in safely.
-      } finally {
-        finishInitialization();
+        if (!readCachedAuth()?.username) finishInitialization();
       }
     };
 
@@ -206,6 +220,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (actor) void actor.logout();
     setLoginNotice(null);
     localStorage.removeItem(REMEMBER_ME_KEY);
+    localStorage.removeItem(CACHED_AUTH_KEY);
     void clearBiometricCredentials();
     setUsername(null);
     setName(null);
@@ -249,7 +264,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [allowedTabs, activeTab]);
 
-  const setActiveTab = useCallback((t: Tab) => setActiveTabState(t), []);
+  const setActiveTab = useCallback((t: Tab) => {
+    setActiveTabState(t);
+    try { localStorage.setItem("rossie.activeTab", t); } catch { /* ignore */ }
+  }, []);
 
   const value: AuthContextType = {
     isInitializing,
@@ -269,7 +287,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     canEdit,
     isAdmin,
     attendanceContractId,
-    setAttendanceContractId,
+    setAttendanceContractId: (id) => {
+      setAttendanceContractId(id);
+      try { if (id === null) localStorage.removeItem("rossie.attendanceContractId"); else localStorage.setItem("rossie.attendanceContractId", id.toString()); } catch { /* ignore */ }
+    },
     refreshAuth,
     loginNotice,
     getRegistrationStatus,
