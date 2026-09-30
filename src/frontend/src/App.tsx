@@ -57,12 +57,6 @@ function AppContent() {
   // Warm data for tabs the user has not opened yet. This runs after auth is
   // available, in parallel, so visiting another tab doesn't trigger its first
   // ever load. Existing cached data can render immediately.
-  useState(() => {
-    if (typeof window !== "undefined") {
-      try { localStorage.setItem("rossie.activeTab", "contracts"); } catch { /* ignore */ }
-    }
-    return true;
-  });
   useEffect(() => {
     if (!isAuthenticated || status !== "approved") return;
     const options = { staleTime: 10 * 60 * 1000 };
