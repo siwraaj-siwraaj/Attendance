@@ -61,16 +61,16 @@ export function useUpdateLabour() {
   return useMutation({
     retry: 3,
     retryDelay: 1000,
-    mutationFn: async ({ id, name, employeeId, joinDate, isActive, phoneNumber }: { id: bigint; name: string; employeeId: string; joinDate: string; isActive: boolean; phoneNumber: string }) => {
+    mutationFn: async ({ id, name, employeeId, joinDate, birthday, isActive, phoneNumber }: { id: bigint; name: string; employeeId: string; joinDate: string; birthday: string; isActive: boolean; phoneNumber: string }) => {
       if (!actor) throw new Error("Backend not connected");
-      const result = await actor.updateLabour(id, name, employeeId, joinDate, isActive, phoneNumber);
+      const result = await actor.updateLabour(id, name, employeeId, joinDate, birthday, isActive, phoneNumber);
       if (result.__kind__ === "err") throw new Error(result.err);
       return result.ok;
     },
     onMutate: async (vars) => {
       await qc.cancelQueries({ queryKey: ["labours"] });
       const prev = qc.getQueryData<unknown[]>(["labours"]) ?? [];
-      qc.setQueryData(["labours"], (prev as Array<{ id: bigint; isActive?: boolean }>).map((l) => l.id === vars.id ? { ...l, isActive: vars.isActive, name: vars.name, employeeId: vars.employeeId, joinDate: vars.joinDate, phoneNumber: vars.phoneNumber } : l));
+      qc.setQueryData(["labours"], (prev as Array<{ id: bigint; isActive?: boolean }>).map((l) => l.id === vars.id ? { ...l, isActive: vars.isActive, name: vars.name, employeeId: vars.employeeId, joinDate: vars.joinDate, birthday: vars.birthday, phoneNumber: vars.phoneNumber } : l));
       return { prev };
     },
     onError: (_e, _v, ctx) => { if (ctx?.prev) qc.setQueryData(["labours"], ctx.prev); },
