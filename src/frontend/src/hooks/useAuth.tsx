@@ -86,59 +86,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!cancelled) setIsInitializing(false);
     };
 
-    if (!actor) {
-      timeoutId = setTimeout(finishInitialization, 1500);
-      return () => {
-        cancelled = true;
-        if (timeoutId) clearTimeout(timeoutId);
-      };
-    }
-
     const restore = async () => {
-      const rememberMe = localStorage.getItem(REMEMBER_ME_KEY) === "true";
-      if (!rememberMe) {
-        finishInitialization();
-        return;
-      }
-
       try {
-        const credentials = await Promise.race([
-          getSavedCredentials(),
-          new Promise<null>((resolve) => {
-            timeoutId = setTimeout(() => resolve(null), RESTORE_TIMEOUT_MS);
-          }),
-        ]);
-
-        if (!credentials || cancelled) {
-          finishInitialization();
-          return;
-        }
-
+        // Supabase persists and refreshes its session in local storage. Restore it
+        // directly instead of requiring the user to enter credentials again.
         const result = await Promise.race([
-          actor.login(credentials),
+          actor?.restoreSession(),
           new Promise<null>((resolve) => {
             timeoutId = setTimeout(() => resolve(null), RESTORE_TIMEOUT_MS);
           }),
         ]);
-
         if (cancelled) return;
-
         if (result) {
           applyLoginResult(result);
           void registerCurrentDeviceForPush();
-        } else {
-          localStorage.removeItem(REMEMBER_ME_KEY);
-          await clearBiometricCredentials();
         }
       } catch {
-        if (!cancelled) localStorage.removeItem(REMEMBER_ME_KEY);
+        // If the saved session is invalid or offline, show sign-in safely.
       } finally {
         finishInitialization();
       }
     };
 
     void restore();
-
     return () => {
       cancelled = true;
       if (timeoutId) clearTimeout(timeoutId);
@@ -165,12 +135,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       applyLoginResult(result);
       void registerCurrentDeviceForPush();
 
+      // Keep the Supabase session across app restarts. Biometric saving is
+      // optional and must not delay entering the app.
+      localStorage.setItem(REMEMBER_ME_KEY, "true");
       if (rememberMe) {
-        localStorage.setItem(REMEMBER_ME_KEY, "true");
-        await saveBiometricCredentials(usernameInput.trim(), password);
+        void saveBiometricCredentials(usernameInput.trim(), password);
       } else {
-        localStorage.removeItem(REMEMBER_ME_KEY);
-        await clearBiometricCredentials();
+        void clearBiometricCredentials();
       }
       return true;
     },
