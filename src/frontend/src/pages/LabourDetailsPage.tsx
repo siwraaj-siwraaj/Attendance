@@ -31,6 +31,7 @@ export default function LabourDetailsPage({ labour, onBack }: LabourDetailsPageP
   const [employeeId, setEmployeeId] = useState(String(labour?.employeeId ?? ""));
   const [phoneNumber, setPhoneNumber] = useState(String(labour?.phoneNumber ?? ""));
   const [joinDate, setJoinDate] = useState(String(labour?.joinDate ?? ""));
+  const [birthday, setBirthday] = useState(String(labour?.birthday ?? ""));
   const [active, setActive] = useState(labour?.isActive !== false);
 
   const initial = String(labour?.name ?? "?").trim().charAt(0).toUpperCase() || "?";
@@ -60,7 +61,10 @@ export default function LabourDetailsPage({ labour, onBack }: LabourDetailsPageP
   }, [labour]);
 
   const gender = String(labour?.gender ?? labour?.sex ?? "").trim();
-  const demographic = [gender, age ? `${age} yrs` : ""].filter(Boolean).join(" · ") || "Demographics not recorded";
+  const birthdayDate = birthday ? new Date(`${birthday}T00:00:00`) : null;
+  const calculatedAge = birthdayDate && !Number.isNaN(birthdayDate.getTime()) ? (() => { const today = new Date(); let years = today.getFullYear() - birthdayDate.getFullYear(); if (today.getMonth() < birthdayDate.getMonth() || (today.getMonth() === birthdayDate.getMonth() && today.getDate() < birthdayDate.getDate())) years -= 1; return years > 0 ? String(years) : ""; })() : "";
+  const displayAge = age || calculatedAge;
+  const demographic = [gender, displayAge ? `${displayAge} yrs` : ""].filter(Boolean).join(" · ") || "Demographics not recorded";
   const address = String(labour?.address ?? labour?.location ?? labour?.fullAddress ?? "").trim() || "Address not recorded";
   const experienceRaw = labour?.experience ?? labour?.experienceYears ?? labour?.yearsOfExperience;
   const experience = experienceRaw !== undefined && experienceRaw !== null && String(experienceRaw).trim() !== ""
@@ -70,6 +74,9 @@ export default function LabourDetailsPage({ labour, onBack }: LabourDetailsPageP
     ? /year|month/i.test(experience)
       ? experience
       : `${experience} ${Number(experience) === 1 ? "year" : "years"}`
+    : "Not recorded";
+  const birthdayText = birthdayDate && !Number.isNaN(birthdayDate.getTime())
+    ? birthdayDate.toLocaleDateString("en-IN", { day: "2-digit", month: "long", year: "numeric" })
     : "Not recorded";
   const fatherName = String(labour?.fatherName ?? "").trim();
   const primaryNameLabel = fatherName ? "Father Name" : "Full Name";
@@ -152,8 +159,13 @@ export default function LabourDetailsPage({ labour, onBack }: LabourDetailsPageP
                     <div className="absolute right-0 top-12 z-50 w-48 overflow-hidden rounded-2xl border border-[#E4E7EC] bg-white p-1.5 shadow-[0_14px_36px_rgba(16,24,40,0.16)]">
                       <button
                         onClick={() => {
-                          setActive((value) => !value);
+                          const nextActive = !active;
                           setMenuOpen(false);
+                          setActive(nextActive);
+                          updateLabour.mutate(
+                            { id: labour.id, name: name.trim(), employeeId: employeeId.trim(), joinDate: joinDate.trim(), birthday: birthday.trim(), isActive: nextActive, phoneNumber: phoneNumber.replace(/\\D/g, "") },
+                            { onSuccess: () => toast.success(nextActive ? "Labour marked active" : "Labour marked inactive"), onError: (e: unknown) => { setActive(!nextActive); toast.error(e instanceof Error ? e.message : "Could not change labour status"); } },
+                          );
                         }}
                         type="button"
                         className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-bold hover:bg-[#F5F7FA]"
@@ -225,6 +237,16 @@ export default function LabourDetailsPage({ labour, onBack }: LabourDetailsPageP
             </div>
           </div>
 
+          <div className="flex items-center gap-3.5 border-b border-[#EEF0F2] px-4 py-4.5">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[13px] bg-[#EEF3F6] text-[#5B7181]">
+              <CalendarDays size={18} />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-[#8A98A4]">Experience</p>
+              <p className="mt-1 text-[15px] font-bold text-[#172536]">{birthdayText}</p>
+            </div>
+          </div>
+
           <div className="flex items-center gap-3.5 px-4 py-4.5">
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[13px] bg-[#EEF3F6] text-[#5B7181]">
               <Clock3 size={18} />
@@ -271,6 +293,10 @@ export default function LabourDetailsPage({ labour, onBack }: LabourDetailsPageP
               <label>
                 <span className="mb-1.5 block text-xs font-bold text-[#344054]">Employee ID</span>
                 <input value={employeeId} onChange={(e) => setEmployeeId(e.target.value)} className="h-12 w-full rounded-xl border border-[#D0D5DD] bg-[#F9FAFB] px-4 text-sm font-semibold outline-none focus:border-[#60798A]" />
+              </label>
+              <label>
+                <span className="mb-1.5 block text-xs font-bold text-[#344054]">Birthday</span>
+                <input type="date" value={birthday} onChange={(e) => setBirthday(e.target.value)} className="h-12 w-full rounded-xl border border-[#D0D5DD] bg-[#F9FAFB] px-4 text-sm font-semibold outline-none focus:border-[#60798A]" />
               </label>
               <label>
                 <span className="mb-1.5 block text-xs font-bold text-[#344054]">Joining date</span>
