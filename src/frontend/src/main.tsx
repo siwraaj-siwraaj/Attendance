@@ -65,6 +65,52 @@ async function resolveCanisterId(): Promise<string | null> {
   return id;
 }
 
+const QUERY_CACHE_KEY = "rossie.queryCache.v1";
+const PERSISTED_QUERY_KEYS = [["contracts"], ["labours"], ["labours", "active"]];
+
+function encodeCache(value: unknown): string {
+  return JSON.stringify(value, (_key, item) =>
+    typeof item === "bigint" ? { __rossieBigInt: item.toString() } : item,
+  );
+}
+
+function decodeCache(value: string): unknown {
+  return JSON.parse(value, (_key, item) =>
+    item && typeof item === "object" && "__rossieBigInt" in item
+      ? BigInt((item as { __rossieBigInt: string }).__rossieBigInt)
+      : item,
+  );
+}
+
+function restoreQueryCache(queryClient: QueryClient) {
+  try {
+    const raw = localStorage.getItem(QUERY_CACHE_KEY);
+    if (!raw) return;
+    const saved = decodeCache(raw) as Array<{ queryKey: unknown[]; data: unknown; updatedAt: number }>;
+    for (const entry of saved) {
+      if (Array.isArray(entry.queryKey) && entry.data !== undefined) {
+        queryClient.setQueryData(entry.queryKey, entry.data, { updatedAt: entry.updatedAt ?? 0 });
+      }
+    }
+  } catch {
+    localStorage.removeItem(QUERY_CACHE_KEY);
+  }
+}
+
+function persistQueryCache(queryClient: QueryClient) {
+  try {
+    const saved = PERSISTED_QUERY_KEYS.map((queryKey) => {
+      const query = queryClient.getQueryCache().find({ queryKey });
+      return query?.state.data === undefined
+        ? null
+        : { queryKey, data: query.state.data, updatedAt: query.state.dataUpdatedAt };
+    }).filter(Boolean);
+    localStorage.setItem(QUERY_CACHE_KEY, encodeCache(saved));
+  } catch {
+    // Cache is only an acceleration layer.
+  }
+}
+
 // Shared QueryClient instance — also used for prefetch in main.tsx
 export const sharedQueryClient = new QueryClient({
   defaultOptions: {
@@ -76,6 +122,9 @@ export const sharedQueryClient = new QueryClient({
     },
   },
 });
+
+restoreQueryCache(sharedQueryClient);
+sharedQueryClient.getQueryCache().subscribe(() => persistQueryCache(sharedQueryClient));
 
 const rootEl = document.getElementById("root");
 if (!rootEl) {
