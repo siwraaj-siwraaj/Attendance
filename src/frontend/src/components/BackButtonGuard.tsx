@@ -7,7 +7,12 @@ interface BackButtonGuardProps {
   returnToContractsOnly?: boolean;
 }
 
-function closeOpenSurface(): boolean {\n  const labourDetailsBack = document.querySelector<HTMLElement>("[data-labour-details-back]");\n  if (labourDetailsBack) {\n    labourDetailsBack.click();\n    return true;\n  }
+function closeOpenSurface(): boolean {
+  const labourDetailsBack = document.querySelector<HTMLElement>("[data-labour-details-back]");
+  if (labourDetailsBack) {
+    labourDetailsBack.click();
+    return true;
+  }
   const contractSearchClose = document.querySelector<HTMLElement>('[data-ocid="contracts.search_back_close"]');
   if (contractSearchClose) {
     contractSearchClose.click();
