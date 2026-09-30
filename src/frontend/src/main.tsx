@@ -153,9 +153,7 @@ if (!rootEl) {
 // close to "tap → previous screen" behavior without putting every page into
 // the initial JS bundle.
 (() => {
-  const activeTab = (() => {
-    try { return localStorage.getItem("rossie.activeTab") ?? "contracts"; } catch { return "contracts"; }
-  })();
+  const activeTab = "contracts";
 
   const warm = (tab: string) => {
     if (tab === "contracts") return import("./pages/ContractsPage");
