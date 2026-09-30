@@ -1,9 +1,10 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/react-query";
 import { lazy, Suspense, useState } from "react";
 import ErrorBoundary from "./components/ErrorBoundary";
 import Layout from "./components/Layout";
 import PendingApproval from "./components/PendingApproval";
 import { AuthProvider, useAuth } from "./hooks/useAuth";
+import { createSupabaseActor } from "./hooks/supabaseActor";
 const LoginPage = lazy(() => import("./pages/LoginPage"));
 const ContractsPage = lazy(() => import("./pages/ContractsPage"));
 const AttendancePage = lazy(() => import("./pages/AttendancePage"));
@@ -49,7 +50,31 @@ const defaultQueryClient = new QueryClient({
 interface AppProps { queryClient?: QueryClient; }
 
 function AppContent() {
-  const { isAuthenticated, status, mode, activeTab, setActiveTab, attendanceContractId, setAttendanceContractId } = useAuth();
+  const { isAuthenticated, status, mode, activeTab, setActiveTab, attendanceContractId, setAttendanceContractId, isAdmin } = useAuth();
+  const queryClient = useQueryClient();
+  const [prefetchActor] = useState(() => createSupabaseActor());
+
+  // Warm data for tabs the user has not opened yet. This runs after auth is
+  // available, in parallel, so visiting another tab doesn't trigger its first
+  // ever load. Existing cached data can render immediately.
+  useState(() => {
+    if (typeof window !== "undefined") {
+      try { localStorage.setItem("rossie.activeTab", "contracts"); } catch { /* ignore */ }
+    }
+    return true;
+  });
+  useEffect(() => {
+    if (!isAuthenticated || status !== "approved") return;
+    const options = { staleTime: 10 * 60 * 1000 };
+    void Promise.allSettled([
+      queryClient.prefetchQuery({ queryKey: ["contracts"], queryFn: () => prefetchActor.getContracts(), ...options }),
+      queryClient.prefetchQuery({ queryKey: ["labours"], queryFn: () => prefetchActor.getLabours(), ...options }),
+      queryClient.prefetchQuery({ queryKey: ["labours", "active"], queryFn: () => prefetchActor.getActiveLabours(), ...options }),
+      queryClient.prefetchQuery({ queryKey: ["advances"], queryFn: () => prefetchActor.getAdvances(), ...options }),
+      queryClient.prefetchQuery({ queryKey: ["attendance", "all"], queryFn: () => prefetchActor.getAllAttendance(), ...options }),
+      ...(isAdmin ? [queryClient.prefetchQuery({ queryKey: ["users"], queryFn: () => prefetchActor.listUsers(), ...options })] : []),
+    ]);
+  }, [isAuthenticated, status, isAdmin, queryClient, prefetchActor]);
   const [selectedContractId, setSelectedContractId] = useState<bigint | null>(null);
   const [selectedContractIds, setSelectedContractIds] = useState<Set<string>>(() => new Set());
   const [paymentData, setPaymentData] = useState<any[] | null>(null);
