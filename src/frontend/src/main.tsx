@@ -124,7 +124,18 @@ export const sharedQueryClient = new QueryClient({
 });
 
 restoreQueryCache(sharedQueryClient);
-sharedQueryClient.getQueryCache().subscribe(() => persistQueryCache(sharedQueryClient));
+
+// Persist only after a short idle window. Writing the full cached dataset to
+// localStorage on every React Query event can otherwise compete with startup,
+// especially on Android WebView.
+let cachePersistTimer: ReturnType<typeof setTimeout> | undefined;
+sharedQueryClient.getQueryCache().subscribe(() => {
+  if (cachePersistTimer) clearTimeout(cachePersistTimer);
+  cachePersistTimer = setTimeout(() => {
+    cachePersistTimer = undefined;
+    persistQueryCache(sharedQueryClient);
+  }, 750);
+});
 
 const rootEl = document.getElementById("root");
 if (!rootEl) {
@@ -137,12 +148,43 @@ if (!rootEl) {
   );
 }
 
-// Resolve canister ID + warm up JS chunks — all in background, never block mount.
-// Chunk prefetching starts immediately, in parallel with canister resolution,
-// so tab switches feel instant without delaying the first paint.
-(async () => {
-  // Page modules are lazy-loaded when needed so startup can prioritize auth and the first screen.
+// Warm the current screen's lazy chunk immediately after React mounts, then
+// warm the remaining screens in the background. This keeps repeat launches
+// close to "tap → previous screen" behavior without putting every page into
+// the initial JS bundle.
+(() => {
+  const activeTab = (() => {
+    try { return localStorage.getItem("rossie.activeTab") ?? "contracts"; } catch { return "contracts"; }
+  })();
 
+  const warm = (tab: string) => {
+    if (tab === "contracts") return import("./pages/ContractsPage");
+    if (tab === "attendance") return import("./pages/AttendancePage");
+    if (tab === "advances") return import("./pages/AdvancesPage");
+    if (tab === "payments") return import("./pages/PaymentsPage");
+    if (tab === "labours") return import("./pages/LaboursPage");
+    if (tab === "more") return import("./pages/MorePage");
+    if (tab === "admin") return import("./pages/AdminPanel");
+    return import("./pages/ContractsPage");
+  };
+
+  void warm(activeTab);
+  const remaining = ["contracts", "attendance", "advances", "payments", "labours", "more", "admin"]
+    .filter((tab) => tab !== activeTab);
+
+  const scheduleRemaining = () => {
+    for (const tab of remaining) void warm(tab);
+  };
+
+  if ("requestIdleCallback" in window) {
+    window.requestIdleCallback(scheduleRemaining, { timeout: 3000 });
+  } else {
+    setTimeout(scheduleRemaining, 1500);
+  }
+})();
+
+// Resolve canister ID in the background; it never blocks the first paint.
+(async () => {
   try {
     const canisterId = await Promise.race([
       resolveCanisterId(),
