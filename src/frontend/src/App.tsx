@@ -49,6 +49,15 @@ const defaultQueryClient = new QueryClient({
 
 interface AppProps { queryClient?: QueryClient; }
 
+function PageLoadingFallback() {
+  return (
+    <div className="app-loading-screen" role="status" aria-label="Loading Attendance">
+      <div className="app-loading-mark" aria-hidden="true"><span /></div>
+      <span className="app-loading-label">Loading</span>
+    </div>
+  );
+}
+
 function AppContent() {
   const { isAuthenticated, status, mode, activeTab, setActiveTab, attendanceContractId, setAttendanceContractId, isAdmin } = useAuth();
   const queryClient = useQueryClient();
@@ -82,10 +91,10 @@ function AppContent() {
   const handleAttendanceBack = () => setActiveTab("contracts");
   // Never block the UI on auth initialization. Cached auth renders the app immediately;
   // without cached auth we show login immediately while session restoration runs in background.
-  if (!isAuthenticated) return <div className="fixed inset-0 flex items-center justify-center" style={{ background: "#0d1220" }}><div className="ambient-glow-1" aria-hidden="true" /><div className="ambient-glow-2" aria-hidden="true" /><Suspense fallback={null}><LoginPage /></Suspense></div>;
+  if (!isAuthenticated) return <div className="fixed inset-0 flex items-center justify-center" style={{ background: "#040913" }}><div className="ambient-glow-1" aria-hidden="true" /><div className="ambient-glow-2" aria-hidden="true" /><Suspense fallback={<PageLoadingFallback />}><LoginPage /></Suspense></div>;
   if (status !== "approved") return <PendingApproval />;
-  if (selectedLabour && activeTab === "labours") return <Layout><div className="flex flex-col min-h-full"><ErrorBoundary tabName="labours"><Suspense fallback={null}><LabourDetailsPage labour={selectedLabour} onBack={() => setSelectedLabour(null)} /></Suspense></ErrorBoundary></div></Layout>;
-  return <Layout><div className="flex flex-col min-h-full"><ErrorBoundary tabName={activeTab} key={activeTab}><Suspense fallback={null}>
+  if (selectedLabour && activeTab === "labours") return <Layout><div className="flex flex-col min-h-full"><ErrorBoundary tabName="labours"><Suspense fallback={<PageLoadingFallback />}><LabourDetailsPage labour={selectedLabour} onBack={() => setSelectedLabour(null)} /></Suspense></ErrorBoundary></div></Layout>;
+  return <Layout><div className="flex flex-col min-h-full"><ErrorBoundary tabName={activeTab} key={activeTab}><Suspense fallback={<PageLoadingFallback />}>
     {activeTab === "admin" && <AdminPanel key="admin" />}
     {mode === "view" && activeTab === "attendance" && <AttendancePage key="attendance" selectedContractId={selectedContractId ?? attendanceContractId} openColumnPickerFor={openColumnPickerFor} onContractChange={setAttendanceContractId} onColumnPickerOpened={() => setOpenColumnPickerFor(null)} onBackToContracts={handleAttendanceBack} />}
     {mode === "view" && activeTab === "contracts" && <ContractsPage key="contracts-view" onViewAttendance={handleViewAttendance} />}
