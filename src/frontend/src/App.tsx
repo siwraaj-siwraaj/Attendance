@@ -1,18 +1,18 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import ErrorBoundary from "./components/ErrorBoundary";
 import Layout from "./components/Layout";
 import PendingApproval from "./components/PendingApproval";
 import { AuthProvider, useAuth } from "./hooks/useAuth";
-import LoginPage from "./pages/LoginPage";
-import ContractsPage from "./pages/ContractsPage";
-import AttendancePage from "./pages/AttendancePage";
-import AdvancesPage from "./pages/AdvancesPage";
-import PaymentsPage from "./pages/PaymentsPage";
-import LaboursPage from "./pages/LaboursPage";
-import LabourDetailsPage from "./pages/LabourDetailsPage";
-import AdminPanel from "./pages/AdminPanel";
-import MorePage from "./pages/MorePage";
+const LoginPage = lazy(() => import("./pages/LoginPage"));
+const ContractsPage = lazy(() => import("./pages/ContractsPage"));
+const AttendancePage = lazy(() => import("./pages/AttendancePage"));
+const AdvancesPage = lazy(() => import("./pages/AdvancesPage"));
+const PaymentsPage = lazy(() => import("./pages/PaymentsPage"));
+const LaboursPage = lazy(() => import("./pages/LaboursPage"));
+const LabourDetailsPage = lazy(() => import("./pages/LabourDetailsPage"));
+const AdminPanel = lazy(() => import("./pages/AdminPanel"));
+const MorePage = lazy(() => import("./pages/MorePage"));
 
 // Keep stalled mobile/WebView requests from blocking the app indefinitely.
 const FETCH_TIMEOUT_MS = 8_000;
@@ -68,8 +68,8 @@ function AppContent() {
   if (isInitializing) return <OpeningRossie />;
   if (!isAuthenticated) return <div className="fixed inset-0 flex items-center justify-center" style={{ background: "#0d1220" }}><div className="ambient-glow-1" aria-hidden="true" /><div className="ambient-glow-2" aria-hidden="true" /><LoginPage /></div>;
   if (status !== "approved") return <PendingApproval />;
-  if (selectedLabour && activeTab === "labours") return <Layout><div className="flex flex-col min-h-full"><ErrorBoundary tabName="labours"><LabourDetailsPage labour={selectedLabour} onBack={() => setSelectedLabour(null)} /></ErrorBoundary></div></Layout>;
-  return <Layout><div className="flex flex-col min-h-full"><ErrorBoundary tabName={activeTab} key={activeTab}>
+  if (selectedLabour && activeTab === "labours") return <Layout><div className="flex flex-col min-h-full"><ErrorBoundary tabName="labours"><Suspense fallback={<OpeningRossie />}><LabourDetailsPage labour={selectedLabour} onBack={() => setSelectedLabour(null)} /></Suspense></ErrorBoundary></div></Layout>;
+  return <Layout><div className="flex flex-col min-h-full"><ErrorBoundary tabName={activeTab} key={activeTab}><Suspense fallback={<OpeningRossie />}>
     {activeTab === "admin" && <AdminPanel key="admin" />}
     {mode === "view" && activeTab === "attendance" && <AttendancePage key="attendance" selectedContractId={selectedContractId ?? attendanceContractId} openColumnPickerFor={openColumnPickerFor} onContractChange={setAttendanceContractId} onColumnPickerOpened={() => setOpenColumnPickerFor(null)} onBackToContracts={handleAttendanceBack} />}
     {mode === "view" && activeTab === "contracts" && <ContractsPage key="contracts-view" onViewAttendance={handleViewAttendance} />}
@@ -80,7 +80,7 @@ function AppContent() {
     {(mode === "edit" || mode === "view") && activeTab === "labours" && <LaboursPage key="labours" onSelectLabour={setSelectedLabour} />}
     {(mode === "edit" || mode === "view") && activeTab === "more" && <MorePage key="more" />}
 
-  </ErrorBoundary></div></Layout>;
+  </Suspense></ErrorBoundary></div></Layout>;
 }
 
 export default function App({ queryClient }: AppProps = {}) { const qc = queryClient ?? defaultQueryClient; return <ErrorBoundary><QueryClientProvider client={qc}><AuthProvider><AppContent /></AuthProvider></QueryClientProvider></ErrorBoundary>; }
