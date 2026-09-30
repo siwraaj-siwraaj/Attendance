@@ -232,7 +232,7 @@ export default function Layout({ children }: LayoutProps) {
   const profileInitial = profileName.charAt(0).toUpperCase();
 
   return (
-    <div className="h-[100dvh] min-h-0 flex flex-col bg-[#040913]">
+    <div className="h-[100dvh] min-h-0 flex flex-col bg-[#F8FAFC]">
       <BackButtonGuard enabled={mode !== null} returnToContractsOnly={activeTab === "admin" || activeTab === "attendance"} onReturnToSelection={() => setActiveTab("contracts")} />
 
       {menuOpen && <>
