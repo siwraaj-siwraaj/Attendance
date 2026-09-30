@@ -20,9 +20,11 @@
   font-display: swap;
 }
 
-html, body, #root { min-height: 100%; background: #040913; }
+html, body, #root { min-height: 100%; background: #F8FAFC; }
 
-.app-loading-screen { min-height: 45vh; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.875rem; background: #040913; color: #aab5c8; }
+/* Keep the app canvas light so it never leaks through light page layouts. */
+html, body { background-color: #F8FAFC; }
+.app-loading-screen { min-height: 100%; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.875rem; background: #F8FAFC; color: #667085; }
 .app-loading-mark { width: 2.5rem; height: 2.5rem; border: 2px solid rgba(249, 115, 22, 0.2); border-top-color: #f97316; border-radius: 9999px; animation: appLoadingSpin 0.75s linear infinite; }
 .app-loading-mark span { display: block; width: 0.375rem; height: 0.375rem; margin: 0.45rem auto; border-radius: 9999px; background: #f97316; }
 .app-loading-label { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; }
