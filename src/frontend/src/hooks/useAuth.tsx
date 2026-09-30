@@ -19,7 +19,7 @@ import { useBackendActor } from "./useBackend";
 import { registerPushTokenForCurrentUser, deletePushToken } from "./pushNotifications";
 
 const REMEMBER_ME_KEY = "rossie.rememberMe";
-const RESTORE_TIMEOUT_MS = 5000;
+const RESTORE_TIMEOUT_MS = 1500;
 const CACHED_AUTH_KEY = "rossie.cachedAuth";
 
 interface AuthContextType {
@@ -50,13 +50,23 @@ const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { actor } = useBackendActor();
-  const [username, setUsername] = useState<string | null>(null);
-  const [name, setName] = useState<string | null>(null);
-  const [status, setStatus] = useState<UserStatus | null>(null);
-  const [role, setRole] = useState<Role | null>(null);
-  const [roles, setRoles] = useState<Role[]>([]);
+  // Restore the last authenticated user synchronously so the app never waits
+  // for React effects or Supabase network calls before showing the app shell.
+  const cachedAuth = (() => {
+    try {
+      const raw = localStorage.getItem(CACHED_AUTH_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  })();
+  const [username, setUsername] = useState<string | null>(cachedAuth?.username ?? null);
+  const [name, setName] = useState<string | null>(cachedAuth?.name ?? null);
+  const [status, setStatus] = useState<UserStatus | null>(cachedAuth?.status ?? null);
+  const [role, setRole] = useState<Role | null>(cachedAuth?.role ?? null);
+  const [roles, setRoles] = useState<Role[]>(cachedAuth?.roles ?? (cachedAuth?.role ? [cachedAuth.role] : []));
   const [loginNotice, setLoginNotice] = useState<{ type: "pending"; name: string; phone: string; message: string; requestToken?: string } | null>(null);
-  const [isInitializing, setIsInitializing] = useState(true);
+  const [isInitializing, setIsInitializing] = useState(!cachedAuth?.username);
   const [activeTab, setActiveTabState] = useState<Tab>(() => {
     try { return (localStorage.getItem("rossie.activeTab") as Tab | null) ?? "contracts"; } catch { return "contracts"; }
   });
@@ -100,7 +110,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         const cached = readCachedAuth();
         if (cached?.username) {
-          applyLoginResult(cached);
+          // Cached auth is already in React state. Do not block the UI while
+          // Supabase validates the persisted session in the background.
           finishInitialization();
         }
 
