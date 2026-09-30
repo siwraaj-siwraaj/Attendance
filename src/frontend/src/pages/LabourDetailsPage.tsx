@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowLeft, CalendarDays, Edit3, Hash, Phone, ShieldCheck, Trash2, UserRound, X } from "lucide-react";
+import { CalendarDays, Edit3, Hash, Phone, ShieldCheck, Trash2, UserRound, X } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "../hooks/useAuth";
 import { useUpdateLabour, useDeleteLabour } from "../hooks/useBackend";
