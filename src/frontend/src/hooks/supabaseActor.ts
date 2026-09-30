@@ -35,6 +35,7 @@ function mapLabour(row: any) {
     employeeId: row.employee_id,
     joinDate: row.join_date ? String(row.join_date).slice(0, 10) : "",
     phoneNumber: row.phone_number ?? "",
+    birthday: row.birthday ? String(row.birthday).slice(0, 10) : "",
     isActive: Boolean(row.is_active),
     createdAt: ns(row.created_at),
   };
@@ -250,7 +251,7 @@ export function createSupabaseActor() {
       } catch (e: any) { return err(e.message); }
     },
     async deleteLabour(id: bigint) { try { return await functionCall("rossie-admin", { action: "delete_labour", labourId: id.toString() }); } catch (e: any) { return { error: e?.message ?? "Could not delete labour" }; } },
-    async updateLabour(id: bigint, name: string, employeeId: string, joinDate: string, active: boolean, phoneNumber: string) {
+    async updateLabour(id: bigint, name: string, employeeId: string, joinDate: string, birthday: string, active: boolean, phoneNumber: string) {
       try {
         const phone = String(phoneNumber ?? "").replace(/\D/g, "");
         if (!/^\d{10}$/.test(phone)) return err("Enter a valid 10-digit mobile number");
@@ -259,7 +260,7 @@ export function createSupabaseActor() {
         const rows = await rest("labours", {
           method: "PATCH",
           query: `?id=eq.${id}`,
-          body: { name, employee_id: employeeId, phone_number: phone, join_date: joinDate ? new Date(joinDate).toISOString() : null, is_active: active },
+          body: { name, employee_id: employeeId, phone_number: phone, join_date: joinDate || null, birthday: birthday || null, is_active: active },
         });
         if (!rows?.length) return err("Labour not found");
         return ok(mapLabour(rows[0]));
