@@ -15,7 +15,7 @@ function LaboursPage({ onSelectLabour }: LaboursPageProps) {
   const { data: labours = [], isLoading } = useLabours();
   const addLabour = useAddLabour();
   const [query, setQuery] = useState("");
-  const [filter, setFilter] = useState<"all" | "active" | "inactive">("active");
+  const [filter, setFilter] = useState<"all" | "active" | "inactive">("all");
   const [showForm, setShowForm] = useState(false);
   const [name, setName] = useState("");
   const [employeeId, setEmployeeId] = useState("");
