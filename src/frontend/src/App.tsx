@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/react-query";
-import { lazy, Suspense, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import ErrorBoundary from "./components/ErrorBoundary";
 import Layout from "./components/Layout";
 import PendingApproval from "./components/PendingApproval";
