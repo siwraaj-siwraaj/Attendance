@@ -104,7 +104,9 @@ function AppContent() {
   // without cached auth we show login immediately while session restoration runs in background.
   if (!isAuthenticated) return <div className="fixed inset-0 flex items-center justify-center" style={{ background: "#040913" }}><div className="ambient-glow-1" aria-hidden="true" /><div className="ambient-glow-2" aria-hidden="true" /><Suspense fallback={<PageLoadingFallback />}><LoginPage /></Suspense></div>;
   if (status !== "approved") return <PendingApproval />;
-  const showTab = (tab: string) => visitedTabs.has(tab);
+  // Render the newly selected tab in the same React render as the tab change;
+  // waiting for the effect to mark it visited caused a one-frame blank flash.
+  const showTab = (tab: string) => visitedTabs.has(tab) || activeTab === tab;
   const tabStyle = (tab: string) => ({ display: activeTab === tab ? "flex" : "none" });
   return <Layout><div className="flex flex-col min-h-full">
     <div style={tabStyle("contracts")} className="flex-col min-h-full" aria-hidden={activeTab !== "contracts"}>{showTab("contracts") && <ErrorBoundary tabName="contracts"><Suspense fallback={<PageLoadingFallback />}><ContractsPage onViewAttendance={handleViewAttendance} /></Suspense></ErrorBoundary>}</div>
