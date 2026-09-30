@@ -175,9 +175,9 @@ if (!rootEl) {
   };
 
   if ("requestIdleCallback" in window) {
-    window.requestIdleCallback(scheduleRemaining, { timeout: 3000 });
+    window.requestIdleCallback(scheduleRemaining, { timeout: 1000 });
   } else {
-    setTimeout(scheduleRemaining, 1500);
+    setTimeout(scheduleRemaining, 250);
   }
 })();
 
