@@ -156,6 +156,24 @@ async function functionCall(name: string, body: any) {
 
 export function createSupabaseActor() {
   return {
+    async restoreSession() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return null;
+      const user = session.user;
+      const rows = await rest("profiles", {
+        query: `?select=status,role,roles&id=eq.${user.id}`,
+      });
+      const profile = rows?.[0];
+      if (!profile) return null;
+      const roles = profile.roles ?? (profile.role ? [profile.role] : []);
+      return {
+        username: user.phone ?? user.email ?? user.id,
+        name: user.user_metadata?.name ?? user.user_metadata?.full_name ?? user.phone ?? "",
+        status: profile.status,
+        role: profile.role,
+        roles,
+      };
+    },
     async login(credentials: { username: string; password: string }) {
       try {
         const data = await functionCall("rossie-login", credentials);
@@ -267,8 +285,11 @@ export function createSupabaseActor() {
       } catch (e: any) { return err(e.message); }
     },
     async getContracts() {
-      const rows = await rest("contracts", { query: "?select=*&order=id.asc" });
-      const columns = await rest("work_columns", { query: "?select=*&order=id.asc" });
+      // These reads are independent; run them together to cut startup latency.
+      const [rows, columns] = await Promise.all([
+        rest("contracts", { query: "?select=*&order=id.asc" }),
+        rest("work_columns", { query: "?select=*&order=id.asc" }),
+      ]);
       return rows.map((row: any) => mapContract(row, columns));
     },
     async addContract(name: string, multiplier: number, contractAmount: number, machineExpenses: number, bedAmount: number, paperAmount: number, meshAmount: number | null) {
