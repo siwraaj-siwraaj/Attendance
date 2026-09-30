@@ -166,19 +166,10 @@ if (!rootEl) {
     return import("./pages/ContractsPage");
   };
 
-  void warm(activeTab);
-  const remaining = ["contracts", "attendance", "advances", "payments", "labours", "more", "admin"]
-    .filter((tab) => tab !== activeTab);
-
-  const scheduleRemaining = () => {
-    for (const tab of remaining) void warm(tab);
-  };
-
-  if ("requestIdleCallback" in window) {
-    window.requestIdleCallback(scheduleRemaining, { timeout: 1000 });
-  } else {
-    setTimeout(scheduleRemaining, 250);
-  }
+  // Start downloading all tab chunks immediately after the first render.
+  // This trades a little background bandwidth for no first-tap code-loading wait.
+  const tabs = ["contracts", "attendance", "advances", "payments", "labours", "more", "admin"];
+  void Promise.allSettled(tabs.map((tab) => warm(tab)));
 })();
 
 // Resolve canister ID in the background; it never blocks the first paint.
