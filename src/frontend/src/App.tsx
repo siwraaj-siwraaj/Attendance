@@ -83,6 +83,17 @@ function AppContent() {
   const [paymentData, setPaymentData] = useState<any[] | null>(null);
   const [openColumnPickerFor, setOpenColumnPickerFor] = useState<bigint | null>(null);
   const [selectedLabour, setSelectedLabour] = useState<any | null>(null);
+  // Keep every tab the user has visited mounted. Returning to it then reveals
+  // the existing screen instead of rebuilding the page from scratch.
+  const [visitedTabs, setVisitedTabs] = useState<Set<string>>(() => new Set([activeTab]));
+  useEffect(() => {
+    setVisitedTabs((previous) => {
+      if (previous.has(activeTab)) return previous;
+      const next = new Set(previous);
+      next.add(activeTab);
+      return next;
+    });
+  }, [activeTab]);
   const handleViewAttendance = (contractId: bigint) => {
     setSelectedContractId(contractId);
     setAttendanceContractId(contractId);
@@ -93,19 +104,17 @@ function AppContent() {
   // without cached auth we show login immediately while session restoration runs in background.
   if (!isAuthenticated) return <div className="fixed inset-0 flex items-center justify-center" style={{ background: "#040913" }}><div className="ambient-glow-1" aria-hidden="true" /><div className="ambient-glow-2" aria-hidden="true" /><Suspense fallback={<PageLoadingFallback />}><LoginPage /></Suspense></div>;
   if (status !== "approved") return <PendingApproval />;
-  if (selectedLabour && activeTab === "labours") return <Layout><div className="flex flex-col min-h-full"><ErrorBoundary tabName="labours"><Suspense fallback={<PageLoadingFallback />}><LabourDetailsPage labour={selectedLabour} onBack={() => setSelectedLabour(null)} /></Suspense></ErrorBoundary></div></Layout>;
-  return <Layout><div className="flex flex-col min-h-full"><ErrorBoundary tabName={activeTab} key={activeTab}><Suspense fallback={<PageLoadingFallback />}>
-    {activeTab === "admin" && <AdminPanel key="admin" />}
-    {mode === "view" && activeTab === "attendance" && <AttendancePage key="attendance" selectedContractId={selectedContractId ?? attendanceContractId} openColumnPickerFor={openColumnPickerFor} onContractChange={setAttendanceContractId} onColumnPickerOpened={() => setOpenColumnPickerFor(null)} onBackToContracts={handleAttendanceBack} />}
-    {mode === "view" && activeTab === "contracts" && <ContractsPage key="contracts-view" onViewAttendance={handleViewAttendance} />}
-    {mode === "edit" && activeTab === "contracts" && <ContractsPage key="contracts-edit" onViewAttendance={handleViewAttendance} />}
-    {mode === "edit" && activeTab === "attendance" && <AttendancePage key="attendance-edit" selectedContractId={selectedContractId ?? attendanceContractId} onContractChange={setAttendanceContractId} openColumnPickerFor={openColumnPickerFor} onColumnPickerOpened={() => setOpenColumnPickerFor(null)} onBackToContracts={handleAttendanceBack} />}
-    {(mode === "edit" || mode === "view") && activeTab === "advances" && <AdvancesPage key="advances" />}
-    {(mode === "edit" || mode === "view") && activeTab === "payments" && <PaymentsPage key="payments" selectedContractIds={selectedContractIds} setSelectedContractIds={setSelectedContractIds} paymentData={paymentData} setPaymentData={setPaymentData} />}
-    {(mode === "edit" || mode === "view") && activeTab === "labours" && <LaboursPage key="labours" onSelectLabour={setSelectedLabour} />}
-    {(mode === "edit" || mode === "view") && activeTab === "more" && <MorePage key="more" />}
-
-  </Suspense></ErrorBoundary></div></Layout>;
+  const showTab = (tab: string) => visitedTabs.has(tab);
+  const tabStyle = (tab: string) => ({ display: activeTab === tab ? "flex" : "none" });
+  return <Layout><div className="flex flex-col min-h-full">
+    <div style={tabStyle("contracts")} className="flex-col min-h-full" aria-hidden={activeTab !== "contracts"}>{showTab("contracts") && <ErrorBoundary tabName="contracts"><Suspense fallback={<PageLoadingFallback />}><ContractsPage onViewAttendance={handleViewAttendance} /></Suspense></ErrorBoundary>}</div>
+    <div style={tabStyle("attendance")} className="flex-col min-h-full" aria-hidden={activeTab !== "attendance"}>{showTab("attendance") && <ErrorBoundary tabName="attendance"><Suspense fallback={<PageLoadingFallback />}><AttendancePage selectedContractId={selectedContractId ?? attendanceContractId} openColumnPickerFor={openColumnPickerFor} onContractChange={setAttendanceContractId} onColumnPickerOpened={() => setOpenColumnPickerFor(null)} onBackToContracts={handleAttendanceBack} /></Suspense></ErrorBoundary>}</div>
+    <div style={tabStyle("advances")} className="flex-col min-h-full" aria-hidden={activeTab !== "advances"}>{showTab("advances") && (mode === "edit" || mode === "view") && <ErrorBoundary tabName="advances"><Suspense fallback={<PageLoadingFallback />}><AdvancesPage /></Suspense></ErrorBoundary>}</div>
+    <div style={tabStyle("payments")} className="flex-col min-h-full" aria-hidden={activeTab !== "payments"}>{showTab("payments") && (mode === "edit" || mode === "view") && <ErrorBoundary tabName="payments"><Suspense fallback={<PageLoadingFallback />}><PaymentsPage selectedContractIds={selectedContractIds} setSelectedContractIds={setSelectedContractIds} paymentData={paymentData} setPaymentData={setPaymentData} /></Suspense></ErrorBoundary>}</div>
+    <div style={tabStyle("labours")} className="flex-col min-h-full" aria-hidden={activeTab !== "labours"}>{showTab("labours") && (mode === "edit" || mode === "view") && (selectedLabour ? <ErrorBoundary tabName="labours"><Suspense fallback={<PageLoadingFallback />}><LabourDetailsPage labour={selectedLabour} onBack={() => setSelectedLabour(null)} /></Suspense></ErrorBoundary> : <ErrorBoundary tabName="labours"><Suspense fallback={<PageLoadingFallback />}><LaboursPage onSelectLabour={setSelectedLabour} /></Suspense></ErrorBoundary>)}</div>
+    <div style={tabStyle("more")} className="flex-col min-h-full" aria-hidden={activeTab !== "more"}>{showTab("more") && (mode === "edit" || mode === "view") && <ErrorBoundary tabName="more"><Suspense fallback={<PageLoadingFallback />}><MorePage /></Suspense></ErrorBoundary>}</div>
+    <div style={tabStyle("admin")} className="flex-col min-h-full" aria-hidden={activeTab !== "admin"}>{showTab("admin") && <ErrorBoundary tabName="admin"><Suspense fallback={<PageLoadingFallback />}><AdminPanel /></Suspense></ErrorBoundary>}</div>
+  </div></Layout>;
 }
 
 export default function App({ queryClient }: AppProps = {}) { const qc = queryClient ?? defaultQueryClient; return <ErrorBoundary><QueryClientProvider client={qc}><AuthProvider><AppContent /></AuthProvider></QueryClientProvider></ErrorBoundary>; }
