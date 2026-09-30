@@ -92,17 +92,7 @@ if (!rootEl) {
 // Chunk prefetching starts immediately, in parallel with canister resolution,
 // so tab switches feel instant without delaying the first paint.
 (async () => {
-  // Eagerly prefetch page chunks so tab switches feel instant. Fire-and-forget
-  // (not awaited) so a slow canister resolution never delays the prefetch.
-  const chunkPrefetches = [
-    import("./pages/ContractsPage"),
-    import("./pages/AttendancePage"),
-    import("./pages/AdvancesPage"),
-    import("./pages/PaymentsPage"),
-    import("./pages/LaboursPage"),
-    import("./pages/SettledPage"),
-  ];
-  void Promise.allSettled(chunkPrefetches);
+  // Page modules are lazy-loaded when needed so startup can prioritize auth and the first screen.
 
   try {
     const canisterId = await Promise.race([
