@@ -16,7 +16,7 @@ export function useLabours() {
     queryKey: ["labours"],
     staleTime: 10 * 60 * 1000,
     gcTime: 15 * 60 * 1000,
-    refetchOnMount: true,
+    refetchOnMount: false,
     queryFn: () => actor!.getLabours(),
     enabled: actorReady,
   });
