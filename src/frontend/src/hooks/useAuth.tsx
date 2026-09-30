@@ -67,9 +67,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [roles, setRoles] = useState<Role[]>(cachedAuth?.roles ?? (cachedAuth?.role ? [cachedAuth.role] : []));
   const [loginNotice, setLoginNotice] = useState<{ type: "pending"; name: string; phone: string; message: string; requestToken?: string } | null>(null);
   const [isInitializing, setIsInitializing] = useState(!cachedAuth?.username);
-  const [activeTab, setActiveTabState] = useState<Tab>(() => {
-    try { return (localStorage.getItem("rossie.activeTab") as Tab | null) ?? "contracts"; } catch { return "contracts"; }
-  });
+  // Always start a fresh app launch on Contracts. Tab changes during the
+  // current session still work normally, but the last tab is not restored.
+  const [activeTab, setActiveTabState] = useState<Tab>("contracts");
   const [attendanceContractId, setAttendanceContractId] = useState<bigint | null>(() => {
     try { const saved = localStorage.getItem("rossie.attendanceContractId"); return saved ? BigInt(saved) : null; } catch { return null; }
   });
