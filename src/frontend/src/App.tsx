@@ -48,12 +48,8 @@ const defaultQueryClient = new QueryClient({
 
 interface AppProps { queryClient?: QueryClient; }
 
-function OpeningRossie() {
-  return <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background" role="status" aria-label="Loading"><div className="flex flex-col items-center gap-3"><div className="h-8 w-8 animate-spin rounded-full border-2 border-muted border-t-foreground" /><span className="text-sm text-muted-foreground">Loading…</span></div></div>;
-}
-
 function AppContent() {
-  const { isAuthenticated, isInitializing, status, mode, activeTab, setActiveTab, attendanceContractId, setAttendanceContractId } = useAuth();
+  const { isAuthenticated, status, mode, activeTab, setActiveTab, attendanceContractId, setAttendanceContractId } = useAuth();
   const [selectedContractId, setSelectedContractId] = useState<bigint | null>(null);
   const [selectedContractIds, setSelectedContractIds] = useState<Set<string>>(() => new Set());
   const [paymentData, setPaymentData] = useState<any[] | null>(null);
@@ -65,7 +61,8 @@ function AppContent() {
     setActiveTab("attendance");
   };
   const handleAttendanceBack = () => setActiveTab("contracts");
-  if (isInitializing) return <OpeningRossie />;
+  // Never block the UI on auth initialization. Cached auth renders the app immediately;
+  // without cached auth we show login immediately while session restoration runs in background.
   if (!isAuthenticated) return <div className="fixed inset-0 flex items-center justify-center" style={{ background: "#0d1220" }}><div className="ambient-glow-1" aria-hidden="true" /><div className="ambient-glow-2" aria-hidden="true" /><Suspense fallback={null}><LoginPage /></Suspense></div>;
   if (status !== "approved") return <PendingApproval />;
   if (selectedLabour && activeTab === "labours") return <Layout><div className="flex flex-col min-h-full"><ErrorBoundary tabName="labours"><Suspense fallback={null}><LabourDetailsPage labour={selectedLabour} onBack={() => setSelectedLabour(null)} /></Suspense></ErrorBoundary></div></Layout>;
