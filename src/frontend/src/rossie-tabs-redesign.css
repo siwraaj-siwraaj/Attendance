@@ -6,12 +6,17 @@
 
 html, body, #root {
   min-height: 100%;
-  background: #040913;
+  background: #F8FAFC;
 }
 
-/* Non-attendance tabs keep the original light page background. */
-body:has([data-ocid="bottom_tab_bar"]):not(:has([data-ocid="attendance.page"])),
-body:has([data-ocid="bottom_tab_bar"]):not(:has([data-ocid="attendance.page"])) #root {
+/* The tab pages are kept mounted for fast switching, so :has(attendance.page)
+   is not a reliable way to identify the active tab. Keep the app shell light;
+   Attendance's own page surface supplies its dark background only when it is
+   actually visible. */
+body:has([data-ocid="bottom_tab_bar"]) {
+  background: #F8FAFC !important;
+}
+body:has([data-ocid="bottom_tab_bar"]) main {
   background: #F8FAFC !important;
 }
 
@@ -70,9 +75,10 @@ body:has([data-ocid="bottom_tab_bar"]) header {
   background: rgba(255,255,255,.045) !important;
 }
 
-/* Attendance keeps its dark page background. Other tabs use the light shell. */
-body:has([data-ocid^="attendance."]) {
-  background:#070b16 !important;
+/* Attendance's page surface remains dark; this is scoped to the page itself
+   rather than the body, because inactive tab pages stay mounted in the DOM. */
+[data-ocid="attendance.page"] {
+  background:#040913 !important;
 }
 
 body:has([data-ocid^="contracts."]) .glass-card,
