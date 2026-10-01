@@ -106,8 +106,8 @@ function AppContent() {
     let timerId: number | undefined;
     const scheduleNext = () => {
       if (cancelled || index >= tabs.length) return;
-      if ("requestIdleCallback" in window) {
-        idleId = window.requestIdleCallback(mountNext, { timeout: 1200 });
+      if (typeof (window as any).requestIdleCallback === "function") {
+        idleId = (window as any).requestIdleCallback(mountNext, { timeout: 1200 });
       } else {
         timerId = window.setTimeout(mountNext, 250);
       }
@@ -126,7 +126,7 @@ function AppContent() {
     scheduleNext();
     return () => {
       cancelled = true;
-      if (idleId !== undefined && "cancelIdleCallback" in window) window.cancelIdleCallback(idleId);
+      if (idleId !== undefined && typeof (window as any).cancelIdleCallback === "function") (window as any).cancelIdleCallback(idleId);
       if (timerId !== undefined) window.clearTimeout(timerId);
     };
   }, [isAuthenticated, status]);
