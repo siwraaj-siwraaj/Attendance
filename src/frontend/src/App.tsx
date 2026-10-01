@@ -94,6 +94,42 @@ function AppContent() {
       return next;
     });
   }, [activeTab]);
+
+  // Mount unopened tabs during idle time. Downloading lazy chunks alone does
+  // not pay the cost of React mounting and layout, which can cause first-tap lag.
+  useEffect(() => {
+    if (!isAuthenticated || status !== "approved") return;
+    const tabs = ["contracts", "attendance", "advances", "payments", "labours", "more", "admin"];
+    let index = 0;
+    let cancelled = false;
+    let idleId: number | undefined;
+    let timerId: number | undefined;
+    const scheduleNext = () => {
+      if (cancelled || index >= tabs.length) return;
+      if ("requestIdleCallback" in window) {
+        idleId = window.requestIdleCallback(mountNext, { timeout: 1200 });
+      } else {
+        timerId = window.setTimeout(mountNext, 250);
+      }
+    };
+    const mountNext = () => {
+      if (cancelled || index >= tabs.length) return;
+      const tab = tabs[index++];
+      setVisitedTabs((previous) => {
+        if (previous.has(tab)) return previous;
+        const next = new Set(previous);
+        next.add(tab);
+        return next;
+      });
+      scheduleNext();
+    };
+    scheduleNext();
+    return () => {
+      cancelled = true;
+      if (idleId !== undefined && "cancelIdleCallback" in window) window.cancelIdleCallback(idleId);
+      if (timerId !== undefined) window.clearTimeout(timerId);
+    };
+  }, [isAuthenticated, status]);
   const handleViewAttendance = (contractId: bigint) => {
     setSelectedContractId(contractId);
     setAttendanceContractId(contractId);
