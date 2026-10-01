@@ -82,7 +82,7 @@ function LaboursPage({ onSelectLabour }: LaboursPageProps) {
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-5xl px-4 pb-28 pt-4 sm:px-6">
+      <main className="mx-auto w-full max-w-5xl px-4 pb-[calc(9rem+env(safe-area-inset-bottom))] pt-4 sm:px-6">
         <section className="rounded-3xl border border-[#101828]/10 bg-white p-3 shadow-sm">
           <div className="relative">
             <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#667085]" />
