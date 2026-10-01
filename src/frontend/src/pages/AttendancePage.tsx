@@ -779,7 +779,7 @@ export default function AttendancePage({
       data-ocid="attendance.page"
     >
       {/* Compact contract context — the attendance page starts directly with the active contract. */}
-      <div className="shrink-0 sticky top-0 z-10 border-b border-white/10 bg-[#0f1525]/95 backdrop-blur-xl">
+      <div className="shrink-0 border-b border-white/10 bg-[#0f1525]/95 backdrop-blur-xl">
         <div className="px-4 py-3">
           <label
             htmlFor="contract-select"
@@ -853,7 +853,7 @@ export default function AttendancePage({
       </div>
 
       {/* Scrollable Content */}
-      <div className="flex-1 overflow-y-auto px-4 pb-24 space-y-4 pt-4">
+      <div className="flex-1 px-4 pb-4 space-y-4 pt-4">
         {!isLoading && !contract && (
           <div
             className="glass-card rounded-xl p-8 text-center text-gray-400"
