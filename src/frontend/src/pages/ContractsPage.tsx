@@ -189,7 +189,7 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
                 <FileText size={14} /> Work management
               </div>
               <ScrollHeaderTitle title="Contracts" className="text-2xl" />
-              <p className="mt-0.5 max-w-xl text-[11px] leading-4 text-white/55">Manage contracts, rates and work columns.</p>
+              <p className="mt-0.5 max-w-xl whitespace-nowrap text-[11px] leading-4 text-white/55">Manage contracts, rates and work columns.</p>
             </div>
             <div className="flex shrink-0 items-center gap-1.5">
               <button ref={searchToggleRef} type="button" onClick={() => setShowSearch((open) => !open)} className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/[0.06] text-white/70 active:scale-95" aria-label="Search contracts" data-ocid="contracts.search_toggle"><Search size={16} /></button>
