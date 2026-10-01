@@ -20,7 +20,7 @@ body:has([data-ocid="bottom_tab_bar"]) main > div { min-width: 0; min-height: 0;
 body:has([data-ocid="bottom_tab_bar"]) main > div { height: auto !important; min-height: calc(100% - var(--rossie-nav-clearance)) !important; overflow: visible !important; }
 body:has([data-ocid="bottom_tab_bar"]) main > div > * { min-height: 0; height: auto !important; max-height: none !important; overflow: visible !important; }
 /* Keep bottom clearance scrollable without recreating a page-background layer around the fixed tab bar. */
-body:has([data-ocid="bottom_tab_bar"]) main > div::after { content: ""; display: block; height: var(--rossie-nav-clearance); flex-shrink: 0; }
+body:has([data-ocid="bottom_tab_bar"]) main > div::after { content: ""; display: block; height: var(--rossie-nav-clearance); flex-shrink: 0; background: inherit; }
 body:has([data-ocid="bottom_tab_bar"]) main [class*="overflow-y-auto"] { min-width: 0; min-height: 0; overscroll-behavior-y: auto; scroll-padding-top: 8px; scroll-padding-bottom: var(--rossie-nav-clearance); -webkit-overflow-scrolling: touch; touch-action: auto; }
 
 body:has([data-ocid="contracts.search_input"]) main [class*="overflow-y-auto"] { height: auto !important; max-height: none !important; }
