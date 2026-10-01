@@ -166,10 +166,28 @@ if (!rootEl) {
     return import("./pages/ContractsPage");
   };
 
-  // Start downloading all tab chunks immediately after the first render.
-  // This trades a little background bandwidth for no first-tap code-loading wait.
-  const tabs = ["contracts", "attendance", "advances", "payments", "labours", "more", "admin"];
-  void Promise.allSettled(tabs.map((tab) => warm(tab)));
+  // Give the first screen a head start, then warm secondary chunks one at a time.
+  const tabs = ["attendance", "advances", "payments", "labours", "more", "admin"];
+  let index = 0;
+  const loadNext = () => {
+    if (index >= tabs.length) return;
+    void warm(tabs[index++]).finally(() => {
+      const win = window as any;
+      if (typeof win.requestIdleCallback === "function") {
+        win.requestIdleCallback(loadNext, { timeout: 2500 });
+      } else {
+        window.setTimeout(loadNext, 700);
+      }
+    });
+  };
+  window.setTimeout(() => {
+    const win = window as any;
+    if (typeof win.requestIdleCallback === "function") {
+      win.requestIdleCallback(loadNext, { timeout: 2500 });
+    } else {
+      window.setTimeout(loadNext, 700);
+    }
+  }, 1200);
 })();
 
 // Resolve canister ID in the background; it never blocks the first paint.
