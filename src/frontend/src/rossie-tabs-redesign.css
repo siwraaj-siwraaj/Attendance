@@ -9,6 +9,12 @@ html, body, #root {
   background: #040913;
 }
 
+/* Non-attendance tabs keep the original light page background. */
+body:has([data-ocid="bottom_tab_bar"]):not(:has([data-ocid="attendance.page"])),
+body:has([data-ocid="bottom_tab_bar"]):not(:has([data-ocid="attendance.page"])) #root {
+  background: #F8FAFC !important;
+}
+
 body {
   margin: 0;
   overscroll-behavior-y: none;
@@ -64,11 +70,8 @@ body:has([data-ocid="bottom_tab_bar"]) header {
   background: rgba(255,255,255,.045) !important;
 }
 
-/* Shared surface language for Contracts / Attendance / Advances / Payments */
-body:has([data-ocid^="contracts."]),
-body:has([data-ocid^="attendance."]),
-body:has([data-ocid^="advances."]),
-body:has([data-ocid^="payments."]) {
+/* Attendance keeps its dark page background. Other tabs use the light shell. */
+body:has([data-ocid^="attendance."]) {
   background:#070b16 !important;
 }
 
