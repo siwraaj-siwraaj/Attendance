@@ -131,6 +131,12 @@ export function AttendanceTable({
   ) => void;
 }) {
   const [page, setPage] = useState(1);
+
+  // Always restart pagination when the selected contract changes so the
+  // attendance sheet cannot retain the previous contract's visible page.
+  useEffect(() => {
+    setPage(1);
+  }, [contract.id]);
   const ITEMS_PER_PAGE = 20;
   const totalPages = Math.ceil(labours.length / ITEMS_PER_PAGE);
   const paginatedLabours = labours.slice(
@@ -779,7 +785,7 @@ export default function AttendancePage({
       data-ocid="attendance.page"
     >
       {/* Compact contract context — the attendance page starts directly with the active contract. */}
-      <div className="relative z-20 shrink-0 border-b border-white/10 bg-[#0f1525]/95 backdrop-blur-xl">
+      <div className="relative z-20 shrink-0 border-b border-white/10 bg-[#0f1525]/95 backdrop-blur-xl pt-[env(safe-area-inset-top,0px)]">
         <div className="px-4 py-3">
           <label
             htmlFor="contract-select"
