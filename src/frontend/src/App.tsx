@@ -63,20 +63,24 @@ function AppContent() {
   const queryClient = useQueryClient();
   const [prefetchActor] = useState(() => createSupabaseActor());
 
-  // Warm data for tabs the user has not opened yet. This runs after auth is
-  // available, in parallel, so visiting another tab doesn't trigger its first
-  // ever load. Existing cached data can render immediately.
+  // Defer non-essential data warming until the first screen has had time to
+  // render. The active page fetches what it needs; this warms other tabs later.
   useEffect(() => {
     if (!isAuthenticated || status !== "approved") return;
-    const options = { staleTime: 10 * 60 * 1000 };
-    void Promise.allSettled([
-      queryClient.prefetchQuery({ queryKey: ["contracts"], queryFn: () => prefetchActor.getContracts(), ...options }),
-      queryClient.prefetchQuery({ queryKey: ["labours"], queryFn: () => prefetchActor.getLabours(), ...options }),
-      queryClient.prefetchQuery({ queryKey: ["labours", "active"], queryFn: () => prefetchActor.getActiveLabours(), ...options }),
-      queryClient.prefetchQuery({ queryKey: ["advances"], queryFn: () => prefetchActor.getAdvances(), ...options }),
-      queryClient.prefetchQuery({ queryKey: ["attendance", "all"], queryFn: () => prefetchActor.getAllAttendance(), ...options }),
-      ...(isAdmin ? [queryClient.prefetchQuery({ queryKey: ["users"], queryFn: () => prefetchActor.listUsers(), ...options })] : []),
-    ]);
+    let cancelled = false;
+    const timer = window.setTimeout(() => {
+      if (cancelled) return;
+      const options = { staleTime: 10 * 60 * 1000 };
+      void Promise.allSettled([
+        queryClient.prefetchQuery({ queryKey: ["contracts"], queryFn: () => prefetchActor.getContracts(), ...options }),
+        queryClient.prefetchQuery({ queryKey: ["labours"], queryFn: () => prefetchActor.getLabours(), ...options }),
+        queryClient.prefetchQuery({ queryKey: ["labours", "active"], queryFn: () => prefetchActor.getActiveLabours(), ...options }),
+        queryClient.prefetchQuery({ queryKey: ["advances"], queryFn: () => prefetchActor.getAdvances(), ...options }),
+        queryClient.prefetchQuery({ queryKey: ["attendance", "all"], queryFn: () => prefetchActor.getAllAttendance(), ...options }),
+        ...(isAdmin ? [queryClient.prefetchQuery({ queryKey: ["users"], queryFn: () => prefetchActor.listUsers(), ...options })] : []),
+      ]);
+    }, 1800);
+    return () => { cancelled = true; window.clearTimeout(timer); };
   }, [isAuthenticated, status, isAdmin, queryClient, prefetchActor]);
   const [selectedContractId, setSelectedContractId] = useState<bigint | null>(null);
   const [selectedContractIds, setSelectedContractIds] = useState<Set<string>>(() => new Set());
