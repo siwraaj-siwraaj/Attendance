@@ -299,32 +299,10 @@ export default function PaymentsPage({
 
   const buildAttendanceReport = () => {
     if (!selectedContracts.length) return;
-    const rows: string[] = [];
-    for (const contract of selectedContracts) {
-      const columns = (contract.workColumns || []).filter((column: any) =>
-        allAttendance.some(
-          (record: any) =>
-            record.contractId === contract.id &&
-            record.columnId === column.id &&
-            getAttendanceDisplay(record.value as AttendanceValue) > 0,
-        ),
-      );
-      for (const labour of labours) {
-        const values = columns.map((column: any) => {
-          const record = allAttendance.find(
-            (item: any) =>
-              item.contractId === contract.id &&
-              item.columnId === column.id &&
-              item.labourId === labour.id,
-          );
-          return record ? String(getAttendanceDisplay(record.value as AttendanceValue)) : "0";
-        });
-        if (values.some((value) => value !== "0")) {
-          rows.push(`<tr><td>${contract.name}</td><td>${labour.name}</td>${values.map((v) => `<td class="num">${v}</td>`).join("")}</tr>`);
-        }
-      }
-    }
 
+    // Build one shared column list for the entire report. Every body row must
+    // have exactly the same number of cells as the header, including columns
+    // belonging to other contracts (left blank for that row).
     const columns = selectedContracts.flatMap((contract: any) =>
       (contract.workColumns || [])
         .filter((column: any) =>
@@ -335,13 +313,38 @@ export default function PaymentsPage({
               getAttendanceDisplay(record.value as AttendanceValue) > 0,
           ),
         )
-        .map((column: any) => column.name),
+        .map((column: any) => ({ contractId: contract.id, id: column.id, name: column.name })),
     );
+
+    const rows: string[] = [];
+    for (const contract of selectedContracts) {
+      for (const labour of labours) {
+        const values = columns.map((column: any) => {
+          if (column.contractId !== contract.id) return "";
+          const record = allAttendance.find(
+            (item: any) =>
+              item.contractId === contract.id &&
+              item.columnId === column.id &&
+              item.labourId === labour.id,
+          );
+          return record ? String(getAttendanceDisplay(record.value as AttendanceValue)) : "0";
+        });
+        if (values.some((value) => value !== "" && value !== "0")) {
+          rows.push(
+            `<tr><td>${contract.name}</td><td>${labour.name}</td>${values
+              .map((value) => `<td class="num">${value}</td>`)
+              .join("")}</tr>`,
+          );
+        }
+      }
+    }
 
     const html = `<div class="report attendance-report">
       <div class="header"><div class="brand">Rossie Attendance</div><div class="title">Attendance Report</div><div class="subtitle">Attendance used for the selected payment calculation</div></div>
       <div class="body"><h2>Attendance details</h2>
-      <table><thead><tr><th>Contract</th><th>Labour</th>${columns.map((name: string) => `<th class="num">${name}</th>`).join("")}</tr></thead><tbody>${rows.join("")}</tbody></table></div>
+      <table><thead><tr><th>Contract</th><th>Labour</th>${columns
+        .map((column: any) => `<th class="num">${column.name}</th>`)
+        .join("")}</tr></thead><tbody>${rows.join("")}</tbody></table></div>
       <div class="footer"><span>Rossie — Construction Labour Management</span><span>Generated ${new Date().toLocaleDateString("en-IN")}</span></div>
     </div>`;
     setPreview({ title: "Attendance Sheet", html });
