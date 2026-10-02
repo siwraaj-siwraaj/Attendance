@@ -102,7 +102,6 @@ export default function App(){
    return next;
   });
  };
- };
  const syncLocalSharedGroup=async(sharedId:string,rows:any[])=>{
   const g=groups.find(x=>x.sharedGroupId===sharedId);
   if(!g)return;
