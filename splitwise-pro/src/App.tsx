@@ -273,17 +273,22 @@ export default function App(){
  const reportRows=useMemo(()=>filteredExpenses.map(e=>({Date:new Date(e.createdAt).toLocaleDateString("en-IN"),Description:e.title,Group:group(e.groupId),PaidBy:person(e.paidBy),Amount:Number(e.amount.toFixed(2)),Split:e.people.map(person).join(", "),Shared:groups.find(g=>g.id===e.groupId)?.sharedGroupId?"Yes":"No"})),[filteredExpenses,groups,people]);
  const saveReportFile=async(name:string,base64:string,mime:string)=>{
   try{
+   const permission=await Filesystem.checkPermissions();
+   if(permission.publicStorage!=="granted"){
+    const requested=await Filesystem.requestPermissions();
+    if(requested.publicStorage!=="granted") throw new Error("Storage permission was denied.");
+   }
    const result=await Filesystem.writeFile({path:name,data:base64,directory:Directory.Documents,recursive:true});
    alert(`Report saved successfully: ${name}`);
    await notifyReportSaved(name);
    return result;
   }catch(error){
    console.error("Report save failed",error);
-   alert("Could not save the report. Please check Android storage permission.");
+   alert("Could not save the report. Please allow storage access for Splitwise in Android Settings, then try again.");
    return null;
   }
  };
- const exportExcel=async()=>{
+  const exportExcel=async()=>{
   const wb=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(reportRows),"Expenses");
   const balanceRows=people.map(p=>({Person:p.name,Balance:Number((balances[p.id]||0).toFixed(2)),Status:Math.abs(balances[p.id]||0)<.005?"Settled":(balances[p.id]>0?"Owes you":"You owe")}));
