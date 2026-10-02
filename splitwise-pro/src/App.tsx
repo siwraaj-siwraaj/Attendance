@@ -14,7 +14,7 @@ export default function App(){
  const [tab,setTab]=useState("Home");
  const [people,setPeople]=useState<Person[]>(()=>load("people",initialPeople));
  const [groups,setGroups]=useState<Group[]>(()=>load("groups",initialGroups));
- const [expenses,setExpenses]=useState<Expense[]>(()=>load("expenses",[]));
+ const [expenses,setExpenses]=useState<Expense[]>(()=>{const raw=load<any[]>("expenses",[]);const ids:Record<string,string>={You:"you",Alex:"alex",Sam:"sam",Jordan:"jordan"};return raw.map((e:any)=>({id:String(e.id??crypto.randomUUID()),title:String(e.title??"Expense"),amount:Number(e.amount)||0,paidBy:ids[e.paidBy]||e.paidBy||"you",people:Array.isArray(e.people)?e.people.map((p:string)=>ids[p]||p):["you"],groupId:groups.find(g=>g.name===(e.group||e.groupId))?.id||"apartment",createdAt:Number(e.createdAt)||Number(e.id)||Date.now()}));});
  const [payments,setPayments]=useState<Payment[]>(()=>load("payments",[]));
  const [modal,setModal]=useState<"expense"|"friend"|"group"|"settle"|null>(null);
  const [title,setTitle]=useState(""); const [amount,setAmount]=useState(""); const [paidBy,setPaidBy]=useState("you"); const [groupId,setGroupId]=useState("apartment"); const [selected,setSelected]=useState<string[]>(["you","alex","sam"]);
