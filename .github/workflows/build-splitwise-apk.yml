@@ -20,6 +20,7 @@ jobs:
       - run: npm install
       - run: npm run build
       - run: npx cap add android
+      - run: node scripts/setup-android-widgets.mjs
       - run: npx cap sync android
       - uses: actions/setup-java@v4
         with:
