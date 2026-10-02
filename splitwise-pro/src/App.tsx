@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Home, Users, ReceiptText, Plus, X, Wallet, Trash2, Check, UserPlus, Download, Upload, LogIn, LogOut } from "lucide-react";
+import { Home, Users, ReceiptText, Plus, X, Wallet, Trash2, Check, UserPlus, Download, Upload, LogIn, LogOut, Image as ImageIcon, FileText } from "lucide-react";
 import { supabase } from "./lib/supabase";
 import jsPDF from "jspdf";
 import * as XLSX from "xlsx";
@@ -295,6 +295,18 @@ export default function App(){
   const base64=btoa(unescape(encodeURIComponent(csv)));
   await saveReportFile(`splitwise-expenses-${new Date().toISOString().slice(0,10)}.csv`,base64,"text/csv");
  };
+ const groupReportData=(g:Group)=>{
+  const rows=expenses.filter(e=>e.groupId===g.id).sort((a,b)=>a.createdAt-b.createdAt);
+  const memberIds=Array.from(new Set([...g.members,...rows.flatMap(e=>e.people)]));
+  const paid:Record<string,number>={};const owed:Record<string,number>={};
+  memberIds.forEach(id=>{paid[id]=0;owed[id]=0;});
+  rows.forEach(e=>{
+   paid[e.paidBy]=(paid[e.paidBy]||0)+e.amount;
+   e.people.forEach(id=>{const share=(e.splitMode||"equal")==="equal"?e.amount/e.people.length:Number(e.shares?.[id]??0);owed[id]=(owed[id]||0)+share;});
+  });
+  const net:Record<string,number>={};memberIds.forEach(id=>net[id]=(paid[id]||0)-(owed[id]||0));
+  return {rows,memberIds,paid,owed,net,total:rows.reduce((sum,e)=>sum+e.amount,0)};
+ };
  const exportPDF=async()=>{
   const doc=new jsPDF({unit:"mm",format:"a4"});
   const margin=14;let y=18;
@@ -306,6 +318,47 @@ export default function App(){
   reportRows.forEach((r:any)=>{if(y>282){doc.addPage();y=18;drawHeader();}const vals=[r.Date,String(r.Description).slice(0,28),String(r.Group).slice(0,20),String(r.PaidBy).slice(0,18),money(r.Amount)];let x=margin;vals.forEach((v,i)=>{doc.text(v,x,y);x+=widths[i];});y+=6;});
   const base64=doc.output("datauristring").split(",")[1];
   await saveReportFile(`splitwise-report-${new Date().toISOString().slice(0,10)}.pdf`,base64,"application/pdf");
+ };
+ const exportTripPDF=async(g:Group)=>{
+  const r=groupReportData(g);const doc=new jsPDF({unit:"mm",format:"a4"});const margin=14;let y=18;
+  const line=(text:string,size=10,bold=false)=>{if(y>282){doc.addPage();y=18;}doc.setFontSize(size);doc.setFont("helvetica",bold?"bold":"normal");doc.text(text,margin,y);y+=6;};
+  line(g.name,20,true);line(`Trip report · ${r.rows.length} expenses · Total ${money(r.total)}`,10,false);line(`Generated ${new Date().toLocaleString("en-IN")}`,9,false);y+=3;
+  line("PEOPLE AND BALANCES",13,true);
+  r.memberIds.forEach(id=>line(`${person(id)} · Paid ${money(r.paid[id]||0)} · Share ${money(r.owed[id]||0)} · Net ${money(r.net[id]||0)}`,9));
+  y+=3;line("EXPENSE DETAILS",13,true);
+  r.rows.forEach((e,index)=>{
+   if(y>270){doc.addPage();y=18;}
+   line(`${index+1}. ${new Date(e.createdAt).toLocaleDateString("en-IN")} · ${e.title} · ${money(e.amount)}`,10,true);
+   line(`Paid by: ${person(e.paidBy)} · Split: ${e.splitMode==="percent"?"Percentage":e.splitMode==="exact"?"Exact":"Equal"}`,9);
+   e.people.forEach(id=>{const share=(e.splitMode||"equal")==="equal"?e.amount/e.people.length:Number(e.shares?.[id]??0);line(`  ${person(id)}: ${money(share)}`,9);});
+   y+=2;
+  });
+  y+=2;line("HOW TO READ THIS",12,true);
+  line("Paid = amount this person actually paid. Share = amount this person should bear.",9);
+  line("Net positive = this person paid more than their share. Net negative = this person owes more than they paid.",9);
+  line("Settlements are recorded separately in Splitwise because payments are not linked to a specific trip.",9);
+  const base64=doc.output("datauristring").split(",")[1];
+  await saveReportFile(`splitwise-${g.name.replace(/[^a-z0-9]+/gi,"-").toLowerCase()}-trip-report.pdf`,base64,"application/pdf");
+ };
+ const saveTripImage=async(g:Group)=>{
+  const r=groupReportData(g);const scale=2;const width=1440;const pad=60;const lineH=44;
+  const lines:string[]=[];
+  lines.push(g.name.toUpperCase());lines.push(`TRIP REPORT  ·  ${r.rows.length} expenses  ·  TOTAL ${money(r.total)}`);lines.push("");
+  lines.push("PEOPLE & BALANCES");
+  r.memberIds.forEach(id=>lines.push(`${person(id)}  |  Paid: ${money(r.paid[id]||0)}  |  Share: ${money(r.owed[id]||0)}  |  Net: ${money(r.net[id]||0)}`));
+  lines.push("");lines.push("EXPENSE DETAILS");
+  r.rows.forEach((e,index)=>{
+   lines.push(`${index+1}. ${new Date(e.createdAt).toLocaleDateString("en-IN")}  ·  ${e.title}  ·  ${money(e.amount)}`);
+   lines.push(`Paid by ${person(e.paidBy)}  ·  Split: ${e.splitMode==="percent"?"Percentage":e.splitMode==="exact"?"Exact":"Equal"}`);
+   e.people.forEach(id=>{const share=(e.splitMode||"equal")==="equal"?e.amount/e.people.length:Number(e.shares?.[id]??0);lines.push(`   • ${person(id)}: ${money(share)}`);});
+   lines.push("");
+  });
+  lines.push("SUMMARY");lines.push("Paid = actual payment. Share = fair portion. Net = Paid minus Share.");lines.push("Positive net means the person should receive money; negative net means the person owes money.");
+  const height=Math.max(900,(lines.length+2)*lineH);const canvas=document.createElement("canvas");canvas.width=width*scale;canvas.height=height*scale;
+  const ctx=canvas.getContext("2d");if(!ctx)return;ctx.scale(scale,scale);ctx.fillStyle="#ffffff";ctx.fillRect(0,0,width,height);ctx.fillStyle="#15231f";
+  let y=80;lines.forEach((lineText,i)=>{ctx.font=i===0?"700 42px Arial":i===3?"700 30px Arial":"22px Arial";ctx.fillText(lineText,pad,y);y+=lineH;});
+  const dataUrl=canvas.toDataURL("image/png",1);const base64=dataUrl.split(",")[1];
+  await saveReportFile(`splitwise-${g.name.replace(/[^a-z0-9]+/gi,"-").toLowerCase()}-trip-details.png`,base64,"image/png");
  };
  const exportBackup=()=>{
   const backup={version:1,app:"Splitwise",exportedAt:new Date().toISOString(),people,groups,expenses,payments};
@@ -336,7 +389,9 @@ export default function App(){
  {tab==="Home"&&<><section className="balance"><small>TOTAL SHARED EXPENSES</small><h2>{money(total)}</h2><p>{expenses.length} expenses · saved on this device</p></section><div className="section"><h3>Balances</h3><button className="link" onClick={()=>setTab("Balances")}>Details</button></div>
  <div className="section"><h3>Backup & Restore</h3></div>
  <div className="section"><h3>Reports & Export</h3></div>
- <button className="add" onClick={exportPDF}><Download size={18}/> Export PDF report</button>
+ <p className="muted">Trip reports show every expense, who paid, each person's share, and the final net balance in plain language.</p>
+ {groups.map(g=><div className="tile" key={"report-"+g.id}><FileText/><div className="grow"><b>{g.name}</b><p>{groupReportData(g).rows.length} expenses · {money(groupReportData(g).total)}</p></div><button className="link" onClick={()=>exportTripPDF(g)}>PDF</button><button className="iconbtn" aria-label={"Download high resolution image for "+g.name} onClick={()=>saveTripImage(g)}><ImageIcon size={17}/></button></div>)}
+ <button className="add" onClick={exportPDF}><Download size={18}/> Export all expenses PDF</button>
  <button className="add" onClick={exportExcel}><Download size={18}/> Export Excel report</button>
  <button className="add" onClick={exportCSV}><Download size={18}/> Export CSV</button>
  <button className="add" onClick={exportBackup}><Download size={18}/> Export backup</button>
