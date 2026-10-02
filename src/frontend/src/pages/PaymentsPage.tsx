@@ -246,7 +246,7 @@ export default function PaymentsPage({
   };
   const saveReportPdf = async () => {
     if (!reportPreview || !reportContentRef.current) return;
-    await html2pdf().set({ margin: 5, filename: `${reportPreview.title.replace(/\\s+/g, "_")}_${new Date().toISOString().slice(0, 10)}.pdf`, image: { type: "jpeg", quality: 0.98 }, html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff" }, jsPDF: { unit: "mm", format: "a4", orientation: "landscape" }, pagebreak: { mode: ["css", "legacy"] } }).from(reportContentRef.current).save();
+    await html2pdf().set({ margin: 5, filename: `${reportPreview.title.replace(/\s+/g, "_")}_${new Date().toISOString().slice(0, 10)}.pdf`, image: { type: "jpeg", quality: 0.98 }, html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff" }, jsPDF: { unit: "mm", format: "a4", orientation: "landscape" }, pagebreak: { mode: ["css", "legacy"] } }).from(reportContentRef.current).save();
   };
 
 
