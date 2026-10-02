@@ -350,11 +350,11 @@ export default function App(){
    doc.setFont("helvetica","bold");doc.setFontSize(18);doc.setTextColor(28,34,32);doc.text(title,margin,18);
    doc.setFont("helvetica","normal");doc.setFontSize(9);doc.setTextColor(90,90,90);doc.text(dateLabel,margin,25);
   };
-  const drawTable=(headers:string[],widths:number[],rows:string[][],options?:{fontSize?:number;rowHeight?:number})=>{
+  const drawTable=(headers:string[],widths:number[],rows:string[][],options?:{fontSize?:number;rowHeight?:number;startY?:number})=>{
    const fontSize=options?.fontSize??8.5,rowHeight=options?.rowHeight??9;
    const headerHeight=9;
    const x0=margin;
-   let y=options?.["startY" as never] as number|undefined;
+   let y=options?.startY;
    if(y===undefined)y=32;
    const wrap=(value:string,width:number)=>{
     doc.setFont("helvetica","normal");doc.setFontSize(fontSize);
@@ -402,7 +402,7 @@ export default function App(){
     if(e.splitMode==="equal")return;
     e.people.forEach(id=>detailRows.push([e.title,person(id),e.splitMode==="percent"?((Number(e.shares?.[id]??0)/e.amount)*100).toFixed(1)+"%":money(Number(e.shares?.[id]??0))]));
    });
-   if(detailRows.length)drawTable(["EXPENSE","PERSON","SHARE"],[90,55,41],detailRows,{fontSize:8.5,rowHeight:9,startY:sy} as any);
+   if(detailRows.length)drawTable(["EXPENSE","PERSON","SHARE"],[90,55,41],detailRows,{fontSize:8.5,rowHeight:9,startY:sy});
   }
   const base64=doc.output("datauristring").split(",")[1];
   await saveReportFile("splitwise-"+slug+"-trip-details.pdf",base64,"application/pdf");
