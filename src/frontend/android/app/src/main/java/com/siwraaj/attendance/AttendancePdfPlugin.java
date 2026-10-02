@@ -87,6 +87,7 @@ public class AttendancePdfPlugin extends Plugin {
     public void savePdf(final PluginCall call) {
         final String html = call.getString("html");
         final String requestedName = call.getString("fileName");
+        final boolean landscape = "landscape".equalsIgnoreCase(call.getString("orientation"));
 
         if (html == null || html.trim().isEmpty()) {
             call.reject("PDF HTML is empty");
@@ -139,7 +140,7 @@ public class AttendancePdfPlugin extends Plugin {
                         // to Android's print engine. The print engine performs the
                         // actual A4 pagination and scaling.
                         view.postDelayed(
-                                () -> createA4PrintPdf(view, call, fileName),
+                                () -> createA4PrintPdf(view, call, fileName, landscape),
                                 300
                         );
                     }
@@ -189,7 +190,8 @@ public class AttendancePdfPlugin extends Plugin {
     private void createA4PrintPdf(
             WebView webView,
             PluginCall call,
-            String fileName
+            String fileName,
+            boolean landscape
     ) {
         if (finished || printWebView != webView) return;
 
@@ -208,7 +210,9 @@ public class AttendancePdfPlugin extends Plugin {
             adapter.onStart();
 
             PrintAttributes attributes = new PrintAttributes.Builder()
-                    .setMediaSize(PrintAttributes.MediaSize.ISO_A4)
+                    .setMediaSize(landscape
+                            ? PrintAttributes.MediaSize.ISO_A4.asLandscape()
+                            : PrintAttributes.MediaSize.ISO_A4.asPortrait())
                     .setResolution(new PrintAttributes.Resolution(
                             "rossie_pdf",
                             "Rossie PDF",
