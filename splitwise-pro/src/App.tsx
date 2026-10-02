@@ -332,7 +332,7 @@ export default function App(){
  const debtors=people.filter(p=>(balances[p.id]||0)<-.005), creditors=people.filter(p=>(balances[p.id]||0)>.005);
  const nav=[{n:"Home",I:Home},{n:"Groups",I:Users},{n:"Activity",I:ReceiptText},{n:"Friends",I:Users},{n:"Balances",I:Wallet}];
  return <div className="app"><header><div className="logo"><b>S</b> Splitwise</div><button className="avatar" aria-label={user?"Account":"Log in"} onClick={()=>{setAuthMessage("");setAuthMode("login");setModal("auth")}}>{user?(accountName[0]?.toUpperCase()||"Y"):<LogIn size={18}/>}</button></header><main>
- <p className="eyebrow">YOUR EXPENSES</p><h1>{tab==="Home"?"Hey, You":tab}</h1><p className="muted">Keep track of shared expenses, simply.</p>{user&&<p className="muted">{syncing?"Syncing to cloud…":"Cloud sync on"}</p>}
+ <p className="eyebrow">YOUR EXPENSES</p><h1>{tab==="Home"?(user&&accountName&&accountName!=="You"?`Hey, ${accountName}`:"Hey, You"):tab}</h1><p className="muted">Keep track of shared expenses, simply.</p>{user&&<p className="muted">{syncing?"Syncing to cloud…":"Cloud sync on"}</p>}
  {tab==="Home"&&<><section className="balance"><small>TOTAL SHARED EXPENSES</small><h2>{money(total)}</h2><p>{expenses.length} expenses · saved on this device</p></section><div className="section"><h3>Balances</h3><button className="link" onClick={()=>setTab("Balances")}>Details</button></div>
  <div className="section"><h3>Backup & Restore</h3></div>
  <div className="section"><h3>Reports & Export</h3></div>
