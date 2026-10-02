@@ -17,7 +17,8 @@ export default function App(){
  const [groups,setGroups]=useState<Group[]>(()=>load("groups",initialGroups));
  const [expenses,setExpenses]=useState<Expense[]>(()=>{const raw=load<any[]>("expenses",[]);const ids:Record<string,string>={You:"you",Alex:"alex",Sam:"sam",Jordan:"jordan"};return raw.map((e:any)=>({id:String(e.id??crypto.randomUUID()),title:String(e.title??"Expense"),amount:Number(e.amount)||0,paidBy:ids[e.paidBy]||e.paidBy||"you",people:Array.isArray(e.people)?e.people.map((p:string)=>ids[p]||p):["you"],groupId:groups.find(g=>g.name===(e.group||e.groupId))?.id||"apartment",createdAt:Number(e.createdAt)||Number(e.id)||Date.now(),splitMode:e.splitMode||"equal",shares:e.shares||{}}));});
  const [payments,setPayments]=useState<Payment[]>(()=>load("payments",[]));
- const [modal,setModal]=useState<"expense"|"friend"|"group"|"settle"|null>(null);\n const restoreInputRef=useRef<HTMLInputElement>(null);
+ const [modal,setModal]=useState<"expense"|"friend"|"group"|"settle"|null>(null);
+ const restoreInputRef=useRef<HTMLInputElement>(null);
  const [title,setTitle]=useState(""); const [amount,setAmount]=useState(""); const [splitMode,setSplitMode]=useState<"equal"|"exact"|"percent">("equal"); const [shares,setShares]=useState<Record<string,string>>({}); const [editingId,setEditingId]=useState<string|null>(null); const [paidBy,setPaidBy]=useState("you"); const [groupId,setGroupId]=useState("apartment"); const [selected,setSelected]=useState<string[]>(["you","alex","sam"]);
  const [friendName,setFriendName]=useState(""); const [groupName,setGroupName]=useState(""); const [editingGroupId,setEditingGroupId]=useState<string|null>(null); const [groupMembers,setGroupMembers]=useState<string[]>([]); const [settleFrom,setSettleFrom]=useState("alex"); const [settleTo,setSettleTo]=useState("you");
  const persist=(key:string,value:unknown)=>localStorage.setItem("swp_"+key,JSON.stringify(value));
