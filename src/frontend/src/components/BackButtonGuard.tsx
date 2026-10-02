@@ -2,7 +2,7 @@ import { App } from "@capacitor/app";
 import { useEffect, useState } from "react";
 
 interface BackButtonGuardProps {
-  onReturnToSelection: () => void;
+  onReturnToSelection: (tab?: string) => void;
   enabled: boolean;
   returnToContractsOnly?: boolean;
   activeTab: string;
