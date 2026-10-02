@@ -1,6 +1,5 @@
 import type React from "react";
-import { useMemo, useRef, useState } from "react";
-import html2pdf from "html2pdf.js";
+import { useMemo, useState } from "react";
 import {
   useAdvances,
   useAllAttendance,
@@ -13,6 +12,8 @@ import {
   Check,
   ChevronDown,
   ChevronRight,
+  FileDown,
+  FileText,
   Search,
   Users,
   Wallet,
@@ -21,6 +22,11 @@ import {
 import LoadingSpinner from "../components/LoadingSpinner";
 import ScrollHeaderTitle from "../components/ScrollHeaderTitle";
 import { type AttendanceValue, getAttendanceDisplay } from "../types";
+import { registerPlugin } from "@capacitor/core";
+
+const AttendancePdf = registerPlugin<{
+  savePdf(options: { html: string; fileName: string; orientation?: "portrait" | "landscape" }): Promise<{ uri: string; fileName: string }>;
+}>("AttendancePdf");
 
 interface PaymentsPageProps {
   selectedContractIds: Set<string>;
@@ -96,8 +102,6 @@ export default function PaymentsPage({
   const [overviewIndex, setOverviewIndex] = useState(0);
   const [overviewSelection, setOverviewSelection] = useState<Set<string>>(new Set());
   const [deductAdvances, setDeductAdvances] = useState(true);
-  const [reportPreview, setReportPreview] = useState<{ title: string; html: string } | null>(null);
-  const reportContentRef = useRef<HTMLDivElement>(null);
 
   const activeContracts = useMemo(
     () => contracts.filter((contract: any) => !contract.settled),
@@ -189,65 +193,151 @@ export default function PaymentsPage({
     payable: selectedOverviewRows.reduce((s: number, r: any) => s + r.amountPayable, 0),
   };
 
-  const reportDate = new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
-  const escapeHtml = (value: unknown) => String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char] || char);
-  const reportShell = (title: string, subtitle: string, body: string) => `
-    <div class="report">
-      <header><div class="eyebrow">ROSSIE PAYROLL</div><h1>${escapeHtml(title)}</h1><p>${escapeHtml(subtitle)}</p></header>
-      ${body}
-      <footer><span>Rossie — Construction Labour Management</span><span>Generated ${reportDate}</span></footer>
-    </div>`;
-  const reportStyles = `
-    <style>
-      *{box-sizing:border-box}body{margin:0;background:#fff;color:#172536;font-family:Arial,sans-serif}
-      .report{padding:22px;background:#fff;width:100%;font-size:10px}
-      header{background:#172536;color:#fff;padding:18px 20px;margin-bottom:18px}
-      .eyebrow{font-size:9px;letter-spacing:3px;color:#d7b77d;margin-bottom:10px}
-      h1{font-size:25px;margin:0 0 7px;font-weight:700}header p{font-size:11px;color:#cbd5e1;margin:0}
-      .summary{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:12px;background:#f1f3f5;padding:14px;margin-bottom:18px}
-      .summary span{display:block;color:#64748b;font-size:8px;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
-      .summary strong{font-size:13px;overflow-wrap:anywhere}
-      h2{font-size:14px;margin:16px 0 9px;padding-bottom:7px;border-bottom:2px solid #172536}
-      table{border-collapse:collapse;width:100%;table-layout:auto}th{background:#172536;color:#fff;font-size:8px;text-align:left;padding:8px 6px;border:1px solid #34465b;white-space:nowrap}
-      td{padding:7px 6px;border:1px solid #d7dce2;font-size:8px;vertical-align:top}
-      tbody tr:nth-child(even){background:#f6f7f8}.num{text-align:right;white-space:nowrap}
-      .total td{background:#d58a28;color:#fff;font-weight:bold}
-      .totals{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:16px}
-      .totalbox{border:1px solid #d7dce2;background:#f6f7f8;padding:12px}.totalbox span{display:block;font-size:8px;color:#64748b;text-transform:uppercase;margin-bottom:6px}.totalbox strong{font-size:15px;color:#b7791f}
-      footer{display:flex;justify-content:space-between;border-top:1px solid #d7dce2;margin-top:22px;padding-top:10px;color:#64748b;font-size:8px}
-      @page{size:A4 landscape;margin:8mm}
-    </style>`;
-  const openPaymentReport = () => {
-    const rows = visibleRows;
-    const body = `
-      <div class="summary"><div><span>Contracts</span><strong>${selectedContracts.map((x: any) => escapeHtml(x.name)).join(", ") || "—"}</strong></div><div><span>Labours</span><strong>${rows.length}</strong></div><div><span>Gross</span><strong>${money(totals.gross)}</strong></div><div><span>Payable</span><strong>${money(totals.payable)}</strong></div></div>
-      <h2>Payment details</h2><table><thead><tr><th>Labour</th>${selectedContracts.map((x: any) => `<th class="num">${escapeHtml(x.name)}</th>`).join("")}<th class="num">Gross</th><th class="num">Advances</th><th class="num">Payable</th></tr></thead><tbody>
-      ${rows.map((row: any) => `<tr><td>${escapeHtml(row.labour.name)}</td>${selectedContracts.map((x: any) => `<td class="num">${money(row.contractSalaries[x.id.toString()] || 0)}</td>`).join("")}<td class="num">${money(row.totalNetSalary)}</td><td class="num">${money(row.totalAdvances)}</td><td class="num">${money(deductAdvances ? row.amountPayable : row.totalNetSalary)}</td></tr>`).join("")}
-      <tr class="total"><td>TOTAL</td>${selectedContracts.map((x: any) => `<td class="num">${money(rows.reduce((s: number, r: any) => s + (r.contractSalaries[x.id.toString()] || 0), 0))}</td>`).join("")}<td class="num">${money(totals.gross)}</td><td class="num">${money(totals.advances)}</td><td class="num">${money(deductAdvances ? totals.payable : totals.gross)}</td></tr>
-      </tbody></table><div class="totals"><div class="totalbox"><span>Gross salary</span><strong>${money(totals.gross)}</strong></div><div class="totalbox"><span>Advances</span><strong>${money(totals.advances)}</strong></div><div class="totalbox"><span>Total payable</span><strong>${money(deductAdvances ? totals.payable : totals.gross)}</strong></div></div>`;
-    setReportPreview({ title: "Payment Sheet", html: reportStyles + reportShell("Payment Report", "Labour payment statement", body) });
+
+  const escapePdfHtml = (value: unknown) =>
+    String(value ?? "").replace(/[&<>"]/g, (char) => ({
+      "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;",
+    }[char] || char));
+
+  const PDF_BASE_CSS = `
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0;background:#fff;color:#172536;font-family:Arial,Helvetica,sans-serif}
+    body{font-size:9pt;line-height:1.35}
+    .report{width:100%;background:#fff}
+    .header{background:#172536;color:#fff;padding:18px 20px}
+    .brand{font-size:9pt;letter-spacing:2px;text-transform:uppercase;opacity:.72}
+    .title{font-size:22pt;font-weight:800;margin:3px 0}
+    .subtitle{font-size:9pt;opacity:.72}
+    .meta{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;padding:12px 20px;background:#f3f5f7;border-bottom:1px solid #d9dee4}
+    .label{font-size:7pt;color:#657181;text-transform:uppercase;font-weight:700;letter-spacing:.8px}
+    .value{font-size:9pt;font-weight:800;margin-top:3px;overflow-wrap:anywhere}
+    .body{padding:15px 20px}
+    h2{font-size:11pt;margin:0 0 8px;padding-bottom:5px;border-bottom:2px solid #172536}
+    .section{margin-top:15px}
+    .section:first-child{margin-top:0}
+    table{width:100%;border-collapse:collapse;table-layout:auto}
+    th{background:#263c55;color:#fff;text-align:left;padding:6px 5px;border:1px solid #263c55;font-size:7pt;white-space:nowrap}
+    td{padding:5px;border:1px solid #d9dee4;font-size:7.5pt;vertical-align:middle}
+    tbody tr:nth-child(even){background:#f7f8f9}
+    .num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+    .total td{background:#c97716;color:#fff;border-color:#c97716;font-weight:800}
+    .summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin-top:12px}
+    .summaryBox{background:#f3f5f7;border:1px solid #d9dee4;padding:9px}
+    .summaryBox strong{display:block;color:#c97716;font-size:11pt;margin-top:2px}
+    .footer{border-top:1px solid #d9dee4;padding:9px 20px;color:#657181;font-size:7pt;display:flex;justify-content:space-between;gap:10px}
+    .contractTitle{font-size:10pt;font-weight:800;margin:0 0 7px;color:#172536}
+    .empty{padding:12px;background:#f7f8f9;border:1px dashed #cbd2da;color:#657181}
+    @media print{thead{display:table-header-group}tr{page-break-inside:avoid}.section{page-break-inside:avoid}}
+  `;
+
+  const savePdfReport = async (title: string, html: string, orientation: "portrait" | "landscape") => {
+    const fullHtml = `<!doctype html><html><head><meta charset="UTF-8"><style>${PDF_BASE_CSS}${orientation === "landscape" ? "@page{size:A4 landscape;margin:7mm}" : "@page{size:A4 portrait;margin:8mm}"}</style></head><body>${html}</body></html>`;
+    const fileName = `${title}_${new Date().toISOString().slice(0,10)}.pdf`;
+    try {
+      const saved = await AttendancePdf.savePdf({ html: fullHtml, fileName, orientation });
+      window.alert(`${saved.fileName} saved to Downloads.`);
+    } catch (error) {
+      console.error("PDF generation failed", error);
+      window.alert("Unable to save the PDF. Please try again.");
+    }
   };
-  const openAttendanceReport = () => {
-    const columns = selectedContracts.flatMap((contract: any) => (contract.workColumns || []).map((column: any) => ({ contract, column })));
-    const rows = selectedContracts.flatMap((contract: any) => labours.map((labour: any) => {
-      const cells = columns.map(({ contract: owner, column }: any) => {
-        if (owner.id !== contract.id) return "";
-        const record = allAttendance.find((item: any) => item.contractId === contract.id && item.labourId === labour.id && item.columnId === column.id);
-        return record ? getAttendanceDisplay(record.value) : "";
-      });
-      return { contract, labour, cells };
-    })).filter((row: any) => row.cells.some((value: any) => value !== ""));
-    const body = `
-      <div class="summary"><div><span>Contracts</span><strong>${selectedContracts.map((x: any) => escapeHtml(x.name)).join(", ") || "—"}</strong></div><div><span>Labours</span><strong>${new Set(rows.map((r: any) => r.labour.id.toString())).size}</strong></div><div><span>Generated</span><strong>${reportDate}</strong></div><div><span>Work columns</span><strong>${columns.length}</strong></div></div>
-      <h2>Attendance details</h2><table><thead><tr><th>Contract</th><th>Labour</th>${columns.map(({ contract, column }: any) => `<th>${escapeHtml(contract.name)} · ${escapeHtml(column.name)}</th>`).join("")}</tr></thead><tbody>
-      ${rows.map((row: any) => `<tr><td>${escapeHtml(row.contract.name)}</td><td>${escapeHtml(row.labour.name)}</td>${row.cells.map((value: any) => `<td class="num">${escapeHtml(value)}</td>`).join("")}</tr>`).join("")}
-      </tbody></table>`;
-    setReportPreview({ title: "Attendance Sheet", html: reportStyles + reportShell("Attendance Report", "Attendance used for the selected payment calculation", body) });
+
+  const savePaymentPdf = async () => {
+    const contractNames = selectedContracts.map((c: any) => c.name).join(", ") || "None";
+    const rows = visibleRows.map((row: any) => `
+      <tr><td>${escapePdfHtml(row.labour.name)}</td>
+      ${selectedContracts.map((contract: any) => `<td class="num">${money(row.contractSalaries[contract.id.toString()] || 0)}</td>`).join("")}
+      <td class="num">${money(row.totalNetSalary)}</td><td class="num">${money(row.totalAdvances)}</td>
+      <td class="num">${money(deductAdvances ? row.amountPayable : row.totalNetSalary)}</td></tr>`).join("");
+    const totalCells = selectedContracts.map((contract: any) => {
+      const total = visibleRows.reduce((sum: number, row: any) => sum + (row.contractSalaries[contract.id.toString()] || 0), 0);
+      return `<td class="num">${money(total)}</td>`;
+    }).join("");
+
+    const html = `
+      <div class="report">
+        <div class="header"><div class="brand">Rossie Payroll</div><div class="title">Payment Report</div><div class="subtitle">Labour payment statement</div></div>
+        <div class="meta">
+          <div><div class="label">Contracts</div><div class="value">${escapePdfHtml(contractNames)}</div></div>
+          <div><div class="label">Labours</div><div class="value">${visibleRows.length}</div></div>
+          <div><div class="label">Gross</div><div class="value">${money(totals.gross)}</div></div>
+          <div><div class="label">Payable</div><div class="value">${money(deductAdvances ? totals.payable : totals.gross)}</div></div>
+        </div>
+        <div class="body"><h2>Payment details</h2>
+          <table><thead><tr><th>Labour</th>${selectedContracts.map((contract: any) => `<th class="num">${escapePdfHtml(contract.name)}</th>`).join("")}<th class="num">Gross</th><th class="num">Advances</th><th class="num">Payable</th></tr></thead>
+          <tbody>${rows}<tr class="total"><td>TOTAL</td>${totalCells}<td class="num">${money(totals.gross)}</td><td class="num">${money(totals.advances)}</td><td class="num">${money(deductAdvances ? totals.payable : totals.gross)}</td></tr></tbody></table>
+          <div class="summary"><div class="summaryBox"><div class="label">Gross salary</div><strong>${money(totals.gross)}</strong></div><div class="summaryBox"><div class="label">Advances</div><strong>${money(totals.advances)}</strong></div><div class="summaryBox"><div class="label">Total payable</div><strong>${money(deductAdvances ? totals.payable : totals.gross)}</strong></div></div>
+        </div>
+        <div class="footer"><span>Rossie — Construction Labour Management</span><span>Generated ${new Date().toLocaleDateString("en-IN")}</span></div>
+      </div>`;
+    await savePdfReport("Payment_Sheet", html, "portrait");
   };
-  const saveReportPdf = async () => {
-    if (!reportPreview || !reportContentRef.current) return;
-    await html2pdf().set({ margin: 5, filename: `${reportPreview.title.replace(/\\s+/g, "_")}_${new Date().toISOString().slice(0, 10)}.pdf`, image: { type: "jpeg", quality: 0.98 }, html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff" }, jsPDF: { unit: "mm", format: "a4", orientation: "landscape" }, pagebreak: { mode: ["css", "legacy"] } }).from(reportContentRef.current).save();
+
+  const saveAttendancePdf = async () => {
+    if (!selectedContracts.length) {
+      window.alert("Select at least one contract first.");
+      return;
+    }
+
+    const sections = selectedContracts.map((contract: any) => {
+      const columns = (contract.workColumns || []).filter((column: any) =>
+        allAttendance.some((record: any) =>
+          record.contractId === contract.id &&
+          record.columnId === column.id &&
+          getAttendanceDisplay(record.value as AttendanceValue) > 0,
+        ),
+      );
+      const rows = labours.map((labour: any) => {
+        const values = columns.map((column: any) => {
+          const record = allAttendance.find((item: any) =>
+            item.contractId === contract.id &&
+            item.columnId === column.id &&
+            item.labourId === labour.id,
+          );
+          return record ? getAttendanceDisplay(record.value as AttendanceValue) : 0;
+        });
+        return { labour, values };
+      }).filter((row: any) => row.values.some((value: number) => Number(value) > 0));
+      if (!columns.length || !rows.length) return "";
+
+      return `
+        <div class="section">
+          <div class="contractTitle">Contract: ${escapePdfHtml(contract.name)}</div>
+          <table><thead><tr><th>Labour</th>${columns.map((column: any) => `<th class="num">${escapePdfHtml(column.name)}</th>`).join("")}</tr></thead>
+          <tbody>${rows.map((row: any) => `<tr><td>${escapePdfHtml(row.labour.name)}</td>${row.values.map((value: number) => `<td class="num">${escapePdfHtml(value)}</td>`).join("")}</tr>`).join("")}</tbody></table>
+        </div>`;
+    }).join("");
+
+    const activeColumnCount = selectedContracts.reduce((sum: number, contract: any) =>
+      sum + (contract.workColumns || []).filter((column: any) =>
+        allAttendance.some((record: any) =>
+          record.contractId === contract.id &&
+          record.columnId === column.id &&
+          getAttendanceDisplay(record.value as AttendanceValue) > 0,
+        ),
+      ).length, 0);
+
+    const labourCount = new Set(
+      allAttendance
+        .filter((record: any) => selectedContracts.some((contract: any) => contract.id === record.contractId))
+        .map((record: any) => record.labourId.toString()),
+    ).size;
+
+    const html = `
+      <div class="report">
+        <div class="header"><div class="brand">Rossie Attendance</div><div class="title">Attendance Report</div><div class="subtitle">Attendance used for the selected payment calculation</div></div>
+        <div class="meta">
+          <div><div class="label">Contracts</div><div class="value">${selectedContracts.length}</div></div>
+          <div><div class="label">Labours</div><div class="value">${labourCount}</div></div>
+          <div><div class="label">Work columns</div><div class="value">${activeColumnCount}</div></div>
+          <div><div class="label">Generated</div><div class="value">${new Date().toLocaleDateString("en-IN")}</div></div>
+        </div>
+        <div class="body"><h2>Attendance details</h2>${sections || '<div class="empty">No attendance records found for the selected contracts.</div>'}</div>
+        <div class="footer"><span>Rossie — Construction Labour Management</span><span>Generated ${new Date().toLocaleDateString("en-IN")}</span></div>
+      </div>`;
+    await savePdfReport("Attendance_Sheet", html, "landscape");
   };
+
 
 
   if (contractsLoading || laboursLoading) {
@@ -414,8 +504,8 @@ export default function PaymentsPage({
                     <p className="text-xs text-[#7b8794]">{selectedContracts.length} contract{selectedContracts.length === 1 ? "" : "s"} · {visibleRows.length} payable labour records</p>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    <button type="button" onClick={openPaymentReport} className="flex items-center gap-2 rounded-xl bg-[#172536] px-3 py-2.5 text-xs font-extrabold text-white"><Wallet size={15} /> Payment PDF</button>
-                    <button type="button" onClick={openAttendanceReport} className="flex items-center gap-2 rounded-xl border border-[#dfe4ea] bg-white px-3 py-2.5 text-xs font-extrabold text-[#172536]"><Calculator size={15} /> Attendance PDF</button>
+                    <button type="button" onClick={savePaymentPdf} className="flex items-center gap-2 rounded-xl bg-[#172536] px-3 py-2.5 text-xs font-extrabold text-white" data-ocid="payments.payment_pdf_button"><FileDown size={15} /> Payment PDF</button>
+                    <button type="button" onClick={saveAttendancePdf} className="flex items-center gap-2 rounded-xl border border-[#dfe4ea] bg-white px-3 py-2.5 text-xs font-extrabold text-[#172536]" data-ocid="payments.attendance_pdf_button"><FileText size={15} /> Attendance PDF</button>
                     <button type="button" onClick={() => { setOverviewSelection(new Set()); setOverviewIndex(0); setShowOverview(true); }} className="flex items-center gap-2 rounded-xl border border-[#dfe4ea] bg-[#f7f9fb] px-3 py-2.5 text-xs font-extrabold text-[#425163]" data-ocid="payments.overview_button"><BarChart3 size={15} /> Overview</button>
                   </div>
                 </div>
@@ -475,21 +565,6 @@ export default function PaymentsPage({
       </main>
 
 
-      {reportPreview && (
-        <div className="fixed inset-0 z-[3000] flex flex-col bg-[#10141c] text-white" style={{ height: "100dvh" }}>
-          <div className="flex shrink-0 items-center justify-between border-b border-white/10 bg-[#172536] px-4 py-3">
-            <div className="min-w-0"><p className="truncate text-base font-bold">{reportPreview.title}</p><p className="text-xs text-white/55">Preview · A4 landscape</p></div>
-            <button type="button" onClick={() => setReportPreview(null)} className="ml-3 rounded-xl bg-white/10 p-2" aria-label="Close preview"><X size={20} /></button>
-          </div>
-          <div className="min-h-0 flex-1 overflow-auto bg-[#e9edf1] p-3">
-            <div ref={reportContentRef} className="mx-auto max-w-[1200px] bg-white text-[#172536]" dangerouslySetInnerHTML={{ __html: reportPreview.html }} />
-          </div>
-          <div className="flex shrink-0 gap-3 border-t border-white/10 bg-[#172536] p-3 pb-[calc(12px+env(safe-area-inset-bottom))]">
-            <button type="button" onClick={() => setReportPreview(null)} className="flex-1 rounded-xl bg-white/10 py-3 font-bold">Close</button>
-            <button type="button" onClick={saveReportPdf} className="flex-1 rounded-xl bg-orange-500 py-3 font-extrabold text-white">Save PDF</button>
-          </div>
-        </div>
-      )}
       {showOverview && (
         <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-[#07101b]/75 p-3">
           <div className="flex max-h-[92vh] w-full max-w-lg flex-col overflow-hidden rounded-3xl bg-white shadow-2xl">
