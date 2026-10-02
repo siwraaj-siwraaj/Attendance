@@ -328,32 +328,81 @@ export default function App(){
  const exportTripPDF=async(g:Group)=>{
   const r=groupReportData(g);
   const slug=g.name.replace(/[^a-z0-9]+/gi,"-").toLowerCase();
-  const dateLabel=r.rows.length?(()=>{const dates=r.rows.map(e=>new Date(e.createdAt));const first=dates[0];const last=dates[dates.length-1];return first.toDateString()===last.toDateString()?first.toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"}):first.toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"})+" - "+last.toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"});})():"No expenses yet";
+  const dateLabel=r.rows.length?(()=>{
+   const dates=r.rows.map(e=>new Date(e.createdAt));const first=dates[0];const last=dates[dates.length-1];
+   return first.toDateString()===last.toDateString()?first.toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"}):first.toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"})+" - "+last.toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"});
+  })():"No expenses yet";
   const transfers=(()=>{
    const creditors=r.memberIds.map(id=>({id,amount:Math.max(0,r.net[id]||0)})).filter(x=>x.amount>.005).sort((a,b)=>b.amount-a.amount);
    const debtors=r.memberIds.map(id=>({id,amount:Math.max(0,-(r.net[id]||0))})).filter(x=>x.amount>.005).sort((a,b)=>b.amount-a.amount);
    const out:{from:string;to:string;amount:number}[]=[];let ci=0,di=0;
-   while(ci<creditors.length&&di<debtors.length){const amount=Math.min(creditors[ci].amount,debtors[di].amount);if(amount>.005)out.push({from:debtors[di].id,to:creditors[ci].id,amount});creditors[ci].amount-=amount;debtors[di].amount-=amount;if(creditors[ci].amount<=.005)ci++;if(debtors[di].amount<=.005)di++;}
+   while(ci<creditors.length&&di<debtors.length){
+    const amount=Math.min(creditors[ci].amount,debtors[di].amount);
+    if(amount>.005)out.push({from:debtors[di].id,to:creditors[ci].id,amount});
+    creditors[ci].amount-=amount;debtors[di].amount-=amount;
+    if(creditors[ci].amount<=.005)ci++;if(debtors[di].amount<=.005)di++;
+   }
    return out;
   })();
   const doc=new jsPDF({unit:"mm",format:"a4"});
-  const margin=16;const pageWidth=210;const contentWidth=pageWidth-margin*2;let y=18;
-  const ensure=(h:number)=>{if(y+h>282){doc.addPage();y=18;}};
-  const text=(value:string,size:number,bold=false)=>{doc.setFont("helvetica",bold?"bold":"normal");doc.setFontSize(size);doc.setTextColor(28,34,32);doc.text(value,margin,y);};
-  const row=(left:string,right:string,size=9,bold=false,gap=6)=>{ensure(gap);text(left,size,bold);doc.setFont("helvetica",bold?"bold":"normal");doc.setFontSize(size);doc.text(right,margin+contentWidth,y,{align:"right"});y+=gap;};
-  const section=(label:string)=>{ensure(10);y+=2;text(label,12,true);y+=7;};
-  const line=()=>{ensure(4);doc.setDrawColor(225);doc.line(margin,y,margin+contentWidth,y);y+=5;};
-  text(g.name.toUpperCase(),20,true);y+=8;text(dateLabel.toUpperCase(),9);y+=8;line();
-  ensure(27);text(money(r.total),28,true);y+=9;text("TOTAL EXPENSE",8,true);y+=8;
-  text(r.memberIds.length+" PEOPLE  ·  "+r.rows.length+" EXPENSES",9);y+=9;line();
-  section("SETTLEMENT");
-  if(transfers.length)transfers.forEach(t=>row(person(t.from)+" → "+person(t.to),money(t.amount),11,true,8));else{text("All settled",10);y+=8;}
-  line();section("EXPENSES");
-  if(r.rows.length)r.rows.forEach(e=>{ensure(13);const date=new Date(e.createdAt).toLocaleDateString("en-IN",{day:"2-digit",month:"short"});text(date+"  "+e.title,9,true);doc.setFont("helvetica","bold");doc.setFontSize(9);doc.text(money(e.amount),margin+contentWidth,y,{align:"right"});y+=5;text("Paid by "+person(e.paidBy),8);y+=7;});
-  else{text("No expenses recorded",9);y+=7;}
-  if(r.rows.length){
-   doc.addPage();y=18;text(g.name.toUpperCase(),18,true);y+=8;text("EXPENSE DETAILS",11,true);y+=8;line();
-   r.rows.forEach((e,index)=>{ensure(34);text((index+1)+". "+e.title,11,true);y+=6;text(new Date(e.createdAt).toLocaleDateString("en-IN")+"  ·  "+money(e.amount)+"  ·  Paid by "+person(e.paidBy),9);y+=6;text("Shared by: "+e.people.map(person).join(", "),9);y+=6;if(e.splitMode==="equal")text("Equal share: "+money(e.people.length?e.amount/e.people.length:0),9);else e.people.forEach(id=>{ensure(6);text(person(id)+": "+money(Number(e.shares?.[id]??0)),8);y+=5;});y+=7;line();});
+  const margin=12,pageWidth=210,pageHeight=297,tableWidth=pageWidth-margin*2;
+  const drawHeader=(title:string)=>{
+   doc.setFont("helvetica","bold");doc.setFontSize(18);doc.setTextColor(28,34,32);doc.text(title,margin,18);
+   doc.setFont("helvetica","normal");doc.setFontSize(9);doc.setTextColor(90,90,90);doc.text(dateLabel,margin,25);
+  };
+  const drawTable=(headers:string[],widths:number[],rows:string[][],options?:{fontSize?:number;rowHeight?:number})=>{
+   const fontSize=options?.fontSize??8.5,rowHeight=options?.rowHeight??9;
+   const headerHeight=9;
+   const x0=margin;
+   let y=options?.["startY" as never] as number|undefined;
+   if(y===undefined)y=32;
+   const wrap=(value:string,width:number)=>{
+    doc.setFont("helvetica","normal");doc.setFontSize(fontSize);
+    return doc.splitTextToSize(String(value),Math.max(10,width-4)) as string[];
+   };
+   const drawHeaderRow=()=>{
+    doc.setFillColor(238,241,239);doc.setDrawColor(190,195,192);doc.rect(x0,y,tableWidth,headerHeight,"FD");
+    let x=x0;doc.setFont("helvetica","bold");doc.setFontSize(fontSize);doc.setTextColor(28,34,32);
+    headers.forEach((h,i)=>{doc.text(h,x+2,y+6);x+=widths[i];});
+    y+=headerHeight;
+   };
+   drawHeaderRow();
+   rows.forEach(row=>{
+    const lines=row.map((v,i)=>wrap(v,widths[i]));const needed=Math.max(rowHeight,Math.max(...lines.map(a=>a.length))*4.2+3);
+    if(y+needed>pageHeight-12){doc.addPage();y=16;drawHeader(g.name.toUpperCase());y=32;drawHeaderRow();}
+    doc.setDrawColor(215,218,216);doc.rect(x0,y,tableWidth,needed,"S");
+    let x=x0;doc.setFont("helvetica","normal");doc.setFontSize(fontSize);doc.setTextColor(40,40,40);
+    row.forEach((_,i)=>{doc.line(x,y,x,y+needed);lines[i].slice(0,4).forEach((line,index)=>doc.text(line,x+2,y+5+index*4.2));x+=widths[i];});
+    doc.line(x,y,x,y+needed);y+=needed;
+   });
+   return y;
+  };
+  drawHeader(g.name.toUpperCase());
+  doc.setFont("helvetica","bold");doc.setFontSize(25);doc.setTextColor(28,34,32);doc.text(money(r.total),margin,43);
+  doc.setFont("helvetica","normal");doc.setFontSize(9);doc.text(r.memberIds.length+" people  ·  "+r.rows.length+" expenses",margin,49);
+  let y=57;
+  doc.setFont("helvetica","bold");doc.setFontSize(11);doc.text("SETTLEMENT",margin,y);y+=5;
+  if(transfers.length){
+   const settlementRows=transfers.map(t=>[person(t.from)+" → "+person(t.to),money(t.amount)]);
+   y=drawTable(["FROM / TO","AMOUNT"],[tableWidth-48,48],settlementRows,{fontSize:9,rowHeight:9});
+  }else{
+   doc.setFont("helvetica","normal");doc.setFontSize(9);doc.text("All settled",margin,y+5);y+=14;
+  }
+  y+=9;doc.setFont("helvetica","bold");doc.setFontSize(11);doc.text("EXPENSES",margin,y);y+=5;
+  const expenseRows=r.rows.map(e=>{
+   const split=e.splitMode==="equal"?"Equal ("+money(e.people.length?e.amount/e.people.length:0)+")":e.splitMode==="percent"?"Percentage":"Exact";
+   return [new Date(e.createdAt).toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"}),e.title,person(e.paidBy),money(e.amount),split];
+  });
+  drawTable(["DATE","EXPENSE","PAID BY","AMOUNT","SPLIT"],[27,66,34,32,27],expenseRows,{fontSize:8,rowHeight:10});
+  if(r.rows.some(e=>e.splitMode!=="equal")){
+   doc.addPage();drawHeader(g.name.toUpperCase()+" · SPLIT DETAILS");
+   let sy=32;
+   const detailRows:string[][]=[];
+   r.rows.forEach(e=>{
+    if(e.splitMode==="equal")return;
+    e.people.forEach(id=>detailRows.push([e.title,person(id),e.splitMode==="percent"?((Number(e.shares?.[id]??0)/e.amount)*100).toFixed(1)+"%":money(Number(e.shares?.[id]??0))]));
+   });
+   if(detailRows.length)drawTable(["EXPENSE","PERSON","SHARE"],[90,55,41],detailRows,{fontSize:8.5,rowHeight:9,startY:sy} as any);
   }
   const base64=doc.output("datauristring").split(",")[1];
   await saveReportFile("splitwise-"+slug+"-trip-details.pdf",base64,"application/pdf");
