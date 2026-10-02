@@ -4,6 +4,7 @@ import { supabase } from "./lib/supabase";
 import jsPDF from "jspdf";
 import * as XLSX from "xlsx";
 import { Filesystem, Directory } from "@capacitor/filesystem";
+import { LocalNotifications } from "@capacitor/local-notifications";
 
 type Person = { id: string; name: string; email?: string; userId?: string; updatedAt?: number };
 type Group = { id: string; name: string; members: string[]; updatedAt?: number; sharedGroupId?: string };
@@ -14,6 +15,21 @@ const initialPeople: Person[] = [{id:"you",name:me},{id:"alex",name:"Alex"},{id:
 const initialGroups: Group[] = [{id:"apartment",name:"Apartment",members:["you","alex","sam"]},{id:"goa",name:"Goa trip",members:["you","alex","sam","jordan"]}];
 const load = <T,>(key:string, fallback:T):T => { try { const v=localStorage.getItem("swp_"+key); return v ? JSON.parse(v) as T : fallback; } catch { return fallback; } };
 const money=(n:number)=>new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:2}).format(n);
+const ensureNotificationPermission=async()=>{
+ try{
+  const current=await LocalNotifications.checkPermissions();
+  if(current.display!=="granted") await LocalNotifications.requestPermissions();
+ }catch(error){console.warn("Notification permission unavailable",error);}
+};
+const notifyReportSaved=async(name:string)=>{
+ try{
+  await ensureNotificationPermission();
+  const permission=await LocalNotifications.checkPermissions();
+  if(permission.display==="granted"){
+   await LocalNotifications.schedule({notifications:[{id:Date.now()%2147483647,title:"Splitwise report downloaded",body:name,smallIcon:"ic_stat_icon_config_sample",extra:{fileName:name}}]});
+  }
+ }catch(error){console.warn("Download notification failed",error);}
+};
 export default function App(){
  const [tab,setTab]=useState("Home");
  const [user,setUser]=useState<any>(null); const [accountName,setAccountName]=useState("You");
@@ -256,7 +272,7 @@ export default function App(){
  const saveReportFile=async(name:string,base64:string,mime:string)=>{
   try{
    const result=await Filesystem.writeFile({path:name,data:base64,directory:Directory.Documents,recursive:true});
-   alert(`Report saved successfully: ${name}`);
+   alert(`Report saved successfully: ${name}`);\n   await notifyReportSaved(name);
    return result;
   }catch(error){
    console.error("Report save failed",error);
