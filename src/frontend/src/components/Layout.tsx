@@ -233,7 +233,7 @@ export default function Layout({ children }: LayoutProps) {
 
   return (
     <div className="h-[100dvh] min-h-0 flex flex-col bg-[#F8FAFC]">
-      <BackButtonGuard enabled={mode !== null} returnToContractsOnly={activeTab === "admin" || activeTab === "attendance"} onReturnToSelection={() => setActiveTab("contracts")} />
+      <BackButtonGuard enabled={mode !== null} activeTab={activeTab} returnToContractsOnly={activeTab === "admin" || activeTab === "attendance"} onReturnToSelection={(tab) => setActiveTab((tab as any) ?? "contracts")} />
 
       {menuOpen && <>
         <div className="fixed inset-0 z-[60] bg-black/55 backdrop-blur-[2px]" onClick={() => setMenuOpen(false)} aria-hidden="true" />
