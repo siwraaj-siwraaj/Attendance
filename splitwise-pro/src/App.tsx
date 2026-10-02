@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from "react";
 import { Home, Users, ReceiptText, Plus, X, Wallet, Trash2, Check, UserPlus, Download, Upload } from "lucide-react";
 
-type Person = { id: string; name: string };
+type Person = { id: string; name: string; email?: string };
 type Group = { id: string; name: string; members: string[] };
 type Expense = { id: string; title: string; amount: number; paidBy: string; people: string[]; groupId: string; createdAt: number; splitMode?: "equal"|"exact"|"percent"; shares?: Record<string,number> };
 type Payment = { id: string; from: string; to: string; amount: number; createdAt: number };
@@ -20,7 +20,7 @@ export default function App(){
  const [modal,setModal]=useState<"expense"|"friend"|"group"|"settle"|null>(null);
  const restoreInputRef=useRef<HTMLInputElement>(null);
  const [title,setTitle]=useState(""); const [amount,setAmount]=useState(""); const [splitMode,setSplitMode]=useState<"equal"|"exact"|"percent">("equal"); const [shares,setShares]=useState<Record<string,string>>({}); const [editingId,setEditingId]=useState<string|null>(null); const [paidBy,setPaidBy]=useState("you"); const [groupId,setGroupId]=useState("apartment"); const [selected,setSelected]=useState<string[]>(["you","alex","sam"]);
- const [friendName,setFriendName]=useState(""); const [groupName,setGroupName]=useState(""); const [editingGroupId,setEditingGroupId]=useState<string|null>(null); const [groupMembers,setGroupMembers]=useState<string[]>([]); const [settleFrom,setSettleFrom]=useState("alex"); const [settleTo,setSettleTo]=useState("you");
+ const [friendName,setFriendName]=useState(""); const [friendEmail,setFriendEmail]=useState(""); const [groupName,setGroupName]=useState(""); const [editingGroupId,setEditingGroupId]=useState<string|null>(null); const [groupMembers,setGroupMembers]=useState<string[]>([]); const [settleFrom,setSettleFrom]=useState("alex"); const [settleTo,setSettleTo]=useState("you");
  const persist=(key:string,value:unknown)=>localStorage.setItem("swp_"+key,JSON.stringify(value));
  const person=(id:string)=>people.find(p=>p.id===id)?.name||"Unknown";
  const group=(id:string)=>groups.find(g=>g.id===id)?.name||"No group";
