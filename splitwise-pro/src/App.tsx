@@ -354,8 +354,7 @@ export default function App(){
    const fontSize=options?.fontSize??8.5,rowHeight=options?.rowHeight??9;
    const headerHeight=9;
    const x0=margin;
-   let y=options?.startY;
-   if(y===undefined)y=32;
+   let y:number=options?.startY??32;
    const wrap=(value:string,width:number)=>{
     doc.setFont("helvetica","normal");doc.setFontSize(fontSize);
     return doc.splitTextToSize(String(value),Math.max(10,width-4)) as string[];
