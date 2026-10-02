@@ -5,6 +5,7 @@ interface BackButtonGuardProps {
   onReturnToSelection: () => void;
   enabled: boolean;
   returnToContractsOnly?: boolean;
+  activeTab: string;
 }
 
 function closeOpenSurface(): boolean {
@@ -80,33 +81,50 @@ export function BackButtonGuard({
   onReturnToSelection,
   enabled,
   returnToContractsOnly = false,
+  activeTab,
 }: BackButtonGuardProps) {
   const [showDialog, setShowDialog] = useState(false);
+  const [showExitHint, setShowExitHint] = useState(false);
 
   useEffect(() => {
     if (!enabled) return;
 
-    const handlePopState = (e: PopStateEvent) => {
-      e.preventDefault();
-      if (closeOpenSurface()) {
-        window.history.pushState(null, "", window.location.href);
+    const handleBackNavigation = async () => {
+      if (closeOpenSurface()) return;
+
+      if (activeTab === "labours" || activeTab === "more") {
+        onReturnToSelection("payments");
+        return;
+      }
+      if (activeTab === "advances" || activeTab === "payments") {
+        onReturnToSelection("contracts");
+        return;
+      }
+      if (activeTab === "contracts") {
+        if (showExitHint) {
+          setShowExitHint(false);
+          await App.exitApp();
+          return;
+        }
+        setShowExitHint(true);
+        window.setTimeout(() => setShowExitHint(false), 2000);
         return;
       }
       if (returnToContractsOnly) {
-        onReturnToSelection();
+        onReturnToSelection("contracts");
         return;
       }
       setShowDialog(true);
+    };
+
+    const handlePopState = (e: PopStateEvent) => {
+      e.preventDefault();
+      void handleBackNavigation();
       window.history.pushState(null, "", window.location.href);
     };
 
     const handleHardwareBack = async () => {
-      if (closeOpenSurface()) return;
-      if (returnToContractsOnly) {
-        onReturnToSelection();
-        return;
-      }
-      window.history.back();
+      await handleBackNavigation();
     };
 
     window.history.pushState(null, "", window.location.href);
@@ -117,7 +135,7 @@ export function BackButtonGuard({
       window.removeEventListener("popstate", handlePopState);
       backListener.then((listener) => listener.remove()).catch(() => {});
     };
-  }, [enabled, onReturnToSelection, returnToContractsOnly]);
+  }, [enabled, onReturnToSelection, returnToContractsOnly, activeTab, showExitHint]);
 
   const handleConfirm = () => {
     setShowDialog(false);
@@ -129,10 +147,15 @@ export function BackButtonGuard({
     window.history.pushState(null, "", window.location.href);
   };
 
-  if (!showDialog) return null;
+  if (!showDialog && !showExitHint) return null;
 
   return (
     <div className="dialog-overlay" data-ocid="back_button.dialog">
+      {showExitHint ? (
+        <div className="rounded-xl bg-[rgba(5,10,20,0.97)] border border-white/10 px-5 py-3 text-white text-sm shadow-2xl" role="status">
+          Press back again to exit
+        </div>
+      ) : (
       <div className="bg-[rgba(5,10,20,0.97)] border border-orange-500/25 rounded-2xl p-6 max-w-xs w-full shadow-2xl">
         <h2 className="text-white font-bold text-lg mb-2">Sign out?</h2>
         <p className="text-gray-400 text-sm mb-5">
@@ -143,6 +166,7 @@ export function BackButtonGuard({
           <button type="button" onClick={handleConfirm} className="flex-1 py-2.5 rounded-xl btn-orange text-sm font-medium" data-ocid="back_button.confirm_button">Sign out</button>
         </div>
       </div>
+      )}
     </div>
   );
 }
