@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { Home, Users, ReceiptText, Plus, X, Wallet, Trash2, Check, UserPlus } from "lucide-react";
+import { useMemo, useRef, useState } from "react";
+import { Home, Users, ReceiptText, Plus, X, Wallet, Trash2, Check, UserPlus, Download, Upload } from "lucide-react";
 
 type Person = { id: string; name: string };
 type Group = { id: string; name: string; members: string[] };
@@ -17,7 +17,7 @@ export default function App(){
  const [groups,setGroups]=useState<Group[]>(()=>load("groups",initialGroups));
  const [expenses,setExpenses]=useState<Expense[]>(()=>{const raw=load<any[]>("expenses",[]);const ids:Record<string,string>={You:"you",Alex:"alex",Sam:"sam",Jordan:"jordan"};return raw.map((e:any)=>({id:String(e.id??crypto.randomUUID()),title:String(e.title??"Expense"),amount:Number(e.amount)||0,paidBy:ids[e.paidBy]||e.paidBy||"you",people:Array.isArray(e.people)?e.people.map((p:string)=>ids[p]||p):["you"],groupId:groups.find(g=>g.name===(e.group||e.groupId))?.id||"apartment",createdAt:Number(e.createdAt)||Number(e.id)||Date.now(),splitMode:e.splitMode||"equal",shares:e.shares||{}}));});
  const [payments,setPayments]=useState<Payment[]>(()=>load("payments",[]));
- const [modal,setModal]=useState<"expense"|"friend"|"group"|"settle"|null>(null);
+ const [modal,setModal]=useState<"expense"|"friend"|"group"|"settle"|null>(null);\n const restoreInputRef=useRef<HTMLInputElement>(null);
  const [title,setTitle]=useState(""); const [amount,setAmount]=useState(""); const [splitMode,setSplitMode]=useState<"equal"|"exact"|"percent">("equal"); const [shares,setShares]=useState<Record<string,string>>({}); const [editingId,setEditingId]=useState<string|null>(null); const [paidBy,setPaidBy]=useState("you"); const [groupId,setGroupId]=useState("apartment"); const [selected,setSelected]=useState<string[]>(["you","alex","sam"]);
  const [friendName,setFriendName]=useState(""); const [groupName,setGroupName]=useState(""); const [editingGroupId,setEditingGroupId]=useState<string|null>(null); const [groupMembers,setGroupMembers]=useState<string[]>([]); const [settleFrom,setSettleFrom]=useState("alex"); const [settleTo,setSettleTo]=useState("you");
  const persist=(key:string,value:unknown)=>localStorage.setItem("swp_"+key,JSON.stringify(value));
@@ -31,12 +31,37 @@ export default function App(){
  const openGroup=(g?:Group)=>{setEditingGroupId(g?.id||null);setGroupName(g?.name||"");setGroupMembers(g?[...g.members]:people.map(p=>p.id));setModal("group");}; const addGroup=()=>{const name=groupName.trim();if(!name||groupMembers.length===0)return;const next=editingGroupId?groups.map(g=>g.id===editingGroupId?{...g,name,members:groupMembers}:g):[...groups,{id:crypto.randomUUID(),name,members:groupMembers}];setGroups(next);persist("groups",next);setGroupName("");setEditingGroupId(null);setGroupMembers([]);setModal(null);}; const deleteGroup=(id:string)=>{if(groups.length<=1){alert("Keep at least one group.");return;}if(!confirm("Delete this group? Existing expenses will remain in history."))return;const next=groups.filter(g=>g.id!==id);setGroups(next);persist("groups",next);};
  const settle=()=>{const n=Number(amount);if(!Number.isFinite(n)||n<=0||settleFrom===settleTo)return;const next=[{id:crypto.randomUUID(),from:settleFrom,to:settleTo,amount:n,createdAt:Date.now()},...payments];setPayments(next);persist("payments",next);setAmount("");setModal(null);};
  const removeExpense=(id:string)=>{const next=expenses.filter(e=>e.id!==id);setExpenses(next);persist("expenses",next);};
+ const exportBackup=()=>{
+  const backup={version:1,app:"Splitwise",exportedAt:new Date().toISOString(),people,groups,expenses,payments};
+  const blob=new Blob([JSON.stringify(backup,null,2)],{type:"application/json"});
+  const url=URL.createObjectURL(blob); const a=document.createElement("a");
+  a.href=url; a.download=`splitwise-backup-${new Date().toISOString().slice(0,10)}.json`;
+  document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+ };
+ const restoreBackup=(file:File)=>{
+  const reader=new FileReader();
+  reader.onload=()=>{
+   try{
+    const data=JSON.parse(String(reader.result));
+    if(!data||data.version!==1||!Array.isArray(data.people)||!Array.isArray(data.groups)||!Array.isArray(data.expenses)||!Array.isArray(data.payments)) throw new Error("Invalid backup");
+    if(!confirm("Restore this backup? Your current groups, friends, expenses, and settlements will be replaced.")) return;
+    setPeople(data.people); setGroups(data.groups); setExpenses(data.expenses); setPayments(data.payments);
+    persist("people",data.people); persist("groups",data.groups); persist("expenses",data.expenses); persist("payments",data.payments);
+    alert("Backup restored successfully.");
+   }catch{ alert("This file is not a valid Splitwise backup."); }
+  };
+  reader.readAsText(file);
+ };
  const openExpense=()=>{setEditingId(null);setTitle("");setAmount("");setPaidBy("you");setGroupId(groups[0]?.id||"");setSelected(groups[0]?.members||people.map(p=>p.id));setSplitMode("equal");setShares({});setModal("expense");}; const editExpense=(e:Expense)=>{setEditingId(e.id);setTitle(e.title);setAmount(String(e.amount));setPaidBy(e.paidBy);setGroupId(e.groupId);setSelected(e.people);setSplitMode(e.splitMode||"equal");setShares(Object.fromEntries(e.people.map(id=>[id,String(e.splitMode==="percent"?(e.shares?.[id]||0)*100/e.amount:(e.shares?.[id]??0))])));setModal("expense");};
  const debtors=people.filter(p=>(balances[p.id]||0)<-.005), creditors=people.filter(p=>(balances[p.id]||0)>.005);
  const nav=[{n:"Home",I:Home},{n:"Groups",I:Users},{n:"Activity",I:ReceiptText},{n:"Friends",I:Users},{n:"Balances",I:Wallet}];
  return <div className="app"><header><div className="logo"><b>S</b> Splitwise</div><span className="avatar">Y</span></header><main>
  <p className="eyebrow">YOUR EXPENSES</p><h1>{tab==="Home"?"Hey, You":tab}</h1><p className="muted">Keep track of shared expenses, simply.</p>
- {tab==="Home"&&<><section className="balance"><small>TOTAL SHARED EXPENSES</small><h2>{money(total)}</h2><p>{expenses.length} expenses · saved on this device</p></section><div className="section"><h3>Balances</h3><button className="link" onClick={()=>setTab("Balances")}>Details</button></div>{people.filter(p=>p.id!=="you").map(p=><div className="tile" key={p.id}><span className="friend">{p.name[0]?.toUpperCase()}</span><div className="grow"><b>{p.name}</b><p>{Math.abs(balances[p.id]||0)<.005?"All settled":(balances[p.id]>0?"owes you ":"you owe ")+money(Math.abs(balances[p.id]||0))}</p></div></div>)}<div className="section"><h3>Recent expenses</h3><button className="link" onClick={()=>setTab("Activity")}>See all</button></div><ExpenseList expenses={expenses.slice(0,4)} person={person} group={group} remove={removeExpense} edit={editExpense}/></>}
+ {tab==="Home"&&<><section className="balance"><small>TOTAL SHARED EXPENSES</small><h2>{money(total)}</h2><p>{expenses.length} expenses · saved on this device</p></section><div className="section"><h3>Balances</h3><button className="link" onClick={()=>setTab("Balances")}>Details</button></div>
+ <div className="section"><h3>Backup & Restore</h3></div>
+ <button className="add" onClick={exportBackup}><Download size={18}/> Export backup</button>
+ <button className="add" onClick={()=>restoreInputRef.current?.click()}><Upload size={18}/> Restore backup</button>
+ <input ref={restoreInputRef} type="file" accept="application/json,.json" hidden onChange={e=>{const file=e.target.files?.[0];if(file)restoreBackup(file);e.currentTarget.value="";}}/>{people.filter(p=>p.id!=="you").map(p=><div className="tile" key={p.id}><span className="friend">{p.name[0]?.toUpperCase()}</span><div className="grow"><b>{p.name}</b><p>{Math.abs(balances[p.id]||0)<.005?"All settled":(balances[p.id]>0?"owes you ":"you owe ")+money(Math.abs(balances[p.id]||0))}</p></div></div>)}<div className="section"><h3>Recent expenses</h3><button className="link" onClick={()=>setTab("Activity")}>See all</button></div><ExpenseList expenses={expenses.slice(0,4)} person={person} group={group} remove={removeExpense} edit={editExpense}/></>}
  {tab==="Activity"&&<><div className="section"><h3>All expenses</h3><span className="muted">{filteredExpenses.length} of {expenses.length}</span></div><input aria-label="Search expenses" value={expenseSearch} onChange={e=>setExpenseSearch(e.target.value)} placeholder="Search description, person..."/><div className="filters"><select aria-label="Filter by group" value={expenseGroupFilter} onChange={e=>setExpenseGroupFilter(e.target.value)}><option value="all">All groups</option>{groups.map(g=><option key={g.id} value={g.id}>{g.name}</option>)}</select><select aria-label="Filter by date" value={expenseDateFilter} onChange={e=>setExpenseDateFilter(e.target.value)}><option value="all">Any date</option><option value="month">This month</option><option value="year">This year</option></select><select aria-label="Sort expenses" value={expenseSort} onChange={e=>setExpenseSort(e.target.value)}><option value="newest">Newest</option><option value="oldest">Oldest</option><option value="amount">Highest amount</option></select></div><ExpenseList expenses={filteredExpenses} person={person} group={group} remove={removeExpense} edit={editExpense}/><div className="section"><h3>Settlements</h3></div>{payments.map(p=><div className="expense" key={p.id}><div className="date"><Check size={18}/></div><div className="grow"><b>Settlement</b><p>{person(p.from)} paid {person(p.to)}</p></div><strong>{money(p.amount)}</strong></div>)}</>}
  {tab==="Groups"&&<>{groups.map(g=><div className="tile" key={g.id}><Users/><div className="grow"><b>{g.name}</b><p>{g.members.map(person).join(", ")}</p><p>{g.members.length} members</p></div><button className="link" onClick={()=>openGroup(g)}>Manage</button><button className="iconbtn" aria-label="Delete group" onClick={()=>deleteGroup(g.id)}><Trash2 size={16}/></button></div>)}<button className="add" onClick={()=>openGroup()}><Plus size={18}/> Create group</button></>}
  {tab==="Friends"&&<>{people.map(p=><div className="tile" key={p.id}><span className="friend">{p.name[0]?.toUpperCase()}</span><div className="grow"><b>{p.name}</b><p>{p.id==="you"?"Your account":(balances[p.id]||0)>.005?"Owes you "+money(balances[p.id]):(balances[p.id]||0)<-.005?"You owe "+money(-balances[p.id]):"Settled up"}</p></div></div>)}<button className="add" onClick={()=>setModal("friend")}><UserPlus size={18}/> Add a friend</button></>}
