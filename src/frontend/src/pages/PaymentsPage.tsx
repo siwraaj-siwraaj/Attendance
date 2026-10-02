@@ -23,6 +23,7 @@ import LoadingSpinner from "../components/LoadingSpinner";
 import ScrollHeaderTitle from "../components/ScrollHeaderTitle";
 import { type AttendanceValue, getAttendanceDisplay } from "../types";
 import { registerPlugin } from "@capacitor/core";
+import { showAppNotification } from "../hooks/nativeNotifications";
 
 const AttendancePdf = registerPlugin<{
   savePdf(options: { html: string; fileName: string; orientation?: "portrait" | "landscape" }): Promise<{ uri: string; fileName: string }>;
@@ -236,6 +237,7 @@ export default function PaymentsPage({
     try {
       const saved = await AttendancePdf.savePdf({ html: fullHtml, fileName, orientation });
       window.alert(`${saved.fileName} saved to Downloads.`);
+      void showAppNotification("PDF downloaded", `${saved.fileName} is ready in your Downloads folder.`);
     } catch (error) {
       console.error("PDF generation failed", error);
       window.alert("Unable to save the PDF. Please try again.");
