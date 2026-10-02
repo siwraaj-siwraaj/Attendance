@@ -414,6 +414,8 @@ export default function PaymentsPage({
                     <p className="text-xs text-[#7b8794]">{selectedContracts.length} contract{selectedContracts.length === 1 ? "" : "s"} · {visibleRows.length} payable labour records</p>
                   </div>
                   <div className="flex flex-wrap gap-2">
+                    <button type="button" onClick={openPaymentReport} className="flex items-center gap-2 rounded-xl bg-[#172536] px-3 py-2.5 text-xs font-extrabold text-white"><Wallet size={15} /> Payment PDF</button>
+                    <button type="button" onClick={openAttendanceReport} className="flex items-center gap-2 rounded-xl border border-[#dfe4ea] bg-white px-3 py-2.5 text-xs font-extrabold text-[#172536]"><Calculator size={15} /> Attendance PDF</button>
                     <button type="button" onClick={() => { setOverviewSelection(new Set()); setOverviewIndex(0); setShowOverview(true); }} className="flex items-center gap-2 rounded-xl border border-[#dfe4ea] bg-[#f7f9fb] px-3 py-2.5 text-xs font-extrabold text-[#425163]" data-ocid="payments.overview_button"><BarChart3 size={15} /> Overview</button>
                   </div>
                 </div>
