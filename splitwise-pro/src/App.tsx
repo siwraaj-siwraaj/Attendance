@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Home, Users, ReceiptText, Plus, X, Wallet, Trash2, Check, UserPlus, Download, Upload, LogIn, LogOut } from "lucide-react";
 import { supabase } from "./lib/supabase";
+import jsPDF from "jspdf";
+import * as XLSX from "xlsx";
 
 type Person = { id: string; name: string; email?: string; userId?: string; updatedAt?: number };
 type Group = { id: string; name: string; members: string[]; updatedAt?: number; sharedGroupId?: string };
@@ -249,6 +251,41 @@ export default function App(){
  const openGroup=(g?:Group)=>{setEditingGroupId(g?.id||null);setGroupName(g?.name||"");setGroupMembers(g?[...g.members]:people.map(p=>p.id));setModal("group");}; const addGroup=()=>{const name=groupName.trim();if(!name||groupMembers.length===0)return;const next=editingGroupId?groups.map(g=>g.id===editingGroupId?{...g,name,members:groupMembers,updatedAt:Date.now()}:g):[...groups,{id:crypto.randomUUID(),name,members:groupMembers,updatedAt:Date.now()}];setGroups(next);persist("groups",next);cloudSync({groups:next});setGroupName("");setEditingGroupId(null);setGroupMembers([]);setModal(null);}; const deleteGroup=(id:string)=>{if(groups.length<=1){alert("Keep at least one group.");return;}if(!confirm("Delete this group? Existing expenses will remain in history."))return;const next=groups.filter(g=>g.id!==id);setGroups(next);persist("groups",next);markDeleted("groups",id);cloudSync({groups:next,deleted:{...deleted,groups:Array.from(new Set([...deleted.groups,id]))}});};
  const settle=()=>{const n=Number(amount);if(!Number.isFinite(n)||n<=0||settleFrom===settleTo)return;const next=[{id:crypto.randomUUID(),from:settleFrom,to:settleTo,amount:n,createdAt:Date.now(),updatedAt:Date.now()},...payments];setPayments(next);persist("payments",next);cloudSync({payments:next});setAmount("");setModal(null);};
  const removeExpense=async(id:string)=>{const old=expenses.find(e=>e.id===id);if(!old)return;const sg=user?groups.find(g=>g.id===old.groupId)?.sharedGroupId:null;if(sg){const {error}=await supabase.from("shared_group_expenses").delete().eq("expense_id",id);if(error){console.error("Shared expense delete failed:",error);alert(error.message||"Could not delete shared expense.");return;}}const next=expenses.filter(e=>e.id!==id);const nextDeleted={...deleted,expenses:Array.from(new Set([...deleted.expenses,id]))};setExpenses(next);persist("expenses",next);setDeleted(nextDeleted);persist("deleted",nextDeleted);cloudSync({expenses:next,deleted:nextDeleted});};
+ const reportRows=useMemo(()=>filteredExpenses.map(e=>({Date:new Date(e.createdAt).toLocaleDateString("en-IN"),Description:e.title,Group:group(e.groupId),PaidBy:person(e.paidBy),Amount:Number(e.amount.toFixed(2)),Split:e.people.map(person).join(", "),Shared:groups.find(g=>g.id===e.groupId)?.sharedGroupId?"Yes":"No"})),[filteredExpenses,groups,people]);
+ const exportExcel=()=>{
+  const wb=XLSX.utils.book_new();
+  const ws=XLSX.utils.json_to_sheet(reportRows);
+  XLSX.utils.book_append_sheet(wb,ws,"Expenses");
+  const balanceRows=people.map(p=>({Person:p.name,Balance:Number((balances[p.id]||0).toFixed(2)),Status:Math.abs(balances[p.id]||0)<.005?"Settled":(balances[p.id]>0?"Owes you":"You owe")}));
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(balanceRows),"Balances");
+  const paymentRows=payments.map(p=>({Date:new Date(p.createdAt).toLocaleDateString("en-IN"),From:person(p.from),To:person(p.to),Amount:Number(p.amount.toFixed(2))}));
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(paymentRows),"Settlements");
+  XLSX.writeFile(wb,`splitwise-report-${new Date().toISOString().slice(0,10)}.xlsx`);
+ };
+ const exportCSV=()=>{
+  const ws=XLSX.utils.json_to_sheet(reportRows);
+  const csv=XLSX.utils.sheet_to_csv(ws);
+  const blob=new Blob([csv],{type:"text/csv;charset=utf-8"});
+  const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=`splitwise-expenses-${new Date().toISOString().slice(0,10)}.csv`;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
+ };
+ const exportPDF=()=>{
+  const doc=new jsPDF({unit:"mm",format:"a4"});
+  const margin=14;let y=18;
+  const pageW=210;
+  doc.setFontSize(18);doc.text("Splitwise Expense Report",margin,y);y+=8;
+  doc.setFontSize(9);doc.text(`Generated ${new Date().toLocaleString("en-IN")} · ${filteredExpenses.length} expenses · Total ${money(filteredExpenses.reduce((s,e)=>s+e.amount,0))}`,margin,y);y+=8;
+  doc.setFontSize(9);
+  const headers=["Date","Description","Group","Paid by","Amount"];
+  const widths=[22,52,38,32,34];
+  const drawHeader=()=>{let x=margin;doc.setFont("helvetica","bold");headers.forEach((h,i)=>{doc.text(h,x,y);x+=widths[i];});doc.setFont("helvetica","normal");y+=6;};
+  drawHeader();
+  reportRows.forEach((r:any)=>{
+   if(y>282){doc.addPage();y=18;drawHeader();}
+   const vals=[r.Date,String(r.Description).slice(0,28),String(r.Group).slice(0,20),String(r.PaidBy).slice(0,18),money(r.Amount)];
+   let x=margin;vals.forEach((v,i)=>{doc.text(v,x,y);x+=widths[i];});y+=6;
+  });
+  doc.save(`splitwise-report-${new Date().toISOString().slice(0,10)}.pdf`);
+ };
  const exportBackup=()=>{
   const backup={version:1,app:"Splitwise",exportedAt:new Date().toISOString(),people,groups,expenses,payments};
   const blob=new Blob([JSON.stringify(backup,null,2)],{type:"application/json"});
@@ -277,6 +314,10 @@ export default function App(){
  <p className="eyebrow">YOUR EXPENSES</p><h1>{tab==="Home"?"Hey, You":tab}</h1><p className="muted">Keep track of shared expenses, simply.</p>{user&&<p className="muted">{syncing?"Syncing to cloud…":"Cloud sync on"}</p>}
  {tab==="Home"&&<><section className="balance"><small>TOTAL SHARED EXPENSES</small><h2>{money(total)}</h2><p>{expenses.length} expenses · saved on this device</p></section><div className="section"><h3>Balances</h3><button className="link" onClick={()=>setTab("Balances")}>Details</button></div>
  <div className="section"><h3>Backup & Restore</h3></div>
+ <div className="section"><h3>Reports & Export</h3></div>
+ <button className="add" onClick={exportPDF}><Download size={18}/> Export PDF report</button>
+ <button className="add" onClick={exportExcel}><Download size={18}/> Export Excel report</button>
+ <button className="add" onClick={exportCSV}><Download size={18}/> Export CSV</button>
  <button className="add" onClick={exportBackup}><Download size={18}/> Export backup</button>
  <button className="add" onClick={()=>restoreInputRef.current?.click()}><Upload size={18}/> Restore backup</button>
  <input ref={restoreInputRef} type="file" accept="application/json,.json" hidden onChange={e=>{const file=e.target.files?.[0];if(file)restoreBackup(file);e.currentTarget.value="";}}/>{people.filter(p=>p.id!=="you").map(p=><div className="tile" key={p.id}><span className="friend">{p.name[0]?.toUpperCase()}</span><div className="grow"><b>{p.name}</b><p>{Math.abs(balances[p.id]||0)<.005?"All settled":(balances[p.id]>0?"owes you ":"you owe ")+money(Math.abs(balances[p.id]||0))}</p></div></div>)}<div className="section"><h3>Recent expenses</h3><button className="link" onClick={()=>setTab("Activity")}>See all</button></div><ExpenseList expenses={expenses.slice(0,4)} person={person} group={group} remove={removeExpense} edit={editExpense} groups={groups}/></>}
