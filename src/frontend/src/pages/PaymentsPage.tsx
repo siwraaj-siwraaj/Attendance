@@ -26,7 +26,7 @@ import html2pdf from "html2pdf.js";
 import { registerPlugin } from "@capacitor/core";
 
 const AttendancePdf = registerPlugin<{
-  savePdf(options: { html: string; fileName: string }): Promise<{ uri: string; fileName: string }>;
+  savePdf(options: { html: string; fileName: string; orientation?: "portrait" | "landscape" }): Promise<{ uri: string; fileName: string }>;
   openPdf(options: { uri: string }): Promise<void>;
 }>("AttendancePdf");
 
