@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Home, Users, ReceiptText, Plus, X, Wallet, Trash2, Check, UserPlus, Download, Upload, LogIn, LogOut } from "lucide-react";
 import { supabase } from "./lib/supabase";
 
-type Person = { id: string; name: string; email?: string; updatedAt?: number };
+type Person = { id: string; name: string; email?: string; userId?: string; updatedAt?: number };
 type Group = { id: string; name: string; members: string[]; updatedAt?: number; sharedGroupId?: string };
 type Expense = { id: string; title: string; amount: number; paidBy: string; people: string[]; groupId: string; createdAt: number; updatedAt?: number; splitMode?: "equal"|"exact"|"percent"; shares?: Record<string,number> };
 type Payment = { id: string; from: string; to: string; amount: number; createdAt: number; updatedAt?: number };
@@ -73,19 +73,24 @@ export default function App(){
  useEffect(()=>{if(user&&cloudReady)cloudSync();},[people,groups,expenses,payments,user,cloudReady,deleted]);
  useEffect(()=>{if(!user||!cloudReady){setInvitations([]);return;} let active=true; supabase.from("group_invitations").select("id,group_id,inviter_id,invitee_email,status,created_at").eq("status","pending").order("created_at",{ascending:false}).then(({data,error})=>{if(!active)return;if(error)console.error("Invitation load failed:",error);setInvitations(data||[]);});return()=>{active=false;};},[user,cloudReady]);
  const openInvite=async(g:Group)=>{if(!user){setAuthMessage("Log in to invite people to a shared group.");setAuthMode("login");setModal("auth");return;}setInviteGroupId(g.id);setInviteEmail("");setModal("invite");};
+ const sharedPersonId=(uid:string)=>people.find(p=>p.userId===uid)?.id||`shared-${uid}`;
  const applySharedExpenseRow=(x:any)=>{
   const localGroup=groups.find(g=>g.sharedGroupId===x.group_id);
+  const memberRows=sharedMembers[x.group_id]||[];
+  const ensureMemberIds=Array.isArray(x.people_user_ids)?x.people_user_ids:[];
+  const localPeople=ensureMemberIds.map((uid:string)=>{
+   const existing=people.find(p=>p.userId===uid);
+   const m=memberRows.find((r:any)=>r.user_id===uid);
+   return existing?.id||sharedPersonId(uid);
+  });
+  const payerUid=String(x.paid_by_user_id||"");
   return {
-   id:x.expense_id,
-   title:x.title,
-   amount:Number(x.amount),
-   paidBy:x.paid_by,
-   people:Array.isArray(x.people)?x.people:[],
-   groupId:localGroup?.id||x.group_id,
-   createdAt:new Date(x.created_at).getTime(),
-   updatedAt:new Date(x.updated_at||x.created_at).getTime(),
-   splitMode:x.split_mode||"equal",
-   shares:x.shares||{}
+   id:x.expense_id,title:x.title,amount:Number(x.amount),
+   paidBy:payerUid?(people.find(p=>p.userId===payerUid)?.id||sharedPersonId(payerUid)):x.paid_by,
+   people:localPeople.length?localPeople:(Array.isArray(x.people)?x.people:[]),
+   groupId:localGroup?.id||x.group_id,createdAt:new Date(x.created_at).getTime(),
+   updatedAt:new Date(x.updated_at||x.created_at).getTime(),splitMode:x.split_mode||"equal",
+   shares:x.shares_user_ids&&typeof x.shares_user_ids==="object" ? Object.fromEntries(Object.entries(x.shares_user_ids).map(([uid,v])=>[sharedPersonId(uid),Number(v)])) : (x.shares||{})
   } as Expense;
  };
  const upsertSharedExpenseLocal=(row:any)=>{
@@ -105,7 +110,7 @@ export default function App(){
  const loadSharedExpenses=async(sharedId:string)=>{
   if(!user)return;
   const {data,error}=await supabase.from("shared_group_expenses")
-   .select("expense_id,title,amount,paid_by,people,group_id,created_at,updated_at,split_mode,shares")
+   .select("expense_id,title,amount,paid_by,people,group_id,created_at,updated_at,split_mode,shares,paid_by_user_id,people_user_ids,shares_user_ids")
    .eq("group_id",sharedId);
   if(error){console.error("Shared expenses load failed:",error);return;}
   const mapped=(data||[]).map(applySharedExpenseRow);
@@ -118,13 +123,26 @@ export default function App(){
  const publishSharedExpense=async(e:Expense)=>{
   const g=groups.find(x=>x.id===e.groupId);
   if(!user||!g?.sharedGroupId)return;
+  const {data:members,error:memberError}=await supabase.from("shared_group_members").select("user_id").eq("group_id",g.sharedGroupId);
+  if(memberError){alert(memberError.message||"Could not load shared members.");return false;}
+  const memberIds=new Set((members||[]).map((m:any)=>String(m.user_id)));
+  const localToUser=new Map(people.filter(p=>p.userId).map(p=>[p.id,p.userId!] as const));
+  localToUser.set("you",user.id);
+  const payerUid=localToUser.get(e.paidBy);
+  const participantUids=e.people.map(id=>localToUser.get(id)).filter(Boolean) as string[];
+  if(!payerUid||!memberIds.has(payerUid)||participantUids.length!==e.people.length||participantUids.some(uid=>!memberIds.has(uid))){
+   alert("Every person in a shared expense must be a member of the shared group.");
+   return false;
+  }
+  const sharesUserIds=e.shares?Object.fromEntries(Object.entries(e.shares).map(([id,v])=>[localToUser.get(id)||id,v])):{};
   const {error}=await supabase.from("shared_group_expenses").upsert({
    expense_id:e.id,group_id:g.sharedGroupId,title:e.title,amount:e.amount,paid_by:e.paidBy,
-   people:e.people,created_at:new Date(e.createdAt).toISOString(),
-   updated_at:new Date(e.updatedAt||Date.now()).toISOString(),
+   people:e.people,paid_by_user_id:payerUid,people_user_ids:participantUids,shares_user_ids:sharesUserIds,
+   created_at:new Date(e.createdAt).toISOString(),updated_at:new Date(e.updatedAt||Date.now()).toISOString(),
    split_mode:e.splitMode||"equal",shares:e.shares||{}
   },{onConflict:"expense_id"});
-  if(error)console.error("Shared expense publish failed:",error);
+  if(error){console.error("Shared expense publish failed:",error);alert(error.message||"Could not share expense.");return false;}
+  return true;
  };
  useEffect(()=>{
   if(!user||!cloudReady)return;
@@ -160,14 +178,14 @@ export default function App(){
  const respondInvite=async(inv:any,accept:boolean)=>{if(!user)return;const status=accept?"accepted":"declined";const {error}=await supabase.from("group_invitations").update({status,responded_at:new Date().toISOString()}).eq("id",inv.id);if(error){alert(error.message||"Could not update invitation.");return;}if(accept){const {error:memberError}=await supabase.from("shared_group_members").upsert({group_id:inv.group_id,user_id:user.id,role:"member",display_name:accountName,email:String(user.email||"").toLowerCase()},{onConflict:"group_id,user_id"});if(memberError){alert(memberError.message||"Could not join group.");return;}const {data:sg}=await supabase.from("shared_groups").select("id,name").eq("id",inv.group_id).single();if(sg&&!groups.some(g=>g.sharedGroupId===sg.id)){const ng:Group={id:crypto.randomUUID(),name:sg.name,members:["you"],sharedGroupId:sg.id,updatedAt:Date.now()};const next=[...groups,ng];setGroups(next);persist("groups",next);await cloudSync({groups:next});}}setInvitations(prev=>prev.filter(x=>x.id!==inv.id));};
 
  const loadProfile=async(id:string,email:string,fallbackName:string)=>{const {data}=await supabase.from("profiles").select("name,email").eq("id",id).maybeSingle();setAccountName(data?.name||fallbackName||"You");};
- const submitAuth=async()=>{const email=authEmail.trim().toLowerCase();if(!email){setAuthMessage("Enter your email.");return;}if(authMode!=="reset"&&authPassword.length<6){setAuthMessage("Password must be at least 6 characters.");return;}setAuthBusy(true);setAuthMessage("");try{if(authMode==="signup"){const name=authName.trim();if(!name){setAuthMessage("Enter your name.");return;}const {data,error}=await supabase.auth.signUp({email,password:authPassword,options:{data:{name}}});if(error)throw error;if(data.session&&data.user){await supabase.from("profiles").upsert({id:data.user.id,name,email},{onConflict:"id"});setAccountName(name);setUser(data.user);setModal(null);}else{setAuthMessage("Account created. Check your email to confirm your account, then log in.");setAuthMode("login");}}else if(authMode==="login"){const {data,error}=await supabase.auth.signInWithPassword({email,password:authPassword});if(error)throw error;if(data.user){await supabase.from("profiles").upsert({id:data.user.id,name:data.user.user_metadata?.name||"You",email},{onConflict:"id"});await loadProfile(data.user.id,email,data.user.user_metadata?.name||"You");setModal(null);}}else{const {error}=await supabase.auth.resetPasswordForEmail(email,{redirectTo:window.location.origin});if(error)throw error;setAuthMessage("If an account exists for that email, a password reset link has been sent.");}}catch(e:any){setAuthMessage(e?.message||"Authentication failed.");}finally{setAuthBusy(false);}};
+ const submitAuth=async()=>{const email=authEmail.trim().toLowerCase();if(!email){setAuthMessage("Enter your email.");return;}if(authMode!=="reset"&&authPassword.length<6){setAuthMessage("Password must be at least 6 characters.");return;}setAuthBusy(true);setAuthMessage("");try{if(authMode==="signup"){const name=authName.trim();if(!name){setAuthMessage("Enter your name.");return;}const {data,error}=await supabase.auth.signUp({email,password:authPassword,options:{data:{name}}});if(error)throw error;if(data.session&&data.user){await supabase.from("profiles").upsert({id:data.user.id,name,email},{onConflict:"id"});setAccountName(name);setUser(data.user);setPeople(prev=>prev.map(p=>p.id==="you"?{...p,userId:data.user.id,updatedAt:Date.now()}:p));setModal(null);}else{setAuthMessage("Account created. Check your email to confirm your account, then log in.");setAuthMode("login");}}else if(authMode==="login"){const {data,error}=await supabase.auth.signInWithPassword({email,password:authPassword});if(error)throw error;if(data.user){await supabase.from("profiles").upsert({id:data.user.id,name:data.user.user_metadata?.name||"You",email},{onConflict:"id"});await loadProfile(data.user.id,email,data.user.user_metadata?.name||"You");setModal(null);}}else{const {error}=await supabase.auth.resetPasswordForEmail(email,{redirectTo:window.location.origin});if(error)throw error;setAuthMessage("If an account exists for that email, a password reset link has been sent.");}}catch(e:any){setAuthMessage(e?.message||"Authentication failed.");}finally{setAuthBusy(false);}};
  const signOut=async()=>{await supabase.auth.signOut();setUser(null);setAccountName("You");};
  const person=(id:string)=>people.find(p=>p.id===id)?.name||"Unknown";
  const group=(id:string)=>groups.find(g=>g.id===id)?.name||"No group";
  const total=expenses.reduce((s,e)=>s+e.amount,0);
  const filteredExpenses=useMemo(()=>{const q=expenseSearch.trim().toLowerCase();const now=new Date();return expenses.filter(e=>{const d=new Date(e.createdAt);const matchesText=!q||[e.title,person(e.paidBy),group(e.groupId),...e.people.map(person)].some(v=>v.toLowerCase().includes(q));const matchesGroup=expenseGroupFilter==="all"||e.groupId===expenseGroupFilter;const matchesDate=expenseDateFilter==="all"||(expenseDateFilter==="month"&&d.getFullYear()===now.getFullYear()&&d.getMonth()===now.getMonth())||(expenseDateFilter==="year"&&d.getFullYear()===now.getFullYear());return matchesText&&matchesGroup&&matchesDate;}).sort((a,b)=>expenseSort==="oldest"?a.createdAt-b.createdAt:expenseSort==="amount"?b.amount-a.amount:b.createdAt-a.createdAt);},[expenses,expenseSearch,expenseGroupFilter,expenseDateFilter,expenseSort,people,groups]);
  const balances=useMemo(()=>{const b:Record<string,number>={};people.forEach(p=>b[p.id]=0);expenses.forEach(e=>{if(!e.people.length)return;b[e.paidBy]=(b[e.paidBy]||0)+e.amount;const split=e.splitMode||"equal";e.people.forEach(id=>{const share=split==="equal"?e.amount/e.people.length:Number(e.shares?.[id]??0);b[id]=(b[id]||0)-share;});});payments.forEach(p=>{b[p.from]=(b[p.from]||0)+p.amount;b[p.to]=(b[p.to]||0)-p.amount});return b;},[people,expenses,payments]);
- const saveExpense=()=>{const n=Number(amount);if(!title.trim()||!Number.isFinite(n)||n<=0||selected.length===0)return;let splitShares:Record<string,number>={};if(splitMode!=="equal"){const vals=selected.map(id=>Number(shares[id]||0));if(vals.some(v=>!Number.isFinite(v)||v<0))return;const sum=vals.reduce((a,b)=>a+b,0);if(splitMode==="exact"&&Math.abs(sum-n)>.01)return;if(splitMode==="percent"&&Math.abs(sum-100)>.01)return;selected.forEach((id,i)=>splitShares[id]=splitMode==="percent"?n*vals[i]/100:vals[i]);}const old=expenses.find(e=>e.id===editingId);const now=Date.now(); const e:Expense={id:editingId||crypto.randomUUID(),title:title.trim(),amount:n,paidBy,people:selected,groupId,createdAt:old?.createdAt||now,updatedAt:now,splitMode,shares:splitShares};const next=editingId?expenses.map(x=>x.id===editingId?e:x):[e,...expenses];setExpenses(next);persist("expenses",next);cloudSync({expenses:next});if(user){const sg=groups.find(g=>g.id===e.groupId)?.sharedGroupId;if(sg)publishSharedExpense(e);}setTitle("");setAmount("");setEditingId(null);setSplitMode("equal");setShares({});setModal(null);};
+ const saveExpense=()=>{const n=Number(amount);if(!title.trim()||!Number.isFinite(n)||n<=0||selected.length===0)return;let splitShares:Record<string,number>={};if(splitMode!=="equal"){const vals=selected.map(id=>Number(shares[id]||0));if(vals.some(v=>!Number.isFinite(v)||v<0))return;const sum=vals.reduce((a,b)=>a+b,0);if(splitMode==="exact"&&Math.abs(sum-n)>.01)return;if(splitMode==="percent"&&Math.abs(sum-100)>.01)return;selected.forEach((id,i)=>splitShares[id]=splitMode==="percent"?n*vals[i]/100:vals[i]);}const old=expenses.find(e=>e.id===editingId);const now=Date.now(); const e:Expense={id:editingId||crypto.randomUUID(),title:title.trim(),amount:n,paidBy,people:selected,groupId,createdAt:old?.createdAt||now,updatedAt:now,splitMode,shares:splitShares};const next=editingId?expenses.map(x=>x.id===editingId?e:x):[e,...expenses];setExpenses(next);persist("expenses",next);cloudSync({expenses:next});if(user){const sg=groups.find(g=>g.id===e.groupId)?.sharedGroupId;if(sg)void publishSharedExpense(e);}setTitle("");setAmount("");setEditingId(null);setSplitMode("equal");setShares({});setModal(null);};
  const addFriend=()=>{const name=friendName.trim();const email=friendEmail.trim().toLowerCase();if(!name)return;if(email&&!/^\S+@\S+\.\S+$/.test(email)){alert("Enter a valid email.");return;}if(email&&people.some(p=>p.email?.toLowerCase()===email)){alert("A friend with this email already exists.");return;}const p:Person={id:crypto.randomUUID(),name,updatedAt:Date.now(),...(email?{email}:{})};const next=[...people,p];setPeople(next);persist("people",next);cloudSync({people:next});setFriendName("");setFriendEmail("");setModal(null);};
  const openGroup=(g?:Group)=>{setEditingGroupId(g?.id||null);setGroupName(g?.name||"");setGroupMembers(g?[...g.members]:people.map(p=>p.id));setModal("group");}; const addGroup=()=>{const name=groupName.trim();if(!name||groupMembers.length===0)return;const next=editingGroupId?groups.map(g=>g.id===editingGroupId?{...g,name,members:groupMembers,updatedAt:Date.now()}:g):[...groups,{id:crypto.randomUUID(),name,members:groupMembers,updatedAt:Date.now()}];setGroups(next);persist("groups",next);cloudSync({groups:next});setGroupName("");setEditingGroupId(null);setGroupMembers([]);setModal(null);}; const deleteGroup=(id:string)=>{if(groups.length<=1){alert("Keep at least one group.");return;}if(!confirm("Delete this group? Existing expenses will remain in history."))return;const next=groups.filter(g=>g.id!==id);setGroups(next);persist("groups",next);markDeleted("groups",id);cloudSync({groups:next,deleted:{...deleted,groups:Array.from(new Set([...deleted.groups,id]))}});};
  const settle=()=>{const n=Number(amount);if(!Number.isFinite(n)||n<=0||settleFrom===settleTo)return;const next=[{id:crypto.randomUUID(),from:settleFrom,to:settleTo,amount:n,createdAt:Date.now(),updatedAt:Date.now()},...payments];setPayments(next);persist("payments",next);cloudSync({payments:next});setAmount("");setModal(null);};
