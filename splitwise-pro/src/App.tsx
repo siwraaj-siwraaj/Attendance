@@ -323,43 +323,82 @@ export default function App(){
   await saveReportFile(`splitwise-report-${new Date().toISOString().slice(0,10)}.pdf`,base64,"application/pdf");
  };
  const exportTripPDF=async(g:Group)=>{
-  const r=groupReportData(g);const doc=new jsPDF({unit:"mm",format:"a4"});const margin=14;let y=18;
-  const line=(text:string,size=10,bold=false)=>{if(y>282){doc.addPage();y=18;}doc.setFontSize(size);doc.setFont("helvetica",bold?"bold":"normal");doc.text(text,margin,y);y+=6;};
-  line(g.name,20,true);line(`Trip report · ${r.rows.length} expenses · Total ${money(r.total)}`,10,false);line(`Generated ${new Date().toLocaleString("en-IN")}`,9,false);y+=3;
-  line("PEOPLE AND BALANCES",13,true);
-  r.memberIds.forEach(id=>line(`${person(id)} · Paid ${money(r.paid[id]||0)} · Share ${money(r.owed[id]||0)} · Net ${money(r.net[id]||0)}`,9));
-  y+=3;line("EXPENSE DETAILS",13,true);
-  r.rows.forEach((e,index)=>{
-   if(y>270){doc.addPage();y=18;}
-   line(`${index+1}. ${new Date(e.createdAt).toLocaleDateString("en-IN")} · ${e.title} · ${money(e.amount)}`,10,true);
-   line(`Paid by: ${person(e.paidBy)} · Split: ${e.splitMode==="percent"?"Percentage":e.splitMode==="exact"?"Exact":"Equal"}`,9);
-   e.people.forEach(id=>{const share=(e.splitMode||"equal")==="equal"?e.amount/e.people.length:Number(e.shares?.[id]??0);line(`  ${person(id)}: ${money(share)}`,9);});
+  const r=groupReportData(g);
+  const doc=new jsPDF({unit:"mm",format:"a4"});
+  const margin=14;const pageWidth=210;const contentWidth=pageWidth-margin*2;let y=18;
+  const ensureSpace=(height:number)=>{if(y+height>282){doc.addPage();y=18;}};
+  const heading=(text:string,size=14)=>{ensureSpace(size+7);doc.setFont("helvetica","bold");doc.setFontSize(size);doc.text(text,margin,y);y+=size/2+5;};
+  const body=(text:string,size=9,indent=0)=>{doc.setFont("helvetica","normal");doc.setFontSize(size);const lines=doc.splitTextToSize(text,contentWidth-indent);const h=lines.length*(size*0.45+1.8);ensureSpace(h+2);doc.text(lines,margin+indent,y);y+=h+2;};
+  const rule=()=>{ensureSpace(5);doc.setDrawColor(210);doc.line(margin,y,margin+contentWidth,y);y+=5;};
+  const moneyCol=(label:string,value:number)=>{ensureSpace(8);doc.setFont("helvetica","normal");doc.setFontSize(9);doc.text(label,margin,y);doc.setFont("helvetica","bold");doc.text(money(value),margin+contentWidth,y,{align:"right"});y+=6;};
+  doc.setFont("helvetica","bold");doc.setFontSize(21);doc.text(g.name,margin,y);y+=8;
+  doc.setFont("helvetica","normal");doc.setFontSize(10);doc.text("Trip Details",margin,y);y+=6;
+  body(`${r.rows.length} expenses  ·  ${r.memberIds.length} people  ·  Total ${money(r.total)}`,10);
+  body(`Generated ${new Date().toLocaleString("en-IN")}`,8);y+=3;rule();
+
+  heading("Trip Summary",14);
+  moneyCol("Total trip expense",r.total);
+  moneyCol("Number of expenses",r.rows.length);
+  moneyCol("People",r.memberIds.length);
+  y+=2;rule();
+
+  heading("People & Balances",14);
+  r.memberIds.forEach(id=>{
+   ensureSpace(13);
+   doc.setFont("helvetica","bold");doc.setFontSize(10);doc.text(person(id),margin,y);doc.setFont("helvetica","normal");y+=5;
+   moneyCol("Paid",r.paid[id]||0);moneyCol("Share",r.owed[id]||0);
+   const net=r.net[id]||0;
+   moneyCol(net>=0?"Balance to receive":"Balance to pay",Math.abs(net));
    y+=2;
   });
-  y+=2;line("HOW TO READ THIS",12,true);
-  line("Paid = amount this person actually paid. Share = amount this person should bear.",9);
-  line("Net positive = this person paid more than their share. Net negative = this person owes more than they paid.",9);
-  line("Settlements are recorded separately in Splitwise because payments are not linked to a specific trip.",9);
+  rule();
+
+  heading("Expenses",14);
+  r.rows.forEach((e,index)=>{
+   const date=new Date(e.createdAt).toLocaleDateString("en-IN");
+   const split=e.splitMode==="percent"?"Percentage":e.splitMode==="exact"?"Exact":"Equal";
+   ensureSpace(25);
+   doc.setFont("helvetica","bold");doc.setFontSize(10);doc.text(`${index+1}. ${date}`,margin,y);doc.text(money(e.amount),margin+contentWidth,y,{align:"right"});y+=5;
+   body(e.title,10);
+   body(`Paid by ${person(e.paidBy)}  ·  Split ${split}`,8);
+   body(`Shared by: ${e.people.map(person).join(", ")}`,8);
+   if(e.splitMode!=="equal"){e.people.forEach(id=>{const share=Number(e.shares?.[id]??0);body(`${person(id)}: ${money(share)}`,8,4);});}
+   else{body(`Each share: ${money(e.people.length?e.amount/e.people.length:0)}`,8,4);}
+   y+=2;rule();
+  });
+
+  heading("How to read the report",12);
+  body("Paid = what the person actually paid. Share = that person's portion of the expense. Balance to receive means they paid more than their share; Balance to pay means they paid less than their share.",9);
   const base64=doc.output("datauristring").split(",")[1];
-  await saveReportFile(`splitwise-${g.name.replace(/[^a-z0-9]+/gi,"-").toLowerCase()}-trip-report.pdf`,base64,"application/pdf");
+  await saveReportFile(`splitwise-${g.name.replace(/[^a-z0-9]+/gi,"-").toLowerCase()}-trip-details.pdf`,base64,"application/pdf");
  };
  const saveTripImage=async(g:Group)=>{
-  const r=groupReportData(g);const scale=2;const width=1440;const pad=60;const lineH=44;
-  const lines:string[]=[];
-  lines.push(g.name.toUpperCase());lines.push(`TRIP REPORT  ·  ${r.rows.length} expenses  ·  TOTAL ${money(r.total)}`);lines.push("");
-  lines.push("PEOPLE & BALANCES");
-  r.memberIds.forEach(id=>lines.push(`${person(id)}  |  Paid: ${money(r.paid[id]||0)}  |  Share: ${money(r.owed[id]||0)}  |  Net: ${money(r.net[id]||0)}`));
-  lines.push("");lines.push("EXPENSE DETAILS");
+  const r=groupReportData(g);const scale=2;const width=1200;const pad=70;const contentWidth=width-pad*2;const lineH=34;
+  const canvas=document.createElement("canvas");const ctx=canvas.getContext("2d");if(!ctx)return;
+  const wrap=(text:string,font:string,maxWidth:number)=>{ctx.font=font;const words=text.split(/\\s+/);const out:string[]=[];let line="";words.forEach(word=>{const test=line?line+" "+word:word;if(ctx.measureText(test).width>maxWidth&&line){out.push(line);line=word;}else line=test;});if(line)out.push(line);return out;};
+  const items:{text:string;font:string;gap:number}[]=[];
+  const add=(text:string,font="24px Arial",gap=lineH)=>items.push({text,font,gap});
+  add(g.name,"700 42px Arial",56);add("Trip Details","24px Arial",42);
+  add(`${r.rows.length} expenses  ·  ${r.memberIds.length} people  ·  Total ${money(r.total)}`,"26px Arial",42);
+  add(`Generated ${new Date().toLocaleString("en-IN")}`,"20px Arial",42);
+  add("TRIP SUMMARY","700 30px Arial",42);add(`Total trip expense: ${money(r.total)}`,"24px Arial");add(`Expenses: ${r.rows.length}    People: ${r.memberIds.length}`,"24px Arial",42);
+  add("PEOPLE & BALANCES","700 30px Arial",42);
+  r.memberIds.forEach(id=>{add(person(id),"700 25px Arial",34);add(`Paid: ${money(r.paid[id]||0)}    Share: ${money(r.owed[id]||0)}    ${(r.net[id]||0)>=0?"Receives":"Pays"}: ${money(Math.abs(r.net[id]||0))}`,"22px Arial",42);});
+  add("EXPENSES","700 30px Arial",42);
   r.rows.forEach((e,index)=>{
-   lines.push(`${index+1}. ${new Date(e.createdAt).toLocaleDateString("en-IN")}  ·  ${e.title}  ·  ${money(e.amount)}`);
-   lines.push(`Paid by ${person(e.paidBy)}  ·  Split: ${e.splitMode==="percent"?"Percentage":e.splitMode==="exact"?"Exact":"Equal"}`);
-   e.people.forEach(id=>{const share=(e.splitMode||"equal")==="equal"?e.amount/e.people.length:Number(e.shares?.[id]??0);lines.push(`   • ${person(id)}: ${money(share)}`);});
-   lines.push("");
+   add(`${index+1}. ${new Date(e.createdAt).toLocaleDateString("en-IN")}  ·  ${money(e.amount)}`,"700 24px Arial",34);
+   add(e.title,"24px Arial",34);
+   add(`Paid by ${person(e.paidBy)}  ·  ${e.splitMode==="percent"?"Percentage":e.splitMode==="exact"?"Exact":"Equal"} split`,"20px Arial",30);
+   add(`Shared by: ${e.people.map(person).join(", ")}`,"20px Arial",30);
+   if(e.splitMode==="equal")add(`Each share: ${money(e.people.length?e.amount/e.people.length:0)}`,"20px Arial",42);
+   else e.people.forEach(id=>add(`${person(id)}: ${money(Number(e.shares?.[id]??0))}`,"20px Arial",30));
   });
-  lines.push("SUMMARY");lines.push("Paid = actual payment. Share = fair portion. Net = Paid minus Share.");lines.push("Positive net means the person should receive money; negative net means the person owes money.");
-  const height=Math.max(900,(lines.length+2)*lineH);const canvas=document.createElement("canvas");canvas.width=width*scale;canvas.height=height*scale;
-  const ctx=canvas.getContext("2d");if(!ctx)return;ctx.scale(scale,scale);ctx.fillStyle="#ffffff";ctx.fillRect(0,0,width,height);ctx.fillStyle="#15231f";
-  let y=80;lines.forEach((lineText,i)=>{ctx.font=i===0?"700 42px Arial":i===3?"700 30px Arial":"22px Arial";ctx.fillText(lineText,pad,y);y+=lineH;});
+  add("HOW TO READ","700 30px Arial",42);add("Paid = actual payment. Share = fair portion. Receives = paid more than share. Pays = paid less than share.","20px Arial",44);
+  const wrapped:{text:string;font:string;gap:number}[]=[];
+  items.forEach(item=>wrap(item.text,item.font,contentWidth).forEach((lineText,index)=>wrapped.push({text:lineText,font:item.font,gap:index===0?item.gap:lineH})));
+  const height=Math.max(900,wrapped.reduce((sum,item)=>sum+item.gap,0)+80);
+  canvas.width=width*scale;canvas.height=height*scale;ctx.scale(scale,scale);ctx.fillStyle="#ffffff";ctx.fillRect(0,0,width,height);ctx.fillStyle="#18221f";
+  let y=70;wrapped.forEach(item=>{ctx.font=item.font;ctx.fillText(item.text,pad,y);y+=item.gap;});
   const dataUrl=canvas.toDataURL("image/png",1);const base64=dataUrl.split(",")[1];
   await saveReportFile(`splitwise-${g.name.replace(/[^a-z0-9]+/gi,"-").toLowerCase()}-trip-details.png`,base64,"image/png");
  };
