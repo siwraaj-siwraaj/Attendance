@@ -273,18 +273,14 @@ export default function App(){
  const reportRows=useMemo(()=>filteredExpenses.map(e=>({Date:new Date(e.createdAt).toLocaleDateString("en-IN"),Description:e.title,Group:group(e.groupId),PaidBy:person(e.paidBy),Amount:Number(e.amount.toFixed(2)),Split:e.people.map(person).join(", "),Shared:groups.find(g=>g.id===e.groupId)?.sharedGroupId?"Yes":"No"})),[filteredExpenses,groups,people]);
  const saveReportFile=async(name:string,base64:string,mime:string)=>{
   try{
-   const permission=await Filesystem.checkPermissions();
-   if(permission.publicStorage!=="granted"){
-    const requested=await Filesystem.requestPermissions();
-    if(requested.publicStorage!=="granted") throw new Error("Storage permission was denied.");
-   }
    const result=await Filesystem.writeFile({path:name,data:base64,directory:Directory.Documents,recursive:true});
    alert(`Report saved successfully: ${name}`);
    await notifyReportSaved(name);
    return result;
   }catch(error){
    console.error("Report save failed",error);
-   alert("Could not save the report. Please allow storage access for Splitwise in Android Settings, then try again.");
+   const message=error instanceof Error ? error.message : String(error);
+   alert(`Could not save the report. ${message}`);
    return null;
   }
  };
