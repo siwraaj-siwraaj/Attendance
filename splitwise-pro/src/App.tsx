@@ -274,7 +274,8 @@ export default function App(){
  const saveReportFile=async(name:string,base64:string,mime:string)=>{
   try{
    const result=await Filesystem.writeFile({path:name,data:base64,directory:Directory.Documents,recursive:true});
-   alert(`Report saved successfully: ${name}`);\n   await notifyReportSaved(name);
+   alert(`Report saved successfully: ${name}`);
+   await notifyReportSaved(name);
    return result;
   }catch(error){
    console.error("Report save failed",error);
