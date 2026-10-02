@@ -111,6 +111,11 @@ td{border:1px solid #d9dee4;padding:6px}
 `;
 
 async function saveReport(title: string, html: string) {
+  const isAttendanceReport = title === "Attendance Sheet";
+  const reportCss = isAttendanceReport
+    ? REPORT_CSS.replace("@page{size:A4 portrait;margin:8mm}", "@page{size:A4 landscape;margin:6mm}") +
+      ".attendance-report{width:100%;max-width:none}.attendance-report table{width:100%;table-layout:fixed;font-size:7px}.attendance-report th,.attendance-report td{padding:3px 4px;overflow-wrap:anywhere;word-break:break-word}.attendance-report .header{padding:12px 16px}.attendance-report .body{padding:10px 16px}.attendance-report .title{font-size:20px}"
+    : REPORT_CSS;
   const filename = `${title.replace(/[^a-z0-9_-]+/gi, "_")}.pdf`;
   const isNative =
     typeof window !== "undefined" &&
@@ -118,14 +123,14 @@ async function saveReport(title: string, html: string) {
     (window as any).Capacitor?.isNativePlatform?.();
 
   if (isNative) {
-    const fullHtml = `<!doctype html><html><head><meta charset="UTF-8"><style>${REPORT_CSS}</style></head><body>${html}</body></html>`;
+    const fullHtml = `<!doctype html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><style>${reportCss}</style></head><body>${html}</body></html>`;
     const saved = await AttendancePdf.savePdf({ html: fullHtml, fileName: filename });
     await AttendancePdf.openPdf({ uri: saved.uri });
     return;
   }
 
   const host = document.createElement("div");
-  host.innerHTML = `<style>${REPORT_CSS}</style>${html}`;
+  host.innerHTML = `<style>${reportCss}</style>${html}`;
   document.body.appendChild(host);
   try {
     await html2pdf()
@@ -333,7 +338,7 @@ export default function PaymentsPage({
         .map((column: any) => column.name),
     );
 
-    const html = `<div class="report">
+    const html = `<div class="report attendance-report">
       <div class="header"><div class="brand">Rossie Attendance</div><div class="title">Attendance Report</div><div class="subtitle">Attendance used for the selected payment calculation</div></div>
       <div class="body"><h2>Attendance details</h2>
       <table><thead><tr><th>Contract</th><th>Labour</th>${columns.map((name: string) => `<th class="num">${name}</th>`).join("")}</tr></thead><tbody>${rows.join("")}</tbody></table></div>
