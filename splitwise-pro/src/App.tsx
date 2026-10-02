@@ -104,10 +104,26 @@ export default function App(){
  const syncLocalSharedGroup=async(sharedId:string,rows:any[])=>{
   const g=groups.find(x=>x.sharedGroupId===sharedId);
   if(!g)return;
-  const linked=rows.map(r=>{
-   const existing=people.find(p=>p.userId===r.user_id);
-   return existing?.id||`shared-${r.user_id}`;
+  const memberIds=rows.map((r:any)=>String(r.user_id));
+  setPeople(prev=>{
+   const next=[...prev];
+   rows.forEach((r:any)=>{
+    const uid=String(r.user_id);
+    const existing=next.find(p=>p.userId===uid);
+    const name=String(r.display_name||r.email||"Shared member").trim()||"Shared member";
+    const email=String(r.email||"").trim().toLowerCase();
+    if(existing){
+     const updated={...existing,name:existing.id==="you"&&accountName?accountName:name,userId:uid,...(email?{email}:{}) ,updatedAt:Date.now()};
+     const index=next.findIndex(p=>p.id===existing.id);
+     next[index]=updated;
+    }else{
+     next.push({id:`shared-${uid}`,name,email:user?.id===uid?(String(user.email||"").toLowerCase()||email):email,userId:uid,updatedAt:Date.now()});
+    }
+   });
+   persist("people",next);
+   return next;
   });
+  const linked=rows.map((r:any)=>people.find(p=>p.userId===String(r.user_id))?.id||`shared-${r.user_id}`);
   const nextGroups=groups.map(x=>x.id===g.id?{...x,members:Array.from(new Set(linked)),updatedAt:Date.now()}:x);
   setGroups(nextGroups);persist("groups",nextGroups);
  };
