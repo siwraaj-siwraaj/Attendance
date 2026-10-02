@@ -114,7 +114,7 @@ async function saveReport(title: string, html: string) {
   const isAttendanceReport = title === "Attendance Sheet";
   const reportCss = isAttendanceReport
     ? REPORT_CSS.replace("@page{size:A4 portrait;margin:8mm}", "@page{size:A4 landscape;margin:6mm}") +
-      ".attendance-report{width:100%;max-width:none}.attendance-report table{width:100%;table-layout:fixed;font-size:7px}.attendance-report th,.attendance-report td{padding:3px 4px;overflow-wrap:anywhere;word-break:break-word}.attendance-report .header{padding:12px 16px}.attendance-report .body{padding:10px 16px}.attendance-report .title{font-size:20px}"
+      ".attendance-report{width:100%;max-width:none}.attendance-report table{display:table;width:100% !important;min-width:100% !important;table-layout:auto;font-size:7px}.attendance-report th,.attendance-report td{padding:3px 4px;overflow-wrap:anywhere;word-break:normal}.attendance-report .header{padding:12px 16px}.attendance-report .body{padding:10px 16px}.attendance-report .title{font-size:20px}"
     : REPORT_CSS;
   const filename = `${title.replace(/[^a-z0-9_-]+/gi, "_")}.pdf`;
   const isNative =
@@ -124,7 +124,7 @@ async function saveReport(title: string, html: string) {
 
   if (isNative) {
     const fullHtml = `<!doctype html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><style>${reportCss}</style></head><body>${html}</body></html>`;
-    const saved = await AttendancePdf.savePdf({ html: fullHtml, fileName: filename });
+    const saved = await AttendancePdf.savePdf({ html: fullHtml, fileName: filename, orientation: isAttendanceReport ? "landscape" : "portrait" });
     await AttendancePdf.openPdf({ uri: saved.uri });
     return;
   }
