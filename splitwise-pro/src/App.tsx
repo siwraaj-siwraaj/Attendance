@@ -73,9 +73,86 @@ export default function App(){
  useEffect(()=>{if(user&&cloudReady)cloudSync();},[people,groups,expenses,payments,user,cloudReady,deleted]);
  useEffect(()=>{if(!user||!cloudReady){setInvitations([]);return;} let active=true; supabase.from("group_invitations").select("id,group_id,inviter_id,invitee_email,status,created_at").eq("status","pending").order("created_at",{ascending:false}).then(({data,error})=>{if(!active)return;if(error)console.error("Invitation load failed:",error);setInvitations(data||[]);});return()=>{active=false;};},[user,cloudReady]);
  const openInvite=async(g:Group)=>{if(!user){setAuthMessage("Log in to invite people to a shared group.");setAuthMode("login");setModal("auth");return;}setInviteGroupId(g.id);setInviteEmail("");setModal("invite");};
- const loadSharedExpenses=async(sharedId:string)=>{if(!user)return;const {data,error}=await supabase.from("shared_group_expenses").select("expense_id,title,amount,paid_by,people,group_id,created_at,updated_at,split_mode,shares").eq("group_id",sharedId);if(error){console.error("Shared expenses load failed:",error);return;}const mapped=(data||[]).map((x:any)=>({id:x.expense_id,title:x.title,amount:Number(x.amount),paidBy:x.paid_by,people:Array.isArray(x.people)?x.people:[],groupId:x.group_id,createdAt:new Date(x.created_at).getTime(),updatedAt:new Date(x.updated_at||x.created_at).getTime(),splitMode:x.split_mode||"equal",shares:x.shares||{}} as Expense));setExpenses(prev=>mergeById(prev,mapped,deleted.expenses));persist("expenses",mergeById(expenses,mapped,deleted.expenses));};
- const publishSharedExpense=async(e:Expense)=>{const g=groups.find(x=>x.id===e.groupId);if(!user||!g?.sharedGroupId)return;const {error}=await supabase.from("shared_group_expenses").upsert({expense_id:e.id,group_id:g.sharedGroupId,title:e.title,amount:e.amount,paid_by:e.paidBy,people:e.people,created_at:new Date(e.createdAt).toISOString(),updated_at:new Date(e.updatedAt||Date.now()).toISOString(),split_mode:e.splitMode||"equal",shares:e.shares||{}},{onConflict:"expense_id"});if(error)console.error("Shared expense publish failed:",error);};
- useEffect(()=>{if(!user||!cloudReady)return;groups.filter(g=>g.sharedGroupId).forEach(g=>loadSharedExpenses(g.sharedGroupId!));},[user,cloudReady,groups.length]);
+ const applySharedExpenseRow=(x:any)=>{
+  const localGroup=groups.find(g=>g.sharedGroupId===x.group_id);
+  return {
+   id:x.expense_id,
+   title:x.title,
+   amount:Number(x.amount),
+   paidBy:x.paid_by,
+   people:Array.isArray(x.people)?x.people:[],
+   groupId:localGroup?.id||x.group_id,
+   createdAt:new Date(x.created_at).getTime(),
+   updatedAt:new Date(x.updated_at||x.created_at).getTime(),
+   splitMode:x.split_mode||"equal",
+   shares:x.shares||{}
+  } as Expense;
+ };
+ const upsertSharedExpenseLocal=(row:any)=>{
+  const mapped=applySharedExpenseRow(row);
+  setExpenses(prev=>{
+   const next=mergeById(prev,[mapped],deleted.expenses);
+   persist("expenses",next);
+   return next;
+  });
+ };
+ const loadSharedExpenses=async(sharedId:string)=>{
+  if(!user)return;
+  const {data,error}=await supabase.from("shared_group_expenses")
+   .select("expense_id,title,amount,paid_by,people,group_id,created_at,updated_at,split_mode,shares")
+   .eq("group_id",sharedId);
+  if(error){console.error("Shared expenses load failed:",error);return;}
+  const mapped=(data||[]).map(applySharedExpenseRow);
+  setExpenses(prev=>{
+   const next=mergeById(prev,mapped,deleted.expenses);
+   persist("expenses",next);
+   return next;
+  });
+ };
+ const publishSharedExpense=async(e:Expense)=>{
+  const g=groups.find(x=>x.id===e.groupId);
+  if(!user||!g?.sharedGroupId)return;
+  const {error}=await supabase.from("shared_group_expenses").upsert({
+   expense_id:e.id,group_id:g.sharedGroupId,title:e.title,amount:e.amount,paid_by:e.paidBy,
+   people:e.people,created_at:new Date(e.createdAt).toISOString(),
+   updated_at:new Date(e.updatedAt||Date.now()).toISOString(),
+   split_mode:e.splitMode||"equal",shares:e.shares||{}
+  },{onConflict:"expense_id"});
+  if(error)console.error("Shared expense publish failed:",error);
+ };
+ useEffect(()=>{
+  if(!user||!cloudReady)return;
+  const sharedIds=groups.filter(g=>g.sharedGroupId).map(g=>g.sharedGroupId!);
+  sharedIds.forEach(loadSharedExpenses);
+  if(!sharedIds.length)return;
+  const channels=sharedIds.map(sharedId=>
+   supabase.channel("shared-expenses-"+sharedId)
+    .on("postgres_changes",{event:"*",schema:"public",table:"shared_group_expenses",filter:`group_id=eq.${sharedId}`},payload=>{
+     if(payload.eventType==="DELETE"){
+      const id=String((payload.old as any)?.expense_id||"");
+      if(!id)return;
+      setExpenses(prev=>{const next=prev.filter(e=>e.id!==id);persist("expenses",next);return next;});
+      return;
+     }
+     if(payload.new)upsertSharedExpenseLocal(payload.new);
+    })
+    .subscribe(status=>{if(status==="CHANNEL_ERROR"||status==="TIMED_OUT")console.error("Shared expense realtime status:",status,sharedId);})
+  );
+  return()=>{channels.forEach(channel=>{supabase.removeChannel(channel);});};
+ },[user,cloudReady,groups.map(g=>g.id+":"+g.sharedGroupId).join("|")]);
+ useEffect(()=>{
+  if(!user||!cloudReady)return;
+  const channel=supabase.channel("splitwise-invitations-"+user.id)
+   .on("postgres_changes",{event:"*",schema:"public",table:"group_invitations"},()=>{
+    supabase.from("group_invitations")
+     .select("id,group_id,inviter_id,invitee_email,status,created_at")
+     .eq("status","pending")
+     .order("created_at",{ascending:false})
+     .then(({data,error})=>{if(error)console.error("Invitation realtime reload failed:",error);else setInvitations(data||[]);});
+   })
+   .subscribe(status=>{if(status==="CHANNEL_ERROR"||status==="TIMED_OUT")console.error("Invitation realtime status:",status);});
+  return()=>{supabase.removeChannel(channel);};
+ },[user,cloudReady]);
  const sendInvite=async()=>{const g=groups.find(x=>x.id===inviteGroupId);const email=inviteEmail.trim().toLowerCase();if(!g||!user)return;if(!/^\S+@\S+\.\S+$/.test(email)){alert("Enter a valid email.");return;}if(email===String(user.email||"").toLowerCase()){alert("You cannot invite yourself.");return;}let sharedId=g.sharedGroupId;if(!sharedId){const {data,error}=await supabase.from("shared_groups").insert({owner_id:user.id,name:g.name}).select("id").single();if(error){alert(error.message||"Could not create shared group.");return;}sharedId=data.id;const {error:memberError}=await supabase.from("shared_group_members").insert({group_id:sharedId,user_id:user.id,role:"owner"});if(memberError){alert(memberError.message||"Could not create group membership.");return;}const next=groups.map(x=>x.id===g.id?{...x,sharedGroupId:sharedId,updatedAt:Date.now()}:x);setGroups(next);persist("groups",next);await cloudSync({groups:next});}const {data:existing}=await supabase.from("group_invitations").select("id").eq("group_id",sharedId).eq("invitee_email",email).eq("status","pending").maybeSingle();if(existing){alert("An invitation is already pending for this email.");return;}const {error}=await supabase.from("group_invitations").insert({group_id:sharedId,inviter_id:user.id,invitee_email:email});if(error){alert(error.message||"Could not send invitation.");return;}setInviteEmail("");setModal(null);alert("Invitation sent.");};
  const respondInvite=async(inv:any,accept:boolean)=>{if(!user)return;const status=accept?"accepted":"declined";const {error}=await supabase.from("group_invitations").update({status,responded_at:new Date().toISOString()}).eq("id",inv.id);if(error){alert(error.message||"Could not update invitation.");return;}if(accept){const {error:memberError}=await supabase.from("shared_group_members").upsert({group_id:inv.group_id,user_id:user.id,role:"member"},{onConflict:"group_id,user_id"});if(memberError){alert(memberError.message||"Could not join group.");return;}const {data:sg}=await supabase.from("shared_groups").select("id,name").eq("id",inv.group_id).single();if(sg&&!groups.some(g=>g.sharedGroupId===sg.id)){const ng:Group={id:crypto.randomUUID(),name:sg.name,members:["you"],sharedGroupId:sg.id,updatedAt:Date.now()};const next=[...groups,ng];setGroups(next);persist("groups",next);await cloudSync({groups:next});}}setInvitations(prev=>prev.filter(x=>x.id!==inv.id));};
 
