@@ -44,15 +44,25 @@ function closeOpenSurface(): boolean {
     return true;
   }
 
+  // Handle app-built overlays as well as Radix dialogs. Many screens use
+  // custom fixed overlays rather than an element with role="dialog".
   const customModal = document.querySelector<HTMLElement>(
-    '.fixed.inset-0[class*="bg-black/"], [data-modal="true"], [data-pdf-preview]',
+    '[data-pdf-preview], [data-modal="true"], .fixed.inset-0[class*="z-"]',
   );
   if (customModal) {
     const closeButton = customModal.querySelector<HTMLElement>(
-      '[aria-label*="Close" i], [data-ocid$=".close"], [data-ocid$=".close_button"]',
+      '[aria-label*="Close" i], [data-ocid$=".close"], [data-ocid$=".close_button"], button:has(svg.lucide-x)',
     );
     if (closeButton) {
       closeButton.click();
+      return true;
+    }
+
+    // Forms commonly provide a Cancel button rather than an X close control.
+    const cancelButton = Array.from(customModal.querySelectorAll<HTMLElement>("button"))
+      .find((button) => /^(cancel|close|back|dismiss)$/i.test(button.textContent?.trim() ?? ""));
+    if (cancelButton) {
+      cancelButton.click();
       return true;
     }
   }
