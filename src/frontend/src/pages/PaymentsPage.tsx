@@ -12,8 +12,6 @@ import {
   Check,
   ChevronDown,
   ChevronRight,
-  FileDown,
-  FileText,
   Search,
   Users,
   Wallet,
@@ -22,13 +20,6 @@ import {
 import LoadingSpinner from "../components/LoadingSpinner";
 import ScrollHeaderTitle from "../components/ScrollHeaderTitle";
 import { type AttendanceValue, getAttendanceDisplay } from "../types";
-import html2pdf from "html2pdf.js";
-import { registerPlugin } from "@capacitor/core";
-
-const AttendancePdf = registerPlugin<{
-  savePdf(options: { html: string; fileName: string; orientation?: "portrait" | "landscape" }): Promise<{ uri: string; fileName: string }>;
-  openPdf(options: { uri: string }): Promise<void>;
-}>("AttendancePdf");
 
 interface PaymentsPageProps {
   selectedContractIds: Set<string>;
@@ -85,69 +76,6 @@ function calculateLabourSalary(contract: any, records: any[], labourId: bigint) 
   return total;
 }
 
-const REPORT_CSS = `
-*{box-sizing:border-box}
-@page{size:A4 portrait;margin:8mm}
-body{margin:0;background:#fff;color:#182230;font-family:Arial,sans-serif;font-size:10pt;line-height:1.35}
-.report{width:100%;background:#fff}
-.header{background:#172536;color:#fff;padding:20px 22px}
-.brand{font-size:11px;letter-spacing:2px;text-transform:uppercase;opacity:.7}
-.title{font-size:24px;font-weight:800;margin:4px 0}
-.subtitle{font-size:11px;opacity:.7}
-.meta{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;background:#f3f5f7;padding:16px 22px}
-.label{font-size:8px;color:#657181;text-transform:uppercase;font-weight:700;letter-spacing:1px}
-.value{font-size:11px;font-weight:800;margin-top:3px;overflow-wrap:anywhere}
-.body{padding:18px 22px}
-h2{font-size:13px;margin:0 0 10px;border-bottom:2px solid #172536;padding-bottom:6px}
-table{width:100%;border-collapse:collapse;font-size:8.5px}
-th{background:#263c55;color:#fff;text-align:left;padding:7px}
-td{border:1px solid #d9dee4;padding:6px}
-.num{text-align:right;white-space:nowrap}
-.total td{background:#c97716;color:#fff;font-weight:800;border-color:#c97716}
-.summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}
-.summary div{background:#f3f5f7;border:1px solid #d9dee4;padding:10px}
-.summary strong{display:block;color:#c97716;font-size:13px;margin-top:3px}
-.footer{border-top:1px solid #d9dee4;padding:12px 22px;color:#657181;font-size:8px;display:flex;justify-content:space-between}
-`;
-
-async function saveReport(title: string, html: string) {
-  const isAttendanceReport = title === "Attendance Sheet";
-  const reportCss = isAttendanceReport
-    ? REPORT_CSS.replace("@page{size:A4 portrait;margin:8mm}", "@page{size:A4 landscape;margin:6mm}") +
-      ".attendance-report{width:100%;max-width:none}.attendance-report table{display:table;width:100% !important;min-width:100% !important;table-layout:auto;font-size:7px}.attendance-report th,.attendance-report td{padding:3px 4px;overflow-wrap:anywhere;word-break:normal}.attendance-report .header{padding:12px 16px}.attendance-report .body{padding:10px 16px}.attendance-report .title{font-size:20px}"
-    : REPORT_CSS;
-  const filename = `${title.replace(/[^a-z0-9_-]+/gi, "_")}.pdf`;
-  const isNative =
-    typeof window !== "undefined" &&
-    "Capacitor" in window &&
-    (window as any).Capacitor?.isNativePlatform?.();
-
-  if (isNative) {
-    const fullHtml = `<!doctype html><html><head><meta charset="UTF-8"><style>${reportCss}</style></head><body>${html}</body></html>`;
-    const saved = await AttendancePdf.savePdf({ html: fullHtml, fileName: filename, orientation: isAttendanceReport ? "landscape" : "portrait" });
-    await AttendancePdf.openPdf({ uri: saved.uri });
-    return;
-  }
-
-  const host = document.createElement("div");
-  host.innerHTML = `<style>${reportCss}</style>${html}`;
-  document.body.appendChild(host);
-  try {
-    await html2pdf()
-      .set({
-        margin: 8,
-        filename,
-        image: { type: "jpeg", quality: 0.95 },
-        html2canvas: { scale: 2, useCORS: true, backgroundColor: "#fff" },
-        jsPDF: { unit: "mm", format: "a4", orientation: isAttendanceReport ? "landscape" : "portrait" },
-      })
-      .from(host)
-      .save();
-  } finally {
-    host.remove();
-  }
-}
-
 export default function PaymentsPage({
   selectedContractIds,
   setSelectedContractIds,
@@ -167,7 +95,6 @@ export default function PaymentsPage({
   const [overviewIndex, setOverviewIndex] = useState(0);
   const [overviewSelection, setOverviewSelection] = useState<Set<string>>(new Set());
   const [deductAdvances, setDeductAdvances] = useState(true);
-  const [preview, setPreview] = useState<{ title: string; html: string } | null>(null);
 
   const activeContracts = useMemo(
     () => contracts.filter((contract: any) => !contract.settled),
@@ -259,96 +186,6 @@ export default function PaymentsPage({
     payable: selectedOverviewRows.reduce((s: number, r: any) => s + r.amountPayable, 0),
   };
 
-  const buildPaymentReport = () => {
-    const contractNames = selectedContracts.map((c: any) => c.name).join(", ") || "None";
-    const rows = visibleRows
-      .map(
-        (row: any) =>
-          `<tr><td>${row.labour.name}</td>${selectedContracts
-            .map((c: any) => `<td class="num">${money(row.contractSalaries[c.id.toString()] || 0)}</td>`)
-            .join("")}<td class="num">${money(row.totalNetSalary)}</td><td class="num">${money(row.totalAdvances)}</td><td class="num">${money(row.amountPayable)}</td></tr>`,
-      )
-      .join("");
-    const totalCells = selectedContracts
-      .map((c: any) => {
-        const total = visibleRows.reduce(
-          (sum: number, row: any) => sum + (row.contractSalaries[c.id.toString()] || 0),
-          0,
-        );
-        return `<td class="num">${money(total)}</td>`;
-      })
-      .join("");
-
-    const html = `<div class="report">
-      <div class="header"><div class="brand">Rossie Payroll</div><div class="title">Payment Report</div><div class="subtitle">Labour payment statement</div></div>
-      <div class="meta">
-        <div><div class="label">Contracts</div><div class="value">${contractNames}</div></div>
-        <div><div class="label">Labours</div><div class="value">${visibleRows.length}</div></div>
-        <div><div class="label">Gross</div><div class="value">${money(totals.gross)}</div></div>
-        <div><div class="label">Payable</div><div class="value">${money(totals.payable)}</div></div>
-      </div>
-      <div class="body"><h2>Payment details</h2>
-      <table><thead><tr><th>Labour</th>${selectedContracts.map((c: any) => `<th class="num">${c.name}</th>`).join("")}<th class="num">Gross</th><th class="num">Advances</th><th class="num">Payable</th></tr></thead>
-      <tbody>${rows}<tr class="total"><td>TOTAL</td>${totalCells}<td class="num">${money(totals.gross)}</td><td class="num">${money(totals.advances)}</td><td class="num">${money(totals.payable)}</td></tr></tbody></table>
-      <div class="summary"><div><div class="label">Gross salary</div><strong>${money(totals.gross)}</strong></div><div><div class="label">Advances</div><strong>${money(totals.advances)}</strong></div><div><div class="label">Total payable</div><strong>${money(totals.payable)}</strong></div></div></div>
-      <div class="footer"><span>Rossie — Construction Labour Management</span><span>Generated ${new Date().toLocaleDateString("en-IN")}</span></div>
-    </div>`;
-
-    setPreview({ title: "Payment Sheet", html });
-  };
-
-  const buildAttendanceReport = () => {
-    if (!selectedContracts.length) return;
-
-    // Build one shared column list for the entire report. Every body row must
-    // have exactly the same number of cells as the header, including columns
-    // belonging to other contracts (left blank for that row).
-    const columns = selectedContracts.flatMap((contract: any) =>
-      (contract.workColumns || [])
-        .filter((column: any) =>
-          allAttendance.some(
-            (record: any) =>
-              record.contractId === contract.id &&
-              record.columnId === column.id &&
-              getAttendanceDisplay(record.value as AttendanceValue) > 0,
-          ),
-        )
-        .map((column: any) => ({ contractId: contract.id, id: column.id, name: column.name })),
-    );
-
-    const rows: string[] = [];
-    for (const contract of selectedContracts) {
-      for (const labour of labours) {
-        const values = columns.map((column: any) => {
-          if (column.contractId !== contract.id) return "";
-          const record = allAttendance.find(
-            (item: any) =>
-              item.contractId === contract.id &&
-              item.columnId === column.id &&
-              item.labourId === labour.id,
-          );
-          return record ? String(getAttendanceDisplay(record.value as AttendanceValue)) : "0";
-        });
-        if (values.some((value) => value !== "" && value !== "0")) {
-          rows.push(
-            `<tr><td>${contract.name}</td><td>${labour.name}</td>${values
-              .map((value) => `<td class="num">${value}</td>`)
-              .join("")}</tr>`,
-          );
-        }
-      }
-    }
-
-    const html = `<div class="report attendance-report">
-      <div class="header"><div class="brand">Rossie Attendance</div><div class="title">Attendance Report</div><div class="subtitle">Attendance used for the selected payment calculation</div></div>
-      <div class="body"><h2>Attendance details</h2>
-      <table><thead><tr><th>Contract</th><th>Labour</th>${columns
-        .map((column: any) => `<th class="num">${column.name}</th>`)
-        .join("")}</tr></thead><tbody>${rows.join("")}</tbody></table></div>
-      <div class="footer"><span>Rossie — Construction Labour Management</span><span>Generated ${new Date().toLocaleDateString("en-IN")}</span></div>
-    </div>`;
-    setPreview({ title: "Attendance Sheet", html });
-  };
 
   if (contractsLoading || laboursLoading) {
     return (
@@ -514,8 +351,6 @@ export default function PaymentsPage({
                     <p className="text-xs text-[#7b8794]">{selectedContracts.length} contract{selectedContracts.length === 1 ? "" : "s"} · {visibleRows.length} payable labour records</p>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    <button type="button" onClick={buildPaymentReport} className="flex items-center gap-2 rounded-xl border border-orange-200 bg-orange-50 px-3 py-2.5 text-xs font-extrabold text-orange-700" data-ocid="payments.download_payment_sheet"><FileText size={15} /> Payment PDF</button>
-                    <button type="button" onClick={buildAttendanceReport} className="flex items-center gap-2 rounded-xl border border-[#dfe4ea] bg-[#f7f9fb] px-3 py-2.5 text-xs font-extrabold text-[#425163]" data-ocid="payments.download_attendance_sheet"><FileDown size={15} /> Attendance PDF</button>
                     <button type="button" onClick={() => { setOverviewSelection(new Set()); setOverviewIndex(0); setShowOverview(true); }} className="flex items-center gap-2 rounded-xl border border-[#dfe4ea] bg-[#f7f9fb] px-3 py-2.5 text-xs font-extrabold text-[#425163]" data-ocid="payments.overview_button"><BarChart3 size={15} /> Overview</button>
                   </div>
                 </div>
@@ -609,15 +444,7 @@ export default function PaymentsPage({
         </div>
       )}
 
-      {preview && (
-        <div className="fixed inset-x-0 bottom-0 top-[env(safe-area-inset-top)] z-[3000] flex bg-white">
-          <div className="flex h-full w-full flex-col overflow-hidden rounded-none bg-white">
-            <div className="flex items-center justify-between border-b px-4 py-3"><div><p className="text-sm font-black">{preview.title}</p><p className="text-[10px] text-[#8793a0]">Preview before saving</p></div><button type="button" onClick={() => setPreview(null)} className="rounded-lg bg-[#f1f3f5] p-2"><X size={16} /></button></div>
-            <div className="min-h-0 flex-1 overflow-auto p-2"><div dangerouslySetInnerHTML={{ __html: `<style>${REPORT_CSS}${preview.title === "Attendance Sheet" ? ".attendance-report{width:100%;max-width:none}.attendance-report table{width:100%;table-layout:fixed;font-size:7px}.attendance-report th,.attendance-report td{padding:3px 4px;overflow-wrap:anywhere;word-break:break-word}.attendance-report .header{padding:12px 16px}.attendance-report .body{padding:10px 16px}.attendance-report .title{font-size:20px}" : ""}</style>${preview.html}` }} /></div>
-            <div className="flex gap-2 border-t p-3"><button type="button" onClick={() => setPreview(null)} className="flex-1 rounded-xl bg-[#eef1f4] py-3 text-sm font-extrabold">Close</button><button type="button" onClick={async () => { try { await saveReport(preview.title, preview.html); setPreview(null); } catch (error) { console.error(error); alert("Unable to create the PDF."); } }} className="flex-1 rounded-xl bg-orange-500 py-3 text-sm font-extrabold text-white">Save PDF</button></div>
-          </div>
-        </div>
-      )}
+
     </div>
   );
 }
