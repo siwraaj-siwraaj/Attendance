@@ -5,6 +5,7 @@ import jsPDF from "jspdf";
 import * as XLSX from "xlsx";
 import { Filesystem, Directory } from "@capacitor/filesystem";
 import { Preferences } from "@capacitor/preferences";
+import { Share } from "@capacitor/share";
 import { LocalNotifications } from "@capacitor/local-notifications";
 
 type Person = { id: string; name: string; email?: string; userId?: string; updatedAt?: number };
@@ -273,12 +274,13 @@ export default function App(){
  const reportRows=useMemo(()=>filteredExpenses.map(e=>({Date:new Date(e.createdAt).toLocaleDateString("en-IN"),Description:e.title,Group:group(e.groupId),PaidBy:person(e.paidBy),Amount:Number(e.amount.toFixed(2)),Split:e.people.map(person).join(", "),Shared:groups.find(g=>g.id===e.groupId)?.sharedGroupId?"Yes":"No"})),[filteredExpenses,groups,people]);
  const saveReportFile=async(name:string,base64:string,mime:string)=>{
   try{
-   const result=await Filesystem.writeFile({path:name,data:base64,directory:Directory.Documents,recursive:true});
-   alert(`Report saved successfully: ${name}`);
+   const result=await Filesystem.writeFile({path:name,data:base64,directory:Directory.Cache,recursive:true});
+   if(!(await Share.canShare()).value) throw new Error("Android sharing is unavailable.");
+   await Share.share({title:name,text:"Save this Splitwise report",files:[result.uri],dialogTitle:"Save report"});
    await notifyReportSaved(name);
    return result;
   }catch(error){
-   console.error("Report save failed",error);
+   console.error("Report save/share failed",error);
    const message=error instanceof Error ? error.message : String(error);
    alert(`Could not save the report. ${message}`);
    return null;
