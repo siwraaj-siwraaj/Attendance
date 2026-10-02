@@ -38,8 +38,6 @@ import java.io.OutputStream;
 
 @CapacitorPlugin(name = "AttendancePdf")
 public class AttendancePdfPlugin extends Plugin {
-    private static final int WEBVIEW_WIDTH = 794;
-    private static final int WEBVIEW_HEIGHT = 1123;
 
     private WebView printWebView;
     private FrameLayout printContainer;
@@ -109,10 +107,14 @@ public class AttendancePdfPlugin extends Plugin {
                 printWebView = webView;
 
                 printContainer = new FrameLayout(getActivity());
+                // Match the HTML layout viewport to the requested paper orientation.
+                // A portrait-sized WebView lays out wide tables too narrowly before printing.
+                int webViewWidth = landscape ? 1123 : 794;
+                int webViewHeight = landscape ? 794 : 1123;
                 FrameLayout.LayoutParams containerParams =
-                        new FrameLayout.LayoutParams(WEBVIEW_WIDTH, WEBVIEW_HEIGHT);
+                        new FrameLayout.LayoutParams(webViewWidth, webViewHeight);
                 FrameLayout.LayoutParams webParams =
-                        new FrameLayout.LayoutParams(WEBVIEW_WIDTH, WEBVIEW_HEIGHT);
+                        new FrameLayout.LayoutParams(webViewWidth, webViewHeight);
 
                 printContainer.addView(webView, webParams);
                 getActivity().addContentView(printContainer, containerParams);
