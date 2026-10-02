@@ -123,7 +123,7 @@ async function saveReport(title: string, html: string) {
     (window as any).Capacitor?.isNativePlatform?.();
 
   if (isNative) {
-    const fullHtml = `<!doctype html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><style>${reportCss}</style></head><body>${html}</body></html>`;
+    const fullHtml = `<!doctype html><html><head><meta charset="UTF-8"><style>${reportCss}</style></head><body>${html}</body></html>`;
     const saved = await AttendancePdf.savePdf({ html: fullHtml, fileName: filename, orientation: isAttendanceReport ? "landscape" : "portrait" });
     await AttendancePdf.openPdf({ uri: saved.uri });
     return;
