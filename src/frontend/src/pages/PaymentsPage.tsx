@@ -139,7 +139,7 @@ async function saveReport(title: string, html: string) {
         filename,
         image: { type: "jpeg", quality: 0.95 },
         html2canvas: { scale: 2, useCORS: true, backgroundColor: "#fff" },
-        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+        jsPDF: { unit: "mm", format: "a4", orientation: isAttendanceReport ? "landscape" : "portrait" },
       })
       .from(host)
       .save();
@@ -610,7 +610,7 @@ export default function PaymentsPage({
         <div className="fixed inset-x-0 bottom-0 top-[env(safe-area-inset-top)] z-[3000] flex bg-white">
           <div className="flex h-full w-full flex-col overflow-hidden rounded-none bg-white">
             <div className="flex items-center justify-between border-b px-4 py-3"><div><p className="text-sm font-black">{preview.title}</p><p className="text-[10px] text-[#8793a0]">Preview before saving</p></div><button type="button" onClick={() => setPreview(null)} className="rounded-lg bg-[#f1f3f5] p-2"><X size={16} /></button></div>
-            <div className="min-h-0 flex-1 overflow-auto p-2"><div dangerouslySetInnerHTML={{ __html: `<style>${REPORT_CSS}</style>${preview.html}` }} /></div>
+            <div className="min-h-0 flex-1 overflow-auto p-2"><div dangerouslySetInnerHTML={{ __html: `<style>${REPORT_CSS}${preview.title === "Attendance Sheet" ? ".attendance-report{width:100%;max-width:none}.attendance-report table{width:100%;table-layout:fixed;font-size:7px}.attendance-report th,.attendance-report td{padding:3px 4px;overflow-wrap:anywhere;word-break:break-word}.attendance-report .header{padding:12px 16px}.attendance-report .body{padding:10px 16px}.attendance-report .title{font-size:20px}" : ""}</style>${preview.html}` }} /></div>
             <div className="flex gap-2 border-t p-3"><button type="button" onClick={() => setPreview(null)} className="flex-1 rounded-xl bg-[#eef1f4] py-3 text-sm font-extrabold">Close</button><button type="button" onClick={async () => { try { await saveReport(preview.title, preview.html); setPreview(null); } catch (error) { console.error(error); alert("Unable to create the PDF."); } }} className="flex-1 rounded-xl bg-orange-500 py-3 text-sm font-extrabold text-white">Save PDF</button></div>
           </div>
         </div>
