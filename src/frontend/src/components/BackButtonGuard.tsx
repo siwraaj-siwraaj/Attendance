@@ -27,9 +27,9 @@ function closeOpenSurface(): boolean {
     return true;
   }
 
-  const dialog = document.querySelector<HTMLElement>(
+  const dialog = Array.from(document.querySelectorAll<HTMLElement>(
     '[role="dialog"], [data-slot="dialog-content"]',
-  );
+  )).find((element) => element.getClientRects().length > 0);
   if (dialog) {
     const closeButton = dialog.querySelector<HTMLElement>(
       '[aria-label*="Close" i], [data-ocid$=".close"], [data-ocid$=".close_button"]',
@@ -46,9 +46,15 @@ function closeOpenSurface(): boolean {
 
   // Handle app-built overlays as well as Radix dialogs. Many screens use
   // custom fixed overlays rather than an element with role="dialog".
-  const customModal = document.querySelector<HTMLElement>(
+  const customModal = Array.from(document.querySelectorAll<HTMLElement>(
     '[data-pdf-preview], [data-modal="true"], .fixed.inset-0[class*="z-"]',
-  );
+  ))
+    .filter((element) => element.getClientRects().length > 0)
+    .sort((a, b) => {
+      const zA = Number.parseInt(getComputedStyle(a).zIndex, 10) || 0;
+      const zB = Number.parseInt(getComputedStyle(b).zIndex, 10) || 0;
+      return zB - zA;
+    })[0];
   if (customModal) {
     const closeButton = customModal.querySelector<HTMLElement>(
       '[aria-label*="Close" i], [data-ocid$=".close"], [data-ocid$=".close_button"], button:has(svg.lucide-x)',
