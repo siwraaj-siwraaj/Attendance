@@ -602,8 +602,8 @@ export default function PaymentsPage({
       )}
 
       {preview && (
-        <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-black/70 p-3">
-          <div className="flex h-full max-h-[95vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-white">
+        <div className="fixed inset-x-0 bottom-0 top-[env(safe-area-inset-top)] z-[3000] flex bg-white">
+          <div className="flex h-full w-full flex-col overflow-hidden rounded-none bg-white">
             <div className="flex items-center justify-between border-b px-4 py-3"><div><p className="text-sm font-black">{preview.title}</p><p className="text-[10px] text-[#8793a0]">Preview before saving</p></div><button type="button" onClick={() => setPreview(null)} className="rounded-lg bg-[#f1f3f5] p-2"><X size={16} /></button></div>
             <div className="min-h-0 flex-1 overflow-auto p-2"><div dangerouslySetInnerHTML={{ __html: `<style>${REPORT_CSS}</style>${preview.html}` }} /></div>
             <div className="flex gap-2 border-t p-3"><button type="button" onClick={() => setPreview(null)} className="flex-1 rounded-xl bg-[#eef1f4] py-3 text-sm font-extrabold">Close</button><button type="button" onClick={async () => { try { await saveReport(preview.title, preview.html); setPreview(null); } catch (error) { console.error(error); alert("Unable to create the PDF."); } }} className="flex-1 rounded-xl bg-orange-500 py-3 text-sm font-extrabold text-white">Save PDF</button></div>
