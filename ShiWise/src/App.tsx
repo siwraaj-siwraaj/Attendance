@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { App as CapacitorApp } from "@capacitor/app";
 import { Home, Users, ReceiptText, Plus, X, Wallet, Trash2, Check, UserPlus, Download, Upload, LogIn, LogOut, Image as ImageIcon, FileText, BarChart3, Tag, Moon, Sun } from "lucide-react";
 import { supabase } from "./lib/supabase";
 import jsPDF from "jspdf";
@@ -91,6 +92,7 @@ export default function App(){
   setCloudReady(true);
  };
  useEffect(()=>{persist("darkMode",darkMode);document.documentElement.classList.toggle("dark",darkMode);},[darkMode]);
+ useEffect(()=>{let active=true;const listener=CapacitorApp.addListener("appUrlOpen",({url})=>{if(active&&url.startsWith("shiwise://quick-add"))openExpense();});return()=>{active=false;listener.then(h=>h.remove());};},[]);
  useEffect(()=>{let mounted=true; supabase.auth.getSession().then(async({data})=>{if(!mounted)return;setUser(data.session?.user??null);if(data.session?.user){await loadProfile(data.session.user.id,data.session.user.email??"",data.session.user.user_metadata?.name??"");await loadCloudData(data.session.user.id);}else setCloudReady(true);}); const {data:{subscription}}=supabase.auth.onAuthStateChange((_event,session)=>{if(mounted){setUser(session?.user??null);setCloudReady(false);if(session?.user){loadProfile(session.user.id,session.user.email??"",session.user.user_metadata?.name??"").then(()=>loadCloudData(session.user.id));}else setCloudReady(true);}}); return()=>{mounted=false;subscription.unsubscribe();};},[]);
 
  useEffect(()=>{if(user&&cloudReady)cloudSync();},[people,groups,expenses,payments,user,cloudReady,deleted]);
