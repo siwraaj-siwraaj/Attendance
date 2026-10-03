@@ -2,8 +2,9 @@ import fs from "node:fs";
 import path from "node:path";
 
 const androidDir = path.resolve("android");
-const appGradle = path.join(androidDir, "app", "build.gradle");
-const keystore = path.join(androidDir, "shiwise-release.jks");
+const appDir = path.join(androidDir, "app");
+const appGradle = path.join(appDir, "build.gradle");
+const keystore = path.join(appDir, "shiwise-release.jks");
 
 const required = ["SHIWISE_KEYSTORE_BASE64","SHIWISE_KEYSTORE_PASSWORD","SHIWISE_KEY_ALIAS","SHIWISE_KEY_PASSWORD"];
 for (const name of required) {
