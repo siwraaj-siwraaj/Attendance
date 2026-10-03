@@ -28,7 +28,7 @@ const notifyReportSaved=async(name:string)=>{
   await ensureNotificationPermission();
   const permission=await LocalNotifications.checkPermissions();
   if(permission.display==="granted"){
-   await LocalNotifications.schedule({notifications:[{id:Date.now()%2147483647,title:"Splitwise report downloaded",body:name,smallIcon:"ic_stat_icon_config_sample",extra:{fileName:name}}]});
+   await LocalNotifications.schedule({notifications:[{id:Date.now()%2147483647,title:"ShiWise report downloaded",body:name,smallIcon:"ic_stat_icon_config_sample",extra:{fileName:name}}]});
   }
  }catch(error){console.warn("Download notification failed",error);}
 };
@@ -279,7 +279,7 @@ export default function App(){
   try{
    const result=await Filesystem.writeFile({path:name,data:base64,directory:Directory.Cache,recursive:true});
    if(!(await Share.canShare()).value) throw new Error("Android sharing is unavailable.");
-   await Share.share({title:name,text:"Save this Splitwise report",files:[result.uri],dialogTitle:"Save report"});
+   await Share.share({title:name,text:"Save this ShiWise report",files:[result.uri],dialogTitle:"Save report"});
    await notifyReportSaved(name);
    return result;
   }catch(error){
@@ -297,12 +297,12 @@ export default function App(){
   const paymentRows=payments.map(p=>({Date:new Date(p.createdAt).toLocaleDateString("en-IN"),From:person(p.from),To:person(p.to),Amount:Number(p.amount.toFixed(2))}));
   XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(paymentRows),"Settlements");
   const base64=XLSX.write(wb,{bookType:"xlsx",type:"base64"});
-  await saveReportFile(`splitwise-report-${new Date().toISOString().slice(0,10)}.xlsx`,base64,"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+  await saveReportFile(`shiwise-report-${new Date().toISOString().slice(0,10)}.xlsx`,base64,"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
  };
  const exportCSV=async()=>{
   const csv=XLSX.utils.sheet_to_csv(XLSX.utils.json_to_sheet(reportRows));
   const base64=btoa(unescape(encodeURIComponent(csv)));
-  await saveReportFile(`splitwise-expenses-${new Date().toISOString().slice(0,10)}.csv`,base64,"text/csv");
+  await saveReportFile(`shiwise-expenses-${new Date().toISOString().slice(0,10)}.csv`,base64,"text/csv");
  };
  const groupReportData=(g:Group)=>{
   const rows=expenses.filter(e=>e.groupId===g.id).sort((a,b)=>a.createdAt-b.createdAt);
@@ -319,14 +319,14 @@ export default function App(){
  const exportPDF=async()=>{
   const doc=new jsPDF({unit:"mm",format:"a4"});
   const margin=14;let y=18;
-  doc.setFontSize(18);doc.text("Splitwise Expense Report",margin,y);y+=8;
+  doc.setFontSize(18);doc.text("ShiWise Expense Report",margin,y);y+=8;
   doc.setFontSize(9);doc.text(`Generated ${new Date().toLocaleString("en-IN")} · ${filteredExpenses.length} expenses · Total ${money(filteredExpenses.reduce((s,e)=>s+e.amount,0))}`,margin,y);y+=8;
   const headers=["Date","Description","Group","Paid by","Amount"];const widths=[22,52,38,32,34];
   const drawHeader=()=>{let x=margin;doc.setFont("helvetica","bold");headers.forEach((h,i)=>{doc.text(h,x,y);x+=widths[i];});doc.setFont("helvetica","normal");y+=6;};
   drawHeader();
   reportRows.forEach((r:any)=>{if(y>282){doc.addPage();y=18;drawHeader();}const vals=[r.Date,String(r.Description).slice(0,28),String(r.Group).slice(0,20),String(r.PaidBy).slice(0,18),money(r.Amount)];let x=margin;vals.forEach((v,i)=>{doc.text(v,x,y);x+=widths[i];});y+=6;});
   const base64=doc.output("datauristring").split(",")[1];
-  await saveReportFile(`splitwise-report-${new Date().toISOString().slice(0,10)}.pdf`,base64,"application/pdf");
+  await saveReportFile(`shiwise-report-${new Date().toISOString().slice(0,10)}.pdf`,base64,"application/pdf");
  };
  const exportTripPDF=async(g:Group)=>{
   const r=groupReportData(g);
@@ -407,7 +407,7 @@ export default function App(){
    if(detailRows.length)drawTable(["EXPENSE","PERSON","SHARE"],[90,55,41],detailRows,{fontSize:8.5,rowHeight:9,startY:sy});
   }
   const base64=doc.output("datauristring").split(",")[1];
-  await saveReportFile("splitwise-"+slug+"-trip-details.pdf",base64,"application/pdf");
+  await saveReportFile("shiwise-"+slug+"-trip-details.pdf",base64,"application/pdf");
  };
  const saveTripImage=async(g:Group)=>{
   const r=groupReportData(g);const slug=g.name.replace(/[^a-z0-9]+/gi,"-").toLowerCase();
@@ -421,12 +421,12 @@ export default function App(){
   add("","20px Arial",12);add("EXPENSES","700 34px Arial",56);r.rows.forEach(e=>{add(new Date(e.createdAt).toLocaleDateString("en-IN",{day:"2-digit",month:"short"})+"  ·  "+e.title,"700 27px Arial",42);add("Paid by "+person(e.paidBy)+"     "+money(e.amount),"24px Arial",52);});
   const wrapped:{text:string;font:string;gap:number}[]=[];items.forEach(item=>wrap(item.text,item.font).forEach((t,i)=>wrapped.push({text:t,font:item.font,gap:i===0?item.gap:lineH})));
   const height=Math.max(1000,wrapped.reduce((sum,item)=>sum+item.gap,0)+100);canvas.width=width*scale;canvas.height=height*scale;ctx.scale(scale,scale);ctx.fillStyle="#ffffff";ctx.fillRect(0,0,width,height);ctx.fillStyle="#18221f";let y=92;wrapped.forEach(item=>{ctx.font=item.font;ctx.fillText(item.text,pad,y);y+=item.gap;});
-  const base64=canvas.toDataURL("image/png",1).split(",")[1];await saveReportFile("splitwise-"+slug+"-trip-details.png",base64,"image/png");
+  const base64=canvas.toDataURL("image/png",1).split(",")[1];await saveReportFile("shiwise-"+slug+"-trip-details.png",base64,"image/png");
  }; const exportBackup=()=>{
-  const backup={version:1,app:"Splitwise",exportedAt:new Date().toISOString(),people,groups,expenses,payments};
+  const backup={version:1,app:"ShiWise",exportedAt:new Date().toISOString(),people,groups,expenses,payments};
   const blob=new Blob([JSON.stringify(backup,null,2)],{type:"application/json"});
   const url=URL.createObjectURL(blob); const a=document.createElement("a");
-  a.href=url; a.download=`splitwise-backup-${new Date().toISOString().slice(0,10)}.json`;
+  a.href=url; a.download=`shiwise-backup-${new Date().toISOString().slice(0,10)}.json`;
   document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
  };
  const restoreBackup=(file:File)=>{
@@ -439,14 +439,14 @@ export default function App(){
     setPeople(data.people); setGroups(data.groups); setExpenses(data.expenses); setPayments(data.payments);
     persist("people",data.people); persist("groups",data.groups); persist("expenses",data.expenses); persist("payments",data.payments);
     alert("Backup restored successfully.");
-   }catch{ alert("This file is not a valid Splitwise backup."); }
+   }catch{ alert("This file is not a valid ShiWise backup."); }
   };
   reader.readAsText(file);
  };
  const openExpense=()=>{setEditingId(null);setTitle("");setAmount("");setPaidBy("you");setGroupId(groups[0]?.id||"");setSelected(groups[0]?.members||people.map(p=>p.id));setSplitMode("equal");setShares({});setModal("expense");}; const editExpense=(e:Expense)=>{setEditingId(e.id);setTitle(e.title);setAmount(String(e.amount));setPaidBy(e.paidBy);setGroupId(e.groupId);setSelected(e.people);setSplitMode(e.splitMode||"equal");setShares(Object.fromEntries(e.people.map(id=>[id,String(e.splitMode==="percent"?(e.shares?.[id]||0)*100/e.amount:(e.shares?.[id]??0))])));setModal("expense");};
  const debtors=people.filter(p=>(balances[p.id]||0)<-.005), creditors=people.filter(p=>(balances[p.id]||0)>.005);
  const nav=[{n:"Home",I:Home},{n:"Groups",I:Users},{n:"Activity",I:ReceiptText},{n:"Friends",I:Users},{n:"Balances",I:Wallet}];
- return <div className="app"><header><div className="logo"><b>S</b> Splitwise</div><button className="avatar" aria-label={user?"Account":"Log in"} onClick={()=>{setAuthMessage("");setAuthMode("login");setModal("auth")}}>{user?(accountName[0]?.toUpperCase()||"Y"):<LogIn size={18}/>}</button></header><main>
+ return <div className="app"><header><div className="logo"><b>S</b> ShiWise</div><button className="avatar" aria-label={user?"Account":"Log in"} onClick={()=>{setAuthMessage("");setAuthMode("login");setModal("auth")}}>{user?(accountName[0]?.toUpperCase()||"Y"):<LogIn size={18}/>}</button></header><main>
  <p className="eyebrow">YOUR EXPENSES</p><h1>{tab==="Home"?(user&&accountName&&accountName!=="You"?`Hey, ${accountName}`:"Hey, You"):tab}</h1><p className="muted">Keep track of shared expenses, simply.</p>{user&&<p className="muted">{syncing?"Syncing to cloud…":"Cloud sync on"}</p>}
  {tab==="Home"&&<><section className="balance"><small>TOTAL SHARED EXPENSES</small><h2>{money(total)}</h2><p>{expenses.length} expenses · saved on this device</p></section><div className="section"><h3>Balances</h3><button className="link" onClick={()=>setTab("Balances")}>Details</button></div>
  <div className="section"><h3>Backup & Restore</h3></div>
@@ -470,7 +470,7 @@ export default function App(){
  {modal==="expense"&&<><label>Description</label><input value={title} onChange={e=>setTitle(e.target.value)} placeholder="What was it for?"/><label>Amount (₹)</label><input type="number" min="0" value={amount} onChange={e=>setAmount(e.target.value)} placeholder="0.00"/><label>Paid by</label><select value={paidBy} onChange={e=>setPaidBy(e.target.value)}>{people.map(p=><option value={p.id} key={p.id}>{p.name}</option>)}</select><label>Group</label><select value={groupId} onChange={e=>{setGroupId(e.target.value);setSelected(groups.find(g=>g.id===e.target.value)?.members||[])}}>{groups.map(g=><option value={g.id} key={g.id}>{g.name}</option>)}</select><label>Split type</label><select value={splitMode} onChange={e=>setSplitMode(e.target.value as "equal"|"exact"|"percent")}><option value="equal">Equally</option><option value="exact">Exact amounts</option><option value="percent">Percentages</option></select><label>{splitMode==="equal"?"Split equally between":splitMode==="exact"?"Share amount for each person (₹)":"Share percentage for each person (%)"}</label><div className="checks">{people.map(p=><label className="check" key={p.id}><input type="checkbox" checked={selected.includes(p.id)} onChange={e=>setSelected(e.target.checked?[...selected,p.id]:selected.filter(id=>id!==p.id))}/>{p.name}{splitMode!=="equal"&&<input className="share-input" type="number" min="0" value={shares[p.id]||""} placeholder={splitMode==="percent"?"%":"₹"} onChange={e=>setShares({...shares,[p.id]:e.target.value})}/>}</label>)}</div><p className="muted">{splitMode==="equal"?"Each selected person gets an equal share.":splitMode==="exact"?"Exact shares must add up to the expense total.":"Percentages must add up to 100%."} Saved on this device.</p><button className="save" onClick={saveExpense}><Check/> Save expense</button></>}
  {modal==="invite"&&<><label>Group</label><select value={inviteGroupId||""} onChange={e=>setInviteGroupId(e.target.value)}>{groups.map(g=><option key={g.id} value={g.id}>{g.name}</option>)}</select><label>Friend's email</label><input type="email" value={inviteEmail} onChange={e=>setInviteEmail(e.target.value)} placeholder="friend@example.com"/><p className="muted">They can accept this invitation when they log in with this email.</p><button className="save" onClick={sendInvite}>Send invitation</button></>}{modal==="friend"&&<><label>Friend's name</label><input value={friendName} onChange={e=>setFriendName(e.target.value)} placeholder="Name"/><label>Email (optional)</label><input type="email" value={friendEmail} onChange={e=>setFriendEmail(e.target.value)} placeholder="friend@example.com"/><p className="muted">Add an email so this friend can be linked to their account later.</p><button className="save" onClick={saveFriend}>{editingId?"Save changes":"Add friend"}</button></>}
  {modal==="group"&&<><label>Group name</label><input value={groupName} onChange={e=>setGroupName(e.target.value)} placeholder="e.g. Weekend trip"/><label>Members</label><div className="checks">{people.map(p=><label className="check" key={p.id}><input type="checkbox" checked={groupMembers.includes(p.id)} onChange={e=>setGroupMembers(e.target.checked?[...groupMembers,p.id]:groupMembers.filter(id=>id!==p.id))}/>{p.name}</label>)}</div><p className="muted">Choose who belongs to this group. Existing expenses are preserved when you edit membership.</p><button className="save" onClick={addGroup}>{editingGroupId?"Save group":"Create group"}</button></>}
- {modal==="auth"&&(user?<><div className="tile"><span className="friend">{accountName[0]?.toUpperCase()||"Y"}</span><div className="grow"><b>{accountName}</b><p>{user.email}</p></div></div><p className="muted">Your Splitwise account is connected. Cloud data sync is enabled.</p><button className="save" onClick={signOut}><LogOut size={18}/> Log out</button></>:<><label>{authMode==="signup"?"Your name":"Email"}</label>{authMode==="signup"&&<input value={authName} onChange={e=>setAuthName(e.target.value)} placeholder="Your name" autoComplete="name"/>}<input type="email" value={authEmail} onChange={e=>setAuthEmail(e.target.value)} placeholder="you@example.com" autoComplete="email"/>{authMode!=="reset"&&<><label>Password</label><input type="password" value={authPassword} onChange={e=>setAuthPassword(e.target.value)} placeholder="At least 6 characters" autoComplete={authMode==="signup"?"new-password":"current-password"}/></>}<p className="muted">{authMessage|| (authMode==="signup"?"Create an account to sync your Splitwise data in the cloud.":"Sign in to your Splitwise account.")}</p><button className="save" onClick={submitAuth} disabled={authBusy}>{authBusy?"Please wait…":authMode==="signup"?"Create account":authMode==="reset"?"Send reset link":"Log in"}</button><button className="link" onClick={()=>{setAuthMessage("");setAuthMode(authMode==="login"?"signup":"login")}}>{authMode==="login"?"Create a new account":authMode==="signup"?"Already have an account? Log in":"Back to login"}</button>{authMode==="login"&&<button className="link" onClick={()=>{setAuthMessage("");setAuthMode("reset")}}>Forgot password?</button>}</>)}
+ {modal==="auth"&&(user?<><div className="tile"><span className="friend">{accountName[0]?.toUpperCase()||"Y"}</span><div className="grow"><b>{accountName}</b><p>{user.email}</p></div></div><p className="muted">Your ShiWise account is connected. Cloud data sync is enabled.</p><button className="save" onClick={signOut}><LogOut size={18}/> Log out</button></>:<><label>{authMode==="signup"?"Your name":"Email"}</label>{authMode==="signup"&&<input value={authName} onChange={e=>setAuthName(e.target.value)} placeholder="Your name" autoComplete="name"/>}<input type="email" value={authEmail} onChange={e=>setAuthEmail(e.target.value)} placeholder="you@example.com" autoComplete="email"/>{authMode!=="reset"&&<><label>Password</label><input type="password" value={authPassword} onChange={e=>setAuthPassword(e.target.value)} placeholder="At least 6 characters" autoComplete={authMode==="signup"?"new-password":"current-password"}/></>}<p className="muted">{authMessage|| (authMode==="signup"?"Create an account to sync your ShiWise data in the cloud.":"Sign in to your ShiWise account.")}</p><button className="save" onClick={submitAuth} disabled={authBusy}>{authBusy?"Please wait…":authMode==="signup"?"Create account":authMode==="reset"?"Send reset link":"Log in"}</button><button className="link" onClick={()=>{setAuthMessage("");setAuthMode(authMode==="login"?"signup":"login")}}>{authMode==="login"?"Create a new account":authMode==="signup"?"Already have an account? Log in":"Back to login"}</button>{authMode==="login"&&<button className="link" onClick={()=>{setAuthMessage("");setAuthMode("reset")}}>Forgot password?</button>}</>)}
  {modal==="settle"&&<><label>From</label><select value={settleFrom} onChange={e=>setSettleFrom(e.target.value)}>{people.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</select><label>To</label><select value={settleTo} onChange={e=>setSettleTo(e.target.value)}>{people.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</select><label>Amount (₹)</label><input type="number" min="0" value={amount} onChange={e=>setAmount(e.target.value)}/><button className="save" onClick={settle}><Check/> Record payment</button></>}
  </section></div>}</div>
 }
