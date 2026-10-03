@@ -189,6 +189,7 @@ export default function App(){
   const g=groups.find(x=>x.sharedGroupId===sharedId);
   if(!g)return;
   const nextPeople=[...people];
+  const aliases:Record<string,string>={};
   rows.forEach((r:any)=>{
    const uid=String(r.user_id);
    const email=String(r.email||"").trim().toLowerCase();
@@ -208,9 +209,23 @@ export default function App(){
     if(sameUser||sameEmail)nextPeople.splice(i,1);
    }
   });
+  const nextGroups=groups.map(x=>({
+   ...x,
+   members:Array.from(new Set(x.members.map(id=>aliases[id]||id))),
+   updatedAt:Object.keys(aliases).length?Date.now():x.updatedAt
+  }));
+  const nextExpenses=expenses.map(e=>({
+   ...e,
+   paidBy:aliases[e.paidBy]||e.paidBy,
+   people:Array.from(new Set(e.people.map(id=>aliases[id]||id))),
+   shares:e.shares?Object.fromEntries(Object.entries(e.shares).map(([id,v])=>[aliases[id]||id,v])):e.shares
+  }));
+  const nextPayments=payments.map(p=>({...p,from:aliases[p.from]||p.from,to:aliases[p.to]||p.to}));
   setPeople(nextPeople);persist("people",nextPeople);
+  setGroups(nextGroups);persist("groups",nextGroups);
+  setExpenses(nextExpenses);persist("expenses",nextExpenses);
+  setPayments(nextPayments);persist("payments",nextPayments);
   const linked=rows.map((r:any)=>nextPeople.find(p=>p.userId===String(r.user_id))?.id||`shared-${r.user_id}`);
-  const nextGroups=groups.map(x=>x.id===g.id?{...x,members:Array.from(new Set(linked)),updatedAt:Date.now()}:x);
   setGroups(nextGroups);persist("groups",nextGroups);
  };
  const loadSharedMembers=async(sharedId:string)=>{
