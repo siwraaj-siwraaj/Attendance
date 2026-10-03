@@ -227,7 +227,15 @@ export default function App(){
   setPayments(nextPayments);persist("payments",nextPayments);
   const linked=rows.map((r:any)=>nextPeople.find(p=>p.userId===String(r.user_id))?.id||`shared-${r.user_id}`);
   const linkedSet=new Set(linked);
-  const updatedGroups=nextGroups.map(x=>x.sharedGroupId===sharedId?{...x,members:Array.from(linkedSet),updatedAt:Date.now()}:x);
+  const sharedUserIds=new Set(rows.map((r:any)=>String(r.user_id)));
+  const updatedGroups=nextGroups.map(x=>{
+   if(x.sharedGroupId!==sharedId)return x;
+   const localOnly=x.members.filter(id=>{
+    const p=nextPeople.find(person=>person.id===id);
+    return !p?.userId;
+   });
+   return {...x,members:Array.from(new Set([...localOnly,...linkedSet])),updatedAt:Date.now()};
+  });
   setGroups(updatedGroups);persist("groups",updatedGroups);
  };
  const loadSharedMembers=async(sharedId:string)=>{
