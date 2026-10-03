@@ -279,17 +279,29 @@ export default function App(){
  const publishSharedExpense=async(e:Expense)=>{
   const g=groups.find(x=>x.id===e.groupId);
   if(!user||!g?.sharedGroupId)return;
-  const {data:members,error:memberError}=await supabase.from("shared_group_members").select("user_id").eq("group_id",g.sharedGroupId);
+  const {data:members,error:memberError}=await supabase.from("shared_group_members").select("user_id,email,display_name").eq("group_id",g.sharedGroupId);
   if(memberError){alert(memberError.message||"Could not load shared members.");return false;}
-  const memberIds=new Set((members||[]).map((m:any)=>String(m.user_id)));
-  const localToUser=new Map(people.filter(p=>p.userId).map(p=>[p.id,p.userId!] as const));
+  const memberRows=members||[];
+  const memberIds=new Set(memberRows.map((m:any)=>String(m.user_id)));
+  const localToUser=new Map<string,string>();
+  people.forEach(p=>{if(p.userId)localToUser.set(p.id,p.userId);});
   localToUser.set("you",user.id);
-  const payerUid=localToUser.get(e.paidBy);
-  const participantUids=e.people.map(id=>localToUser.get(id)).filter(Boolean) as string[];
+  const emailToUser=new Map<string,string>();
+  memberRows.forEach((m:any)=>{const email=String(m.email||"").trim().toLowerCase();if(email)emailToUser.set(email,String(m.user_id));});
+  const resolveUserId=(id:string)=>{
+   const direct=localToUser.get(id);
+   if(direct)return direct;
+   const person=people.find(p=>p.id===id);
+   const email=String(person?.email||"").trim().toLowerCase();
+   return email?emailToUser.get(email):undefined;
+  };
+  const payerUid=resolveUserId(e.paidBy);
+  const participantUids=e.people.map(resolveUserId).filter(Boolean) as string[];
   if(!payerUid||!memberIds.has(payerUid)||participantUids.length!==e.people.length||participantUids.some(uid=>!memberIds.has(uid))){
-   alert("Every person in a shared expense must be a member of the shared group.");
+   alert("Every person in a shared expense must be a member of the shared group. Add/accept the friend in the shared group first.");
    return false;
-  }  const sharesUserIds=e.shares?Object.fromEntries(Object.entries(e.shares).map(([id,v])=>[localToUser.get(id)||id,v])):{};
+  }
+  const sharesUserIds=e.shares?Object.fromEntries(Object.entries(e.shares).map(([id,v])=>[resolveUserId(id)||id,v])):{};
   const {error}=await supabase.from("shared_group_expenses").upsert({
    expense_id:e.id,group_id:g.sharedGroupId,title:e.title,amount:e.amount,paid_by:e.paidBy,
    people:e.people,paid_by_user_id:payerUid,people_user_ids:participantUids,shares_user_ids:sharesUserIds,
