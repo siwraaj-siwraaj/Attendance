@@ -297,11 +297,19 @@ export default function App(){
   };
   const payerUid=resolveUserId(e.paidBy);
   const participantUids=e.people.map(resolveUserId).filter(Boolean) as string[];
-  if(!payerUid||!memberIds.has(payerUid)||participantUids.length!==e.people.length||participantUids.some(uid=>!memberIds.has(uid))){
-   alert("Every person in a shared expense must be a member of the shared group. Add/accept the friend in the shared group first.");
+  // A shared expense can include a local-only friend from the owner's group.
+  // Only people who have a ShiWise account are required to be members of the
+  // Supabase shared group; local-only friends remain represented by their
+  // local person ID in the expense.
+  const unresolvedParticipants=e.people.filter(id=>!resolveUserId(id));
+  if(!payerUid||!memberIds.has(payerUid)||participantUids.some(uid=>!memberIds.has(uid))){
+   alert("The payer and any connected ShiWise account in a shared expense must belong to the shared group.");
    return false;
   }
-  const sharesUserIds=e.shares?Object.fromEntries(Object.entries(e.shares).map(([id,v])=>[resolveUserId(id)||id,v])):{};
+  const sharesUserIds=e.shares?Object.fromEntries(Object.entries(e.shares).map(([id,v])=>{
+   const uid=resolveUserId(id);
+   return [uid||id,v];
+  })):{};
   const {error}=await supabase.from("shared_group_expenses").upsert({
    expense_id:e.id,group_id:g.sharedGroupId,title:e.title,amount:e.amount,paid_by:e.paidBy,
    people:e.people,paid_by_user_id:payerUid,people_user_ids:participantUids,shares_user_ids:sharesUserIds,
