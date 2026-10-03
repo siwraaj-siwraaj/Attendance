@@ -381,7 +381,45 @@ export default function App(){
  const editFriend=(p:Person)=>{setEditingId(p.id);setFriendName(p.name);setFriendEmail(p.email||"");setModal("friend");};
  const deleteFriend=(id:string)=>{if(id==="you")return;const p=people.find(x=>x.id===id);if(!p)return;if(!confirm(`Delete ${p.name}? Existing expenses will remain in history.`))return;const next=people.filter(x=>x.id!==id);setPeople(next);persist("people",next);markDeleted("people",id);cloudSync({people:next,deleted:{...deleted,people:Array.from(new Set([...deleted.people,id]))}});};
  const openGroup=(g?:Group)=>{setEditingGroupId(g?.id||null);setGroupName(g?.name||"");setGroupMembers(g?[...g.members]:people.map(p=>p.id));setModal("group");};
- const addGroup=async()=>{const name=groupName.trim();if(!name||groupMembers.length===0)return;const now=Date.now();let next:Group[]=editingGroupId?groups.map(g=>g.id===editingGroupId?{...g,name,members:groupMembers,updatedAt:now}:g):[...groups,{id:crypto.randomUUID(),name,members:groupMembers,updatedAt:now}];const target=editingGroupId?next.find(g=>g.id===editingGroupId):next[next.length-1];if(user&&target&&!target.sharedGroupId){const connectedIds=Array.from(new Set(groupMembers.map(id=>people.find(p=>p.id===id)?.userId).filter((id):id is string=>Boolean(id))));if(connectedIds.length){const {data,error}=await supabase.from("shared_groups").insert({owner_id:user.id,name}).select("id").single();if(error){alert(error.message||"Could not create shared group.");return;}const sharedId=data.id;const rows=[{group_id:sharedId,user_id:user.id,role:"owner",display_name:accountName,email:String(user.email||"").toLowerCase()}];for(const uid of connectedIds){if(uid===user.id)continue;const p=people.find(x=>x.userId===uid);rows.push({group_id:sharedId,user_id:uid,role:"member",display_name:p?.name||"Friend",email:p?.email||""});}const {error:memberError}=await supabase.from("shared_group_members").insert(rows);if(memberError){alert(memberError.message||"Could not add shared group members.");return;}next=next.map(g=>g.id===target.id?{...g,sharedGroupId:sharedId,updatedAt:Date.now()}:g);}}else if(user&&target?.sharedGroupId){const sharedId=target.sharedGroupId;const connectedIds=Array.from(new Set(groupMembers.map(id=>people.find(p=>p.id===id)?.userId).filter((id):id is string=>Boolean(id)))).filter(id=>id!==user.id);const {data:existingRows,error:loadError}=await supabase.from("shared_group_members").select("user_id").eq("group_id",sharedId);if(loadError){alert(loadError.message||"Could not load current group members.");return;}const existingIds=new Set((existingRows||[]).map((row:any)=>String(row.user_id)));const addIds=connectedIds.filter(id=>!existingIds.has(id));const removeIds=Array.from(existingIds).filter(id=>id!==user.id&&!connectedIds.includes(id));if(addIds.length){const rows=addIds.map(uid=>{const p=people.find(x=>x.userId===uid);return {group_id:sharedId,user_id:uid,role:"member",display_name:p?.name||"Friend",email:p?.email||""};});const {error}=await supabase.from("shared_group_members").insert(rows);if(error){alert(error.message||"Could not add group members.");return;}}for(const uid of removeIds){const {error}=await supabase.from("shared_group_members").delete().eq("group_id",sharedId).eq("user_id",uid);if(error){alert(error.message||"Could not remove a group member.");return;}}await loadSharedMembers(sharedId);next=next.map(g=>g.id===target.id?{...g,updatedAt:Date.now()}:g);}}setGroups(next);persist("groups",next);await cloudSync({groups:next});setGroupName("");setEditingGroupId(null);setGroupMembers([]);setModal(null);};
+
+ const addGroup=async()=>{
+  const name=groupName.trim();
+  if(!name||groupMembers.length===0)return;
+  const now=Date.now();
+  let next:Group[]=editingGroupId?groups.map(g=>g.id===editingGroupId?{...g,name,members:groupMembers,updatedAt:now}:g):[...groups,{id:crypto.randomUUID(),name,members:groupMembers,updatedAt:now}];
+  const target=editingGroupId?next.find(g=>g.id===editingGroupId):next[next.length-1];
+  if(user&&target&&!target.sharedGroupId){
+   const connectedIds=Array.from(new Set(groupMembers.map(id=>people.find(p=>p.id===id)?.userId).filter(Boolean))) as string[];
+   if(connectedIds.length){
+    const {data,error}=await supabase.from("shared_groups").insert({owner_id:user.id,name}).select("id").single();
+    if(error){alert(error.message||"Could not create shared group.");return;}
+    const sharedId=data.id;
+    const rows:any[]=[{group_id:sharedId,user_id:user.id,role:"owner",display_name:accountName,email:String(user.email||"").toLowerCase()}];
+    connectedIds.filter(uid=>uid!==user.id).forEach(uid=>{const p=people.find(x=>x.userId===uid);rows.push({group_id:sharedId,user_id:uid,role:"member",display_name:p?.name||"Friend",email:p?.email||""});});
+    const {error:memberError}=await supabase.from("shared_group_members").insert(rows);
+    if(memberError){alert(memberError.message||"Could not add shared group members.");return;}
+    next=next.map(g=>g.id===target.id?{...g,sharedGroupId:sharedId,updatedAt:Date.now()}:g);
+   }
+  }else if(user&&target?.sharedGroupId){
+   const sharedId=target.sharedGroupId;
+   const connectedIds=Array.from(new Set(groupMembers.map(id=>people.find(p=>p.id===id)?.userId).filter(Boolean))) as string[];
+   const memberIds=connectedIds.filter(uid=>uid!==user.id);
+   const {data:existingRows,error:loadError}=await supabase.from("shared_group_members").select("user_id").eq("group_id",sharedId);
+   if(loadError){alert(loadError.message||"Could not load current group members.");return;}
+   const existingIds=new Set((existingRows||[]).map((row:any)=>String(row.user_id)));
+   const addIds=memberIds.filter(uid=>!existingIds.has(uid));
+   const removeIds=Array.from(existingIds).filter(uid=>uid!==user.id&&!memberIds.includes(uid));
+   if(addIds.length){
+    const rows:any[]=addIds.map(uid=>{const p=people.find(x=>x.userId===uid);return {group_id:sharedId,user_id:uid,role:"member",display_name:p?.name||"Friend",email:p?.email||""};});
+    const {error}=await supabase.from("shared_group_members").insert(rows);
+    if(error){alert(error.message||"Could not add group members.");return;}
+   }
+   for(const uid of removeIds){const {error}=await supabase.from("shared_group_members").delete().eq("group_id",sharedId).eq("user_id",uid);if(error){alert(error.message||"Could not remove a group member.");return;}}
+   await loadSharedMembers(sharedId);
+   next=next.map(g=>g.id===target.id?{...g,updatedAt:Date.now()}:g);
+  }
+  setGroups(next);persist("groups",next);await cloudSync({groups:next});setGroupName("");setEditingGroupId(null);setGroupMembers([]);setModal(null);
+ };
  const deleteGroup=(id:string)=>{if(groups.length<=1){alert("Keep at least one group.");return;}if(!confirm("Delete this group? Existing expenses will remain in history."))return;const next=groups.filter(g=>g.id!==id);setGroups(next);persist("groups",next);markDeleted("groups",id);cloudSync({groups:next,deleted:{...deleted,groups:Array.from(new Set([...deleted.groups,id]))}});};
  const settle=()=>{const n=Number(amount);if(!Number.isFinite(n)||n<=0||settleFrom===settleTo)return;const next=[{id:crypto.randomUUID(),from:settleFrom,to:settleTo,amount:n,createdAt:Date.now(),updatedAt:Date.now()},...payments];setPayments(next);persist("payments",next);cloudSync({payments:next});setAmount("");setModal(null);};
  const removePayment=(id:string)=>{if(!confirm("Remove this settlement record? This reverses its effect on balances."))return;const next=payments.filter(p=>p.id!==id);setPayments(next);persist("payments",next);cloudSync({payments:next});};
