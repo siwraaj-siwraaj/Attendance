@@ -17,6 +17,7 @@ import android.appwidget.AppWidgetProvider;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.content.SharedPreferences;
 import android.widget.RemoteViews;
 import org.json.JSONObject;
@@ -26,7 +27,7 @@ public abstract class ShiWiseWidgetBase extends AppWidgetProvider{
  protected abstract void bind(RemoteViews v,JSONObject d);
  protected static String money(double n){return String.format(Locale.US,"₹%,.2f",n);}
  protected JSONObject snapshot(Context c){try{SharedPreferences p=c.getSharedPreferences("CapacitorStorage",Context.MODE_PRIVATE);return new JSONObject(p.getString("widget_snapshot","{}"));}catch(Exception e){return new JSONObject();}}
- @Override public void onUpdate(Context c,AppWidgetManager m,int[] ids){for(int id:ids){RemoteViews v=new RemoteViews(c.getPackageName(),layoutId());try{bind(v,snapshot(c));}catch(Exception ignored){} Intent i=new Intent(c,MainActivity.class);i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_CLEAR_TOP);PendingIntent pi=PendingIntent.getActivity(c,0,i,PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);v.setOnClickPendingIntent(R.id.widget_root,pi);m.updateAppWidget(id,v);}}
+ @Override public void onUpdate(Context c,AppWidgetManager m,int[] ids){for(int id:ids){RemoteViews v=new RemoteViews(c.getPackageName(),layoutId());try{bind(v,snapshot(c));}catch(Exception ignored){} Intent i=new Intent(c,MainActivity.class);if(this instanceof QuickAddWidgetProvider)i.setData(Uri.parse("shiwise://quick-add"));i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_CLEAR_TOP);PendingIntent pi=PendingIntent.getActivity(c,0,i,PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);v.setOnClickPendingIntent(R.id.widget_root,pi);m.updateAppWidget(id,v);}}
  public static void refreshAll(Context c){AppWidgetManager m=AppWidgetManager.getInstance(c);Class<?>[] p={BalanceWidgetProvider.class,GroupsWidgetProvider.class,RecentExpensesWidgetProvider.class,TripWidgetProvider.class,QuickAddWidgetProvider.class};for(Class<?> x:p){ComponentName n=new ComponentName(c,x);int[] ids=m.getAppWidgetIds(n);if(ids.length>0)c.sendBroadcast(new Intent(AppWidgetManager.ACTION_APPWIDGET_UPDATE).setComponent(n).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS,ids));}}
 }`,
 "BalanceWidgetProvider.java":`package com.siwraaj.shiwise;
