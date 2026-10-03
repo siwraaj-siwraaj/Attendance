@@ -5,6 +5,10 @@ const javaDir=path.join(root,"java/com/siwraaj/shiwise");
 const res=path.join(root,"res");
 const values=path.join(res,"values"), xml=path.join(res,"xml"), layout=path.join(res,"layout"), drawable=path.join(res,"drawable");
 for(const d of [javaDir,values,xml,layout,drawable]) fs.mkdirSync(d,{recursive:true});
+const iconSource=path.resolve("../frontend/public/assets/1790986439376.png");
+const iconTarget=path.join(res,"drawable-nodpi","shiwise_icon.png");
+fs.mkdirSync(path.dirname(iconTarget),{recursive:true});
+if(fs.existsSync(iconSource)) fs.copyFileSync(iconSource,iconTarget);
 const javaFiles={
 "ShiWiseWidgetBase.java":`package com.siwraaj.shiwise;
 import android.app.PendingIntent;
@@ -59,5 +63,5 @@ for(const n of Object.keys(layouts)){const value="wrap_content";fs.writeFileSync
 fs.writeFileSync(path.join(drawable,"widget_bg.xml"),'<shape xmlns:android="http://schemas.android.com/apk/res/android"><corners android:radius="20dp"/><solid android:color="#FFFFFFFF"/><stroke android:width="1dp" android:color="#FFE4EBE7"/></shape>');
 for(const n of Object.keys(layouts))fs.writeFileSync(path.join(xml,"widget_"+n+"_info.xml"),'<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android" android:minWidth="180dp" android:minHeight="100dp" android:updatePeriodMillis="0" android:initialLayout="@layout/widget_'+n+'" android:resizeMode="horizontal|vertical" android:widgetCategory="home_screen"/>');
 const strings=path.join(values,"strings.xml");let sc=fs.existsSync(strings)?fs.readFileSync(strings,"utf8"):"<resources></resources>";if(!sc.includes("splitwise_widget_name"))sc=sc.replace("</resources>",'<string name="splitwise_widget_name">ShiWise</string></resources>');fs.writeFileSync(strings,sc);
-const manifestPath=path.join(root,"AndroidManifest.xml");let manifest=fs.readFileSync(manifestPath,"utf8");const receivers=[["BalanceWidgetProvider","balance"],["GroupsWidgetProvider","groups"],["RecentExpensesWidgetProvider","recent"],["TripWidgetProvider","trip"],["QuickAddWidgetProvider","quick_add"]].map(x=>'<receiver android:name=".'+x[0]+'" android:exported="true"><intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"/></intent-filter><meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_'+x[1]+'_info"/></receiver>').join("");if(!manifest.includes("BalanceWidgetProvider"))manifest=manifest.replace("</application>",receivers+"</application>");fs.writeFileSync(manifestPath,manifest);
+const manifestPath=path.join(root,"AndroidManifest.xml");let manifest=fs.readFileSync(manifestPath,"utf8");manifest=manifest.replace(/android:icon="@mipmap\/ic_launcher"/,'android:icon="@drawable/shiwise_icon"');const receivers=[["BalanceWidgetProvider","balance"],["GroupsWidgetProvider","groups"],["RecentExpensesWidgetProvider","recent"],["TripWidgetProvider","trip"],["QuickAddWidgetProvider","quick_add"]].map(x=>'<receiver android:name=".'+x[0]+'" android:exported="true"><intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"/></intent-filter><meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_'+x[1]+'_info"/></receiver>').join("");if(!manifest.includes("BalanceWidgetProvider"))manifest=manifest.replace("</application>",receivers+"</application>");fs.writeFileSync(manifestPath,manifest);
 console.log("Android widgets installed");
