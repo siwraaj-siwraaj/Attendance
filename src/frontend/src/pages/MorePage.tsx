@@ -1,5 +1,6 @@
 import { useRef, useState, type ReactNode } from "react";
 import * as XLSX from "xlsx";
+import { FileSharer } from "@capgo/capacitor-file-sharer";
 import { ChevronRight, FileText, KeyRound, LogOut, Settings, ShieldCheck, Upload, UserCircle } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import { markBackupDownloaded } from "../hooks/useAutoBackupReminder";
@@ -23,36 +24,64 @@ export default function MorePage() {
   const profileName = name?.trim() || username?.trim() || "User";
   const profileInitial = profileName.charAt(0).toUpperCase();
 
-  const handleExportCSV = async () => {
+  const textToBase64 = (value: string) => {
+    const bytes = new TextEncoder().encode(value);
+    let binary = "";
+    const chunkSize = 0x8000;
+    for (let i = 0; i < bytes.length; i += chunkSize) {
+      binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+    }
+    return btoa(binary);
+  };
+
+  const saveExportFile = async (filename: string, contentType: string, base64Data: string) => {
+    await FileSharer.save({
+      filename,
+      contentType,
+      base64Data,
+      android: { saveDirectory: "downloads", relativePath: "Download/ShiWise" },
+    });
     markBackupDownloaded();
+  };
+
+  const handleExportCSV = async () => {
     try {
       const json = safeParse<any>(await exportData() as string);
       const rows: string[][] = [["Contracts"],["ID","Name","Multiplier","ContractAmount","MachineExpenses","BedAmount","PaperAmount","MeshAmount","Settled"]];
-      for (const c of json.contracts || []) rows.push([String(c.id),c.name,String(c.multiplier),String(c.contractAmount),String(c.machineExpenses),String(c.bedAmount),String(c.paperAmount),String(c.meshAmount),String(c.settled)]);
+      for (const contract of json.contracts || []) rows.push([String(contract.id),contract.name,String(contract.multiplier),String(contract.contractAmount),String(contract.machineExpenses),String(contract.bedAmount),String(contract.paperAmount),String(contract.meshAmount),String(contract.settled)]);
       rows.push([],["Labours"],["ID","Name"]);
-      for (const l of json.labours || []) rows.push([String(l.id),l.name]);
+      for (const labour of json.labours || []) rows.push([String(labour.id),labour.name]);
       rows.push([],["Advances"],["ID","ContractID","LabourID","Amount","Note"]);
-      for (const a of json.advances || []) rows.push([String(a.id),String(a.contractId),String(a.labourId),String(a.amount),a.note]);
+      for (const advance of json.advances || []) rows.push([String(advance.id),String(advance.contractId),String(advance.labourId),String(advance.amount),advance.note]);
       rows.push([],["Attendance"],["ContractID","LabourID","ColumnID","ValueKind","Value"]);
-      for (const r of json.attendance || []) { const kind=r.value?.__kind__; rows.push([String(r.contractId),String(r.labourId),r.columnId,kind,kind==="partial"?String(r.value?.partial??""):kind]); }
-      const csv=rows.map(r=>r.map(cell=>`"${String(cell).replace(/"/g,'""')}"`).join(",")).join("\n");
-      const a=document.createElement("a"); const url=URL.createObjectURL(new Blob([csv],{type:"text/csv"})); a.href=url; a.download=`rossie-export-${new Date().toISOString().slice(0,10)}.csv`; a.click(); URL.revokeObjectURL(url);
-    } catch {}
+      for (const record of json.attendance || []) {
+        const kind = record.value?.__kind__;
+        rows.push([String(record.contractId),String(record.labourId),record.columnId,kind,kind === "partial" ? String(record.value?.partial ?? "") : kind]);
+      }
+      const csv = rows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g,'""')}"`).join(",")).join("\n");
+      await saveExportFile(`shiwise-backup-${new Date().toISOString().slice(0,10)}.csv`, "text/csv", textToBase64(csv));
+    } catch (error) {
+      console.error("ShiWise CSV export failed", error);
+      window.alert("Export failed. Please try again.");
+    }
   };
 
   const handleExportExcel = async () => {
-    markBackupDownloaded();
     try {
-      const json=safeParse<any>(await exportData() as string);
-      const contractMap=new Map<string,string>((json.contracts||[]).map((c:any)=>[String(c.id),c.name||""]));
-      const labourMap=new Map<string,string>((json.labours||[]).map((l:any)=>[String(l.id),l.name||""]));
+      const json = safeParse<any>(await exportData() as string);
+      const contractMap=new Map<string,string>((json.contracts||[]).map((contract:any)=>[String(contract.id),contract.name||""]));
+      const labourMap=new Map<string,string>((json.labours||[]).map((labour:any)=>[String(labour.id),labour.name||""]));
       const wb=XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([["Contract Name","Multiplier","Contract Amount","Bed Amount","Paper Amount","Mesh Amount","Machine Expenses"],...(json.contracts||[]).map((c:any)=>[c.name||"",c.multiplier??"",c.contractAmount??"",c.bedAmount??"",c.paperAmount??"",c.meshAmount??"",c.machineExpenses??""])]),"Contracts");
-      XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([["Name","Employee ID","Join Date","Status"],...(json.labours||[]).map((l:any)=>[l.name||"",l.employeeId||"",l.joinDate||"",l.active===false?"Inactive":"Active"])]),"Labours");
-      XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([["Labour Name","Contract Name","Amount","Note","Cleared"],...(json.advances||[]).map((a:any)=>[labourMap.get(String(a.labourId))||String(a.labourId),contractMap.get(String(a.contractId))||String(a.contractId),a.amount??"",a.note||"",a.cleared?"Yes":"No"])]),"Advances");
-      XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([["Contract Name","Labour Name","Column Name","Value"],...(json.attendance||[]).map((r:any)=>{const k=r.value?.__kind__; return [contractMap.get(String(r.contractId))||String(r.contractId),labourMap.get(String(r.labourId))||String(r.labourId),r.columnId||"",k==="partial"?String(r.value?.partial??""):k||""]})]),"Attendance");
-      XLSX.writeFile(wb,`rossie-export-${new Date().toISOString().slice(0,10)}.xlsx`);
-    } catch {}
+      XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([["Contract Name","Multiplier","Contract Amount","Bed Amount","Paper Amount","Mesh Amount","Machine Expenses"],...(json.contracts||[]).map((contract:any)=>[contract.name||"",contract.multiplier??"",contract.contractAmount??"",contract.bedAmount??"",contract.paperAmount??"",contract.meshAmount??"",contract.machineExpenses??""])]),"Contracts");
+      XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([["Name","Employee ID","Join Date","Status"],...(json.labours||[]).map((labour:any)=>[labour.name||"",labour.employeeId||"",labour.joinDate||"",labour.active===false?"Inactive":"Active"])]),"Labours");
+      XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([["Labour Name","Contract Name","Amount","Note","Cleared"],...(json.advances||[]).map((advance:any)=>[labourMap.get(String(advance.labourId))||String(advance.labourId),contractMap.get(String(advance.contractId))||String(advance.contractId),advance.amount??"",advance.note||"",advance.cleared?"Yes":"No"])]),"Advances");
+      XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([["Contract Name","Labour Name","Column Name","Value"],...(json.attendance||[]).map((record:any)=>{const kind=record.value?.__kind__;return [contractMap.get(String(record.contractId))||String(record.contractId),labourMap.get(String(record.labourId))||String(record.labourId),record.columnId||"",kind==="partial"?String(record.value?.partial??""):kind||""]})]),"Attendance");
+      const base64 = XLSX.write(wb,{bookType:"xlsx",type:"base64"});
+      await saveExportFile(`shiwise-backup-${new Date().toISOString().slice(0,10)}.xlsx`,"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",base64);
+    } catch (error) {
+      console.error("ShiWise Excel export failed", error);
+      window.alert("Export failed. Please try again.");
+    }
   };
 
   const handleImportCSV=(file:File)=>{
