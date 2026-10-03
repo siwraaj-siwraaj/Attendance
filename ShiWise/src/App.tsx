@@ -97,6 +97,7 @@ export default function App(){
 
  useEffect(()=>{if(user&&cloudReady)cloudSync();},[people,groups,expenses,payments,user,cloudReady,deleted]);
  useEffect(()=>{if(!user||!cloudReady){setInvitations([]);return;} let active=true; supabase.from("group_invitations").select("id,group_id,inviter_id,invitee_email,status,created_at").eq("status","pending").ilike("invitee_email",String(user.email||"")).neq("inviter_id",user.id).order("created_at",{ascending:false}).then(async({data,error})=>{if(!active)return;if(error){console.error("Invitation load failed:",error);setInvitations([]);return;}const rows=data||[];const ids=Array.from(new Set(rows.map((x:any)=>x.group_id)));let names:Record<string,string>={};if(ids.length){const {data:groupRows}=await supabase.from("shared_groups").select("id,name").in("id",ids);(groupRows||[]).forEach((g:any)=>{names[g.id]=g.name;});}if(active)setInvitations(rows.map((x:any)=>({...x,group_name:names[x.group_id]||"Shared group"})));});return()=>{active=false;};},[user,cloudReady]);
+ const currentEmailForPerson=(list:Person[],uid:string)=>String(list.find(p=>p.userId===uid)?.email||"").trim().toLowerCase();
  const syncAcceptedFriendInvitations=async(rows:any[])=>{
   if(!user)return;
   let changed=false;
@@ -108,15 +109,28 @@ export default function App(){
    const isInviter=inv.inviter_id===user.id;
    const name=String(isInviter?inv.invitee_name:inv.inviter_name||"Friend").trim()||"Friend";
    const email=String(isInviter?inv.invitee_email:"").trim().toLowerCase();
-   const idx=nextPeople.findIndex(p=>p.userId===otherId);
    const existingEmail=nextPeople.findIndex(p=>email&&p.email?.toLowerCase()===email);
-   const targetIndex=idx>=0?idx:existingEmail>=0?existingEmail:-1;
+   const idx=nextPeople.findIndex(p=>p.userId===otherId);
+   const targetIndex=existingEmail>=0?existingEmail:idx;
    if(targetIndex>=0){
     const current=nextPeople[targetIndex];
     if(current.userId!==otherId||current.name!==name||(email&&current.email!==email)){
      nextPeople[targetIndex]={...current,userId:otherId,name,...(email?{email}:{}),updatedAt:Date.now()};changed=true;
     }
+    for(let i=nextPeople.length-1;i>=0;i--){if(i!==targetIndex&&nextPeople[i].userId===otherId){nextPeople.splice(i,1);changed=true;}}
    }else{nextPeople.push({id:`friend-${otherId}`,name,userId:otherId,...(email?{email}:{}),updatedAt:Date.now()});changed=true;}
+   if(isInviter){
+    const localPerson=nextPeople.find(p=>p.userId===otherId);
+    if(localPerson){
+     for(const g of groups){
+      if(!g.sharedGroupId||!g.members.includes(localPerson.id))continue;
+      const {data:ownerRow}=await supabase.from("shared_group_members").select("user_id").eq("group_id",g.sharedGroupId).eq("user_id",user.id).eq("role","owner").maybeSingle();
+      if(!ownerRow)continue;
+      const {error:memberError}=await supabase.from("shared_group_members").upsert({group_id:g.sharedGroupId,user_id:otherId,role:"member",display_name:name,email:email||currentEmailForPerson(nextPeople,otherId)},{onConflict:"group_id,user_id"});
+      if(memberError)console.error("Accepted friend shared-group link failed:",memberError);
+     }
+    }
+   }
   }
   if(changed){setPeople(nextPeople);persist("people",nextPeople);await cloudSync({people:nextPeople});}
  };
@@ -124,7 +138,7 @@ export default function App(){
   if(!user||!cloudReady){setFriendInvitations([]);return;}
   let active=true;
   const loadFriendInvites=async()=>{
-   const {data,error}=await supabase.from("friend_invitations").select("id,inviter_id,invitee_email,invitee_id,status,created_at,responded_at,inviter_name,invitee_name").in("status",["pending","accepted"]).ilike("invitee_email",String(user.email||"")).neq("inviter_id",user.id).order("created_at",{ascending:false});
+   const {data,error}=await supabase.from("friend_invitations").select("id,inviter_id,invitee_email,invitee_id,status,created_at,responded_at,inviter_name,invitee_name").in("status",["pending","accepted"]).or("invitee_email.ilike."+String(user.email||"")+",inviter_id.eq."+user.id).order("created_at",{ascending:false});
    if(!active)return;
    if(error){console.error("Friend invitation load failed:",error);setFriendInvitations([]);return;}
    const rows=data||[];
