@@ -1,8 +1,8 @@
-name: Build Splitwise-style Android APK
+name: Build ShiWise Android APK
 on:
   push:
-    branches: [splitwise-pro-android]
-    paths: ['splitwise-pro/**', '.github/workflows/build-splitwise-apk.yml']
+    branches: [ShiWise-android]
+    paths: ['ShiWise/**', '.github/workflows/build-shiwise-apk.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: splitwise-pro
+        working-directory: ShiWise
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -27,9 +27,9 @@ jobs:
           distribution: temurin
           java-version: '21'
       - name: Build debug APK
-        working-directory: splitwise-pro/android
+        working-directory: ShiWise/android
         run: chmod +x gradlew && ./gradlew assembleDebug
       - uses: actions/upload-artifact@v4
         with:
-          name: Splitwise-style-debug-apk
-          path: splitwise-pro/android/app/build/outputs/apk/debug/app-debug.apk
+          name: ShiWise-debug-apk
+          path: ShiWise/android/app/build/outputs/apk/debug/app-debug.apk

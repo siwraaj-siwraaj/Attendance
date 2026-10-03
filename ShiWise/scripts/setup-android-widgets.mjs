@@ -1,12 +1,12 @@
 import fs from "node:fs";
 import path from "node:path";
 const root=path.resolve("android/app/src/main");
-const javaDir=path.join(root,"java/com/siwraaj/splitwisepro");
+const javaDir=path.join(root,"java/com/siwraaj/shiwise");
 const res=path.join(root,"res");
 const values=path.join(res,"values"), xml=path.join(res,"xml"), layout=path.join(res,"layout"), drawable=path.join(res,"drawable");
 for(const d of [javaDir,values,xml,layout,drawable]) fs.mkdirSync(d,{recursive:true});
 const javaFiles={
-"SplitwiseWidgetBase.java":`package com.siwraaj.splitwisepro;
+"ShiWiseWidgetBase.java":`package com.siwraaj.shiwise;
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
@@ -17,7 +17,7 @@ import android.content.SharedPreferences;
 import android.widget.RemoteViews;
 import org.json.JSONObject;
 import java.util.Locale;
-public abstract class SplitwiseWidgetBase extends AppWidgetProvider{
+public abstract class ShiWiseWidgetBase extends AppWidgetProvider{
  protected abstract int layoutId();
  protected abstract void bind(RemoteViews v,JSONObject d);
  protected static String money(double n){return String.format(Locale.US,"₹%,.2f",n);}
@@ -25,32 +25,32 @@ public abstract class SplitwiseWidgetBase extends AppWidgetProvider{
  @Override public void onUpdate(Context c,AppWidgetManager m,int[] ids){for(int id:ids){RemoteViews v=new RemoteViews(c.getPackageName(),layoutId());try{bind(v,snapshot(c));}catch(Exception ignored){} Intent i=new Intent(c,MainActivity.class);i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_CLEAR_TOP);PendingIntent pi=PendingIntent.getActivity(c,0,i,PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);v.setOnClickPendingIntent(R.id.widget_root,pi);m.updateAppWidget(id,v);}}
  public static void refreshAll(Context c){AppWidgetManager m=AppWidgetManager.getInstance(c);Class<?>[] p={BalanceWidgetProvider.class,GroupsWidgetProvider.class,RecentExpensesWidgetProvider.class,TripWidgetProvider.class,QuickAddWidgetProvider.class};for(Class<?> x:p){ComponentName n=new ComponentName(c,x);int[] ids=m.getAppWidgetIds(n);if(ids.length>0)c.sendBroadcast(new Intent(AppWidgetManager.ACTION_APPWIDGET_UPDATE).setComponent(n).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS,ids));}}
 }`,
-"BalanceWidgetProvider.java":`package com.siwraaj.splitwisepro;
+"BalanceWidgetProvider.java":`package com.siwraaj.shiwise;
 import android.widget.RemoteViews;
 import org.json.JSONObject;
-public class BalanceWidgetProvider extends SplitwiseWidgetBase{protected int layoutId(){return R.layout.widget_balance;}protected void bind(RemoteViews v,JSONObject d){double b=d.optDouble("balance",0);v.setTextViewText(R.id.widget_title,"Your balance");v.setTextViewText(R.id.widget_value,b>=0.005?"You are owed "+money(b):b<=-0.005?"You owe "+money(-b):"All settled");v.setTextViewText(R.id.widget_subtitle,"Tap to open ShiWise");}}
+public class BalanceWidgetProvider extends ShiWiseWidgetBase{protected int layoutId(){return R.layout.widget_balance;}protected void bind(RemoteViews v,JSONObject d){double b=d.optDouble("balance",0);v.setTextViewText(R.id.widget_title,"Your balance");v.setTextViewText(R.id.widget_value,b>=0.005?"You are owed "+money(b):b<=-0.005?"You owe "+money(-b):"All settled");v.setTextViewText(R.id.widget_subtitle,"Tap to open ShiWise");}}
 `,
-"GroupsWidgetProvider.java":`package com.siwraaj.splitwisepro;
+"GroupsWidgetProvider.java":`package com.siwraaj.shiwise;
 import android.widget.RemoteViews;
 import org.json.JSONArray;
 import org.json.JSONObject;
-public class GroupsWidgetProvider extends SplitwiseWidgetBase{protected int layoutId(){return R.layout.widget_groups;}protected void bind(RemoteViews v,JSONObject d){v.setTextViewText(R.id.widget_title,"Groups");JSONArray a=d.optJSONArray("groups");StringBuilder s=new StringBuilder();if(a!=null)for(int i=0;i<Math.min(4,a.length());i++){JSONObject g=a.optJSONObject(i);if(g!=null)s.append(g.optString("name","Group")).append("  ").append(money(g.optDouble("total",0))).append("\\n");}if(s.length()==0)s.append("No groups yet");v.setTextViewText(R.id.widget_value,s.toString().trim());v.setTextViewText(R.id.widget_subtitle,"Group expense totals");}}
+public class GroupsWidgetProvider extends ShiWiseWidgetBase{protected int layoutId(){return R.layout.widget_groups;}protected void bind(RemoteViews v,JSONObject d){v.setTextViewText(R.id.widget_title,"Groups");JSONArray a=d.optJSONArray("groups");StringBuilder s=new StringBuilder();if(a!=null)for(int i=0;i<Math.min(4,a.length());i++){JSONObject g=a.optJSONObject(i);if(g!=null)s.append(g.optString("name","Group")).append("  ").append(money(g.optDouble("total",0))).append("\\n");}if(s.length()==0)s.append("No groups yet");v.setTextViewText(R.id.widget_value,s.toString().trim());v.setTextViewText(R.id.widget_subtitle,"Group expense totals");}}
 `,
-"RecentExpensesWidgetProvider.java":`package com.siwraaj.splitwisepro;
+"RecentExpensesWidgetProvider.java":`package com.siwraaj.shiwise;
 import android.widget.RemoteViews;
 import org.json.JSONArray;
 import org.json.JSONObject;
-public class RecentExpensesWidgetProvider extends SplitwiseWidgetBase{protected int layoutId(){return R.layout.widget_recent;}protected void bind(RemoteViews v,JSONObject d){v.setTextViewText(R.id.widget_title,"Recent expenses");JSONArray a=d.optJSONArray("recent");StringBuilder s=new StringBuilder();if(a!=null)for(int i=0;i<Math.min(4,a.length());i++){JSONObject e=a.optJSONObject(i);if(e!=null)s.append(e.optString("title","Expense")).append("  ").append(money(e.optDouble("amount",0))).append("\\n");}if(s.length()==0)s.append("No expenses yet");v.setTextViewText(R.id.widget_value,s.toString().trim());v.setTextViewText(R.id.widget_subtitle,"Latest expenses");}}
+public class RecentExpensesWidgetProvider extends ShiWiseWidgetBase{protected int layoutId(){return R.layout.widget_recent;}protected void bind(RemoteViews v,JSONObject d){v.setTextViewText(R.id.widget_title,"Recent expenses");JSONArray a=d.optJSONArray("recent");StringBuilder s=new StringBuilder();if(a!=null)for(int i=0;i<Math.min(4,a.length());i++){JSONObject e=a.optJSONObject(i);if(e!=null)s.append(e.optString("title","Expense")).append("  ").append(money(e.optDouble("amount",0))).append("\\n");}if(s.length()==0)s.append("No expenses yet");v.setTextViewText(R.id.widget_value,s.toString().trim());v.setTextViewText(R.id.widget_subtitle,"Latest expenses");}}
 `,
-"TripWidgetProvider.java":`package com.siwraaj.splitwisepro;
+"TripWidgetProvider.java":`package com.siwraaj.shiwise;
 import android.widget.RemoteViews;
 import org.json.JSONObject;
-public class TripWidgetProvider extends SplitwiseWidgetBase{protected int layoutId(){return R.layout.widget_trip;}protected void bind(RemoteViews v,JSONObject d){JSONObject t=d.optJSONObject("trip");v.setTextViewText(R.id.widget_title,t==null?"Trip summary":t.optString("name","Trip summary"));v.setTextViewText(R.id.widget_value,t==null?"No trip data":money(t.optDouble("total",0)));v.setTextViewText(R.id.widget_subtitle,(t==null?0:t.optInt("expenses",0))+" expenses");}}
+public class TripWidgetProvider extends ShiWiseWidgetBase{protected int layoutId(){return R.layout.widget_trip;}protected void bind(RemoteViews v,JSONObject d){JSONObject t=d.optJSONObject("trip");v.setTextViewText(R.id.widget_title,t==null?"Trip summary":t.optString("name","Trip summary"));v.setTextViewText(R.id.widget_value,t==null?"No trip data":money(t.optDouble("total",0)));v.setTextViewText(R.id.widget_subtitle,(t==null?0:t.optInt("expenses",0))+" expenses");}}
 `,
-"QuickAddWidgetProvider.java":`package com.siwraaj.splitwisepro;
+"QuickAddWidgetProvider.java":`package com.siwraaj.shiwise;
 import android.widget.RemoteViews;
 import org.json.JSONObject;
-public class QuickAddWidgetProvider extends SplitwiseWidgetBase{protected int layoutId(){return R.layout.widget_quick_add;}protected void bind(RemoteViews v,JSONObject d){v.setTextViewText(R.id.widget_title,"Quick add");v.setTextViewText(R.id.widget_value,"＋ Add expense");v.setTextViewText(R.id.widget_subtitle,"Open ShiWise");}}
+public class QuickAddWidgetProvider extends ShiWiseWidgetBase{protected int layoutId(){return R.layout.widget_quick_add;}protected void bind(RemoteViews v,JSONObject d){v.setTextViewText(R.id.widget_title,"Quick add");v.setTextViewText(R.id.widget_value,"＋ Add expense");v.setTextViewText(R.id.widget_subtitle,"Open ShiWise");}}
 `
 };
 for(const [n,c] of Object.entries(javaFiles))fs.writeFileSync(path.join(javaDir,n),c);

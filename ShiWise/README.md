@@ -4,7 +4,7 @@ Independent React + Vite + Capacitor app. It preserves the existing Attendance a
 
 ## Build
 ```sh
-cd splitwise-pro
+cd ShiWise
 npm install
 npm run build
 npx cap add android

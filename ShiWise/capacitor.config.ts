@@ -1,0 +1,1 @@
+import type { CapacitorConfig } from "@capacitor/cli"; const config: CapacitorConfig = { appId: "com.siwraaj.shiwise", appName: "ShiWise", webDir: "dist" }; export default config;
