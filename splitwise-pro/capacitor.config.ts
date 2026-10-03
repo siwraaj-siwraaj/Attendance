@@ -1,1 +1,1 @@
-import type { CapacitorConfig } from "@capacitor/cli"; const config: CapacitorConfig = { appId: "com.siwraaj.splitwisepro", appName: "Splitwise", webDir: "dist" }; export default config;
+import type { CapacitorConfig } from "@capacitor/cli"; const config: CapacitorConfig = { appId: "com.siwraaj.splitwisepro", appName: "ShiWise", webDir: "dist" }; export default config;
