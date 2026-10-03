@@ -96,7 +96,7 @@ export default function App(){
  useEffect(()=>{let mounted=true; supabase.auth.getSession().then(async({data})=>{if(!mounted)return;setUser(data.session?.user??null);if(data.session?.user){await loadProfile(data.session.user.id,data.session.user.email??"",data.session.user.user_metadata?.name??"");await loadCloudData(data.session.user.id);}else setCloudReady(true);}); const {data:{subscription}}=supabase.auth.onAuthStateChange((_event,session)=>{if(mounted){setUser(session?.user??null);setCloudReady(false);if(session?.user){loadProfile(session.user.id,session.user.email??"",session.user.user_metadata?.name??"").then(()=>loadCloudData(session.user.id));}else setCloudReady(true);}}); return()=>{mounted=false;subscription.unsubscribe();};},[]);
 
  useEffect(()=>{if(user&&cloudReady)cloudSync();},[people,groups,expenses,payments,user,cloudReady,deleted]);
- useEffect(()=>{if(!user||!cloudReady){setInvitations([]);return;} let active=true; supabase.from("group_invitations").select("id,group_id,inviter_id,invitee_email,status,created_at").eq("status","pending").order("created_at",{ascending:false}).then(async({data,error})=>{if(!active)return;if(error){console.error("Invitation load failed:",error);setInvitations([]);return;}const rows=data||[];const ids=Array.from(new Set(rows.map((x:any)=>x.group_id)));let names:Record<string,string>={};if(ids.length){const {data:groupRows}=await supabase.from("shared_groups").select("id,name").in("id",ids);(groupRows||[]).forEach((g:any)=>{names[g.id]=g.name;});}if(active)setInvitations(rows.map((x:any)=>({...x,group_name:names[x.group_id]||"Shared group"})));});return()=>{active=false;};},[user,cloudReady]);
+ useEffect(()=>{if(!user||!cloudReady){setInvitations([]);return;} let active=true; supabase.from("group_invitations").select("id,group_id,inviter_id,invitee_email,status,created_at").eq("status","pending").ilike("invitee_email",String(user.email||"")).neq("inviter_id",user.id).order("created_at",{ascending:false}).then(async({data,error})=>{if(!active)return;if(error){console.error("Invitation load failed:",error);setInvitations([]);return;}const rows=data||[];const ids=Array.from(new Set(rows.map((x:any)=>x.group_id)));let names:Record<string,string>={};if(ids.length){const {data:groupRows}=await supabase.from("shared_groups").select("id,name").in("id",ids);(groupRows||[]).forEach((g:any)=>{names[g.id]=g.name;});}if(active)setInvitations(rows.map((x:any)=>({...x,group_name:names[x.group_id]||"Shared group"})));});return()=>{active=false;};},[user,cloudReady]);
  const syncAcceptedFriendInvitations=async(rows:any[])=>{
   if(!user)return;
   let changed=false;
@@ -316,6 +316,8 @@ export default function App(){
     supabase.from("group_invitations")
      .select("id,group_id,inviter_id,invitee_email,status,created_at")
      .eq("status","pending")
+     .ilike("invitee_email",String(user.email||""))
+     .neq("inviter_id",user.id)
      .order("created_at",{ascending:false})
      .then(async({data,error})=>{if(error){console.error("Invitation realtime reload failed:",error);return;}const rows=data||[];const ids=Array.from(new Set(rows.map((x:any)=>x.group_id)));let names:Record<string,string>={};if(ids.length){const {data:groupRows}=await supabase.from("shared_groups").select("id,name").in("id",ids);(groupRows||[]).forEach((g:any)=>{names[g.id]=g.name;});}setInvitations(rows.map((x:any)=>({...x,group_name:names[x.group_id]||"Shared group"})));});
    })
