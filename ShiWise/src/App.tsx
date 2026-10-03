@@ -226,7 +226,9 @@ export default function App(){
   setExpenses(nextExpenses);persist("expenses",nextExpenses);
   setPayments(nextPayments);persist("payments",nextPayments);
   const linked=rows.map((r:any)=>nextPeople.find(p=>p.userId===String(r.user_id))?.id||`shared-${r.user_id}`);
-  setGroups(nextGroups);persist("groups",nextGroups);
+  const linkedSet=new Set(linked);
+  const updatedGroups=nextGroups.map(x=>x.sharedGroupId===sharedId?{...x,members:Array.from(linkedSet),updatedAt:Date.now()}:x);
+  setGroups(updatedGroups);persist("groups",updatedGroups);
  };
  const loadSharedMembers=async(sharedId:string)=>{
   if(!user)return;
