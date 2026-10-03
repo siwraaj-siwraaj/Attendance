@@ -191,13 +191,21 @@ export default function App(){
   const nextPeople=[...people];
   rows.forEach((r:any)=>{
    const uid=String(r.user_id);
-   const existingIndex=nextPeople.findIndex(p=>p.userId===uid);
    const email=String(r.email||"").trim().toLowerCase();
    const name=uid===user?.id ? (accountName||"You") : (String(r.display_name||r.email||"Shared member").trim()||"Shared member");
-   if(existingIndex>=0){
-    nextPeople[existingIndex]={...nextPeople[existingIndex],name,userId:uid,...(email?{email}:{}),updatedAt:Date.now()};
-   }else{
-    nextPeople.push({id:`shared-${uid}`,name,userId:uid,...(email?{email}:{}),updatedAt:Date.now()});
+   const accountIndex=uid===user?.id ? nextPeople.findIndex(p=>p.id==="you") : -1;
+   const userIndex=nextPeople.findIndex(p=>p.userId===uid);
+   const emailIndex=email ? nextPeople.findIndex(p=>String(p.email||"").trim().toLowerCase()===email) : -1;
+   const existingIndex=accountIndex>=0 ? accountIndex : (userIndex>=0 ? userIndex : emailIndex);
+   const keepId=existingIndex>=0 ? nextPeople[existingIndex].id : `shared-${uid}`;
+   const merged:Person={...(existingIndex>=0?nextPeople[existingIndex]:{id:keepId}),name,userId:uid,...(email?{email}:{}),updatedAt:Date.now()};
+   if(existingIndex>=0) nextPeople[existingIndex]=merged;
+   else nextPeople.push(merged);
+   for(let i=nextPeople.length-1;i>=0;i--){
+    if(i===existingIndex)continue;
+    const sameUser=nextPeople[i].userId===uid;
+    const sameEmail=!!email&&String(nextPeople[i].email||"").trim().toLowerCase()===email;
+    if(sameUser||sameEmail)nextPeople.splice(i,1);
    }
   });
   setPeople(nextPeople);persist("people",nextPeople);
