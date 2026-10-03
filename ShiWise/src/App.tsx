@@ -355,9 +355,7 @@ export default function App(){
   };
   const drawTable=(headers:string[],widths:number[],rows:string[][],options?:{fontSize?:number;rowHeight?:number;startY?:number})=>{
    const fontSize=options?.fontSize??8.5,rowHeight=options?.rowHeight??9;
-   const headerHeight=9;
-   const x0=margin;
-   let y:number=options?.startY??32;
+   const headerHeight=9,x0=margin;let y:number=options?.startY??32;
    const wrap=(value:string,width:number)=>{
     doc.setFont("helvetica","normal");doc.setFontSize(fontSize);
     return doc.splitTextToSize(String(value),Math.max(10,width-4)) as string[];
@@ -365,8 +363,7 @@ export default function App(){
    const drawHeaderRow=()=>{
     doc.setFillColor(238,241,239);doc.setDrawColor(190,195,192);doc.rect(x0,y,tableWidth,headerHeight,"FD");
     let x=x0;doc.setFont("helvetica","bold");doc.setFontSize(fontSize);doc.setTextColor(28,34,32);
-    headers.forEach((h,i)=>{doc.text(h,x+2,y+6);x+=widths[i];});
-    y+=headerHeight;
+    headers.forEach((h,i)=>{doc.text(h,x+2,y+6);x+=widths[i];});y+=headerHeight;
    };
    drawHeaderRow();
    rows.forEach(row=>{
@@ -379,17 +376,51 @@ export default function App(){
    });
    return y;
   };
+  const drawBarChart=(title:string,items:{label:string;value:number}[],startY:number)=>{
+   const x=margin,w=tableWidth,rowH=10,chartH=Math.max(36,items.length*rowH+20),max=Math.max(1,...items.map(i=>i.value));
+   doc.setFont("helvetica","bold");doc.setFontSize(11);doc.setTextColor(28,34,32);doc.text(title,x,startY);
+   let yy=startY+8;
+   items.forEach(item=>{
+    const label=doc.splitTextToSize(item.label,34)[0];const barX=x+39,barW=w-82;
+    doc.setFont("helvetica","normal");doc.setFontSize(7.5);doc.setTextColor(70,75,72);doc.text(label,x,yy+4);
+    doc.setFillColor(235,242,239);doc.roundedRect(barX,yy,barW,6,2,2,"F");
+    doc.setFillColor(28,194,159);doc.roundedRect(barX,yy,Math.max(1,barW*(item.value/max)),6,2,2,"F");
+    doc.setFont("helvetica","bold");doc.setFontSize(7.5);doc.setTextColor(40,45,42);doc.text(money(item.value),x+w-39,yy+4,{align:"right"});
+    yy+=rowH;
+   });
+   return startY+chartH;
+  };
+  const drawLineChart=(title:string,items:{label:string;value:number}[],startY:number)=>{
+   const x=margin,w=tableWidth,chartTop=startY+9,chartH=54,left=x+8,right=x+w-4,base=chartTop+chartH;
+   const max=Math.max(1,...items.map(i=>i.value));const step=items.length>1?(right-left)/(items.length-1):0;
+   doc.setFont("helvetica","bold");doc.setFontSize(11);doc.setTextColor(28,34,32);doc.text(title,x,startY);
+   doc.setDrawColor(220,226,223);doc.line(left,base,right,base);doc.line(left,chartTop,right,chartTop);
+   if(items.length){
+    const pts=items.map((item,i)=>({x:left+step*i,y:base-(item.value/max)*chartH}));
+    doc.setDrawColor(28,194,159);doc.setLineWidth(0.9);
+    pts.forEach((p,i)=>{if(i)doc.line(pts[i-1].x,pts[i-1].y,p.x,p.y);doc.setFillColor(28,194,159);doc.circle(p.x,p.y,1.5,"F");});
+    doc.setLineWidth(0.2);doc.setFont("helvetica","normal");doc.setFontSize(6.5);doc.setTextColor(75,80,77);
+    items.forEach((item,i)=>{const label=item.label.length>10?item.label.slice(0,10):item.label;doc.text(label,pts[i].x,base+7,{align:"center"});doc.text(money(item.value),pts[i].x,pts[i].y-3,{align:"center"});});
+   }
+   return base+14;
+  };
   drawHeader(g.name.toUpperCase());
   doc.setFont("helvetica","bold");doc.setFontSize(25);doc.setTextColor(28,34,32);doc.text(money(r.total),margin,43);
   doc.setFont("helvetica","normal");doc.setFontSize(9);doc.text(r.memberIds.length+" people  ·  "+r.rows.length+" expenses",margin,49);
-  let y=57;
-  doc.setFont("helvetica","bold");doc.setFontSize(11);doc.text("SETTLEMENT",margin,y);y+=5;
+
+  const paidByItems=r.memberIds.map(id=>({label:person(id),value:r.paid[id]||0})).filter(x=>x.value>0).sort((a,b)=>b.value-a.value);
+  const dailyMap=new Map<string,number>();
+  r.rows.forEach(e=>{const d=new Date(e.createdAt).toLocaleDateString("en-IN",{day:"2-digit",month:"short"});dailyMap.set(d,(dailyMap.get(d)||0)+e.amount);});
+  const dailyItems=Array.from(dailyMap.entries()).map(([label,value])=>({label,value}));
+  let y=58;
+  y=drawBarChart("SPENDING BY PAYER",paidByItems,y)+5;
+  if(dailyItems.length){y=drawLineChart("DAILY SPENDING",dailyItems,y)+4;}
+  if(y>250){doc.addPage();drawHeader(g.name.toUpperCase());y=32;}
+  doc.setFont("helvetica","bold");doc.setFontSize(11);doc.setTextColor(28,34,32);doc.text("SETTLEMENT",margin,y);y+=5;
   if(transfers.length){
    const settlementRows=transfers.map(t=>[person(t.from)+" → "+person(t.to),money(t.amount)]);
-   y=drawTable(["FROM / TO","AMOUNT"],[tableWidth-48,48],settlementRows,{fontSize:9,rowHeight:9});
-  }else{
-   doc.setFont("helvetica","normal");doc.setFontSize(9);doc.text("All settled",margin,y+5);y+=14;
-  }
+   y=drawTable(["FROM / TO","AMOUNT"],[tableWidth-48,48],settlementRows,{fontSize:9,rowHeight:9,startY:y});
+  }else{doc.setFont("helvetica","normal");doc.setFontSize(9);doc.text("All settled",margin,y+5);y+=14;}
   y+=9;doc.setFont("helvetica","bold");doc.setFontSize(11);doc.text("EXPENSES",margin,y);y+=5;
   const expenseRows=r.rows.map(e=>{
    const split=e.splitMode==="equal"?"Equal ("+money(e.people.length?e.amount/e.people.length:0)+")":e.splitMode==="percent"?"Percentage":"Exact";
@@ -398,13 +429,9 @@ export default function App(){
   drawTable(["DATE","EXPENSE","PAID BY","AMOUNT","SPLIT"],[27,66,34,32,27],expenseRows,{fontSize:8,rowHeight:10});
   if(r.rows.some(e=>e.splitMode!=="equal")){
    doc.addPage();drawHeader(g.name.toUpperCase()+" · SPLIT DETAILS");
-   let sy=32;
    const detailRows:string[][]=[];
-   r.rows.forEach(e=>{
-    if(e.splitMode==="equal")return;
-    e.people.forEach(id=>detailRows.push([e.title,person(id),e.splitMode==="percent"?((Number(e.shares?.[id]??0)/e.amount)*100).toFixed(1)+"%":money(Number(e.shares?.[id]??0))]));
-   });
-   if(detailRows.length)drawTable(["EXPENSE","PERSON","SHARE"],[90,55,41],detailRows,{fontSize:8.5,rowHeight:9,startY:sy});
+   r.rows.forEach(e=>{if(e.splitMode==="equal")return;e.people.forEach(id=>detailRows.push([e.title,person(id),e.splitMode==="percent"?((Number(e.shares?.[id]??0)/e.amount)*100).toFixed(1)+"%":money(Number(e.shares?.[id]??0))]));});
+   if(detailRows.length)drawTable(["EXPENSE","PERSON","SHARE"],[90,55,41],detailRows,{fontSize:8.5,rowHeight:9,startY:32});
   }
   const base64=doc.output("datauristring").split(",")[1];
   await saveReportFile("shiwise-"+slug+"-trip-details.pdf",base64,"application/pdf");
