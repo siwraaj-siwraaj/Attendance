@@ -124,7 +124,7 @@ export default function App(){
   if(!user||!cloudReady){setFriendInvitations([]);return;}
   let active=true;
   const loadFriendInvites=async()=>{
-   const {data,error}=await supabase.from("friend_invitations").select("id,inviter_id,invitee_email,invitee_id,status,created_at,responded_at,inviter_name,invitee_name").in("status",["pending","accepted"]).order("created_at",{ascending:false});
+   const {data,error}=await supabase.from("friend_invitations").select("id,inviter_id,invitee_email,invitee_id,status,created_at,responded_at,inviter_name,invitee_name").in("status",["pending","accepted"]).ilike("invitee_email",String(user.email||"")).neq("inviter_id",user.id).order("created_at",{ascending:false});
    if(!active)return;
    if(error){console.error("Friend invitation load failed:",error);setFriendInvitations([]);return;}
    const rows=data||[];
