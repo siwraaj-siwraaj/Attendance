@@ -301,7 +301,6 @@ export default function App(){
   // Only people who have a ShiWise account are required to be members of the
   // Supabase shared group; local-only friends remain represented by their
   // local person ID in the expense.
-  const unresolvedParticipants=e.people.filter(id=>!resolveUserId(id));
   if(!payerUid||!memberIds.has(payerUid)||participantUids.some(uid=>!memberIds.has(uid))){
    alert("The payer and any connected ShiWise account in a shared expense must belong to the shared group.");
    return false;
