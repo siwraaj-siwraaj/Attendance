@@ -337,11 +337,14 @@ export function createSupabaseActor() {
         return ok(mapContract(contractRows[0], columns));
       } catch (e: any) { return err(e.message); }
     },
-    async updateWorkColumn(_contractId: bigint, columnId: string, name: string) {
+    async updateWorkColumn(contractId: bigint, columnId: string, name: string) {
       try {
         const rows = await rest("work_columns", { method: "PATCH", query: `?id=eq.${encodeURIComponent(columnId)}&select=*`, body: { name: String(name ?? "").trim() } });
         if (!rows.length) return err("Work column not found");
-        return ok(mapColumn(rows[0]));
+        const contractRows = await rest("contracts", { query: `?select=*&id=eq.${encodeURIComponent(contractId.toString())}` });
+        if (!contractRows.length) return err("Contract not found");
+        const columns = await rest("work_columns", { query: `?select=*&contract_id=eq.${encodeURIComponent(contractId.toString())}&order=id.asc` });
+        return ok(mapContract(contractRows[0], columns));
       } catch (e: any) { return err(e.message); }
     },
     async removeWorkColumn(contractId: bigint, columnId: string) {
