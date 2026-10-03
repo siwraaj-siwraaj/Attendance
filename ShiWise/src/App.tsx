@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Home, Users, ReceiptText, Plus, X, Wallet, Trash2, Check, UserPlus, Download, Upload, LogIn, LogOut, Image as ImageIcon, FileText, BarChart3, Tag } from "lucide-react";
+import { Home, Users, ReceiptText, Plus, X, Wallet, Trash2, Check, UserPlus, Download, Upload, LogIn, LogOut, Image as ImageIcon, FileText, BarChart3, Tag, Moon, Sun } from "lucide-react";
 import { supabase } from "./lib/supabase";
 import jsPDF from "jspdf";
 import * as XLSX from "xlsx";
@@ -34,6 +34,7 @@ const notifyReportSaved=async(name:string)=>{
 };
 export default function App(){
  const [tab,setTab]=useState("Home");
+ const [darkMode,setDarkMode]=useState(()=>load("darkMode",false));
  const [user,setUser]=useState<any>(null); const [accountName,setAccountName]=useState("You");
  const [authMode,setAuthMode]=useState<"login"|"signup"|"reset">("login"); const [authEmail,setAuthEmail]=useState(""); const [authPassword,setAuthPassword]=useState(""); const [authName,setAuthName]=useState(""); const [authBusy,setAuthBusy]=useState(false); const [authMessage,setAuthMessage]=useState("");
  const [expenseSearch,setExpenseSearch]=useState(""); const [expenseGroupFilter,setExpenseGroupFilter]=useState("all"); const [expenseDateFilter,setExpenseDateFilter]=useState("all"); const [expenseSort,setExpenseSort]=useState("newest"); const [expenseCategoryFilter,setExpenseCategoryFilter]=useState("all"); const categories=["Food","Travel","Hotel","Shopping","Entertainment","Bills","Other"];
@@ -89,6 +90,7 @@ export default function App(){
   }
   setCloudReady(true);
  };
+ useEffect(()=>{persist("darkMode",darkMode);document.documentElement.classList.toggle("dark",darkMode);},[darkMode]);
  useEffect(()=>{let mounted=true; supabase.auth.getSession().then(async({data})=>{if(!mounted)return;setUser(data.session?.user??null);if(data.session?.user){await loadProfile(data.session.user.id,data.session.user.email??"",data.session.user.user_metadata?.name??"");await loadCloudData(data.session.user.id);}else setCloudReady(true);}); const {data:{subscription}}=supabase.auth.onAuthStateChange((_event,session)=>{if(mounted){setUser(session?.user??null);setCloudReady(false);if(session?.user){loadProfile(session.user.id,session.user.email??"",session.user.user_metadata?.name??"").then(()=>loadCloudData(session.user.id));}else setCloudReady(true);}}); return()=>{mounted=false;subscription.unsubscribe();};},[]);
 
  useEffect(()=>{if(user&&cloudReady)cloudSync();},[people,groups,expenses,payments,user,cloudReady,deleted]);
@@ -472,7 +474,7 @@ export default function App(){
  };
  const openExpense=()=>{setEditingId(null);setTitle("");setAmount("");setCategory("Other");setPaidBy("you");setGroupId(groups[0]?.id||"");setSelected(groups[0]?.members||people.map(p=>p.id));setSplitMode("equal");setShares({});setModal("expense");}; const editExpense=(e:Expense)=>{setEditingId(e.id);setTitle(e.title);setAmount(String(e.amount));setCategory(e.category||"Other");setPaidBy(e.paidBy);setGroupId(e.groupId);setSelected(e.people);setSplitMode(e.splitMode||"equal");setShares(Object.fromEntries(e.people.map(id=>[id,String(e.splitMode==="percent"?(e.shares?.[id]||0)*100/e.amount:(e.shares?.[id]??0))])));setModal("expense");};
  const creditors=useMemo(()=>people.filter(p=>p.id!=="you"&&(balances[p.id]||0)>.005),[people,balances]); const debtors=useMemo(()=>people.filter(p=>p.id!=="you"&&(balances[p.id]||0)<-.005),[people,balances]); const categoryTotals=useMemo(()=>categories.map(name=>({name,total:expenses.filter(e=>(e.category||"Other")===name).reduce((sum,e)=>sum+e.amount,0)})).filter(x=>x.total>0).sort((a,b)=>b.total-a.total),[expenses]); const topCategory=categoryTotals[0]?.name||"No expenses yet"; const nav=[{n:"Home",I:Home},{n:"Groups",I:Users},{n:"Activity",I:ReceiptText},{n:"Friends",I:Users},{n:"Balances",I:Wallet},{n:"Stats",I:BarChart3}];
- return <div className="app"><header><div className="logo"><b>S</b> ShiWise</div><button className="avatar" aria-label={user?"Account":"Log in"} onClick={()=>{setAuthMessage("");setAuthMode("login");setModal("auth")}}>{user?(accountName[0]?.toUpperCase()||"Y"):<LogIn size={18}/>}</button></header><main>
+ return <div className="app"><header><div className="logo"><b>S</b> ShiWise</div><button className="themebtn" aria-label={darkMode?"Switch to light mode":"Switch to dark mode"} onClick={()=>setDarkMode(v=>!v)}>{darkMode?<Sun size={18}/>:<Moon size={18}/>}</button><button className="avatar" aria-label={user?"Account":"Log in"} onClick={()=>{setAuthMessage("");setAuthMode("login");setModal("auth")}}>{user?(accountName[0]?.toUpperCase()||"Y"):<LogIn size={18}/>}</button></header><main>
  <p className="eyebrow">YOUR EXPENSES</p><h1>{tab==="Home"?(user&&accountName&&accountName!=="You"?`Hey, ${accountName}`:"Hey, You"):tab}</h1><p className="muted">Keep track of shared expenses, simply.</p>{user&&<p className="muted">{syncing?"Syncing to cloud…":"Cloud sync on"}</p>}
  {tab==="Home"&&<><section className="balance"><small>TOTAL SHARED EXPENSES</small><h2>{money(total)}</h2><p>{expenses.length} expenses · saved on this device</p></section><div className="section"><h3>Balances</h3><button className="link" onClick={()=>setTab("Balances")}>Details</button></div>
  <div className="section"><h3>Backup & Restore</h3></div>
