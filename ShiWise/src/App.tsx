@@ -641,10 +641,9 @@ export default function App(){
  };
  const expensePeopleForGroup=(gid:string)=>{
   const g=groups.find(x=>x.id===gid);
-  if(!g?.sharedGroupId)return people;
-  const rows=sharedMembers[g.sharedGroupId]||[];
-  const sharedIds=new Set(rows.map((m:any)=>String(m.user_id)));
-  return people.filter(p=>p.id==="you"||!!p.userId&&sharedIds.has(String(p.userId)));
+  if(!g)return people;
+  const memberIds=new Set(g.members);
+  return people.filter(p=>memberIds.has(p.id));
  };
  const openExpense=()=>{
   const gid=groups[0]?.id||"";
