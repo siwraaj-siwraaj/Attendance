@@ -243,7 +243,7 @@ export default function App(){
  },[user,cloudReady,groups.map(g=>g.id+":"+g.sharedGroupId).join("|")]);
  useEffect(()=>{
   if(!user||!cloudReady)return;
-  const channel=supabase.channel("splitwise-invitations-"+user.id)
+  const channel=supabase.channel("shiwise-invitations-"+user.id)
    .on("postgres_changes",{event:"*",schema:"public",table:"group_invitations"},()=>{
     supabase.from("group_invitations")
      .select("id,group_id,inviter_id,invitee_email,status,created_at")
