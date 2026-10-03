@@ -33,3 +33,5 @@ jobs:
         with:
           name: ShiWise-debug-apk
           path: ShiWise/android/app/build/outputs/apk/debug/app-debug.apk
+
+# Build trigger marker
