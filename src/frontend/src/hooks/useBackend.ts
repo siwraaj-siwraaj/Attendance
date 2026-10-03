@@ -157,6 +157,17 @@ export function useUpdateContract() {
       qc.setQueryData(["contracts"], (old: Array<Record<string, unknown>> | undefined) => (old ?? []).map((c) => c.id === vars.id ? { ...c, name: vars.name, multiplier: vars.multiplier, contractAmount: vars.contractAmount, machineExpenses: vars.machineExpenses, bedAmount: vars.bedAmount, paperAmount: vars.paperAmount, meshAmount: vars.meshAmount } : c));
       return { prev };
     },
+    onSuccess: (updatedContract) => {
+      if (updatedContract) {
+        const updated = updatedContract as unknown as Record<string, unknown>;
+        qc.setQueryData(["contracts"], (old: Array<Record<string, unknown>> | undefined) => {
+          const list = (old ?? []).slice();
+          const index = list.findIndex((item) => item.id === updated.id);
+          if (index >= 0) list[index] = updated;
+          return list;
+        });
+      }
+    },
     onError: (_e: unknown, _v: unknown, ctx: unknown) => { const c = ctx as { prev?: unknown } | undefined; if (c?.prev) qc.setQueryData(["contracts"], c.prev); },
     onSettled: () => qc.invalidateQueries({ queryKey: ["contracts"] }),
   });
