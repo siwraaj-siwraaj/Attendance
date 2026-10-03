@@ -227,7 +227,6 @@ export default function App(){
   setPayments(nextPayments);persist("payments",nextPayments);
   const linked=rows.map((r:any)=>nextPeople.find(p=>p.userId===String(r.user_id))?.id||`shared-${r.user_id}`);
   const linkedSet=new Set(linked);
-  const sharedUserIds=new Set(rows.map((r:any)=>String(r.user_id)));
   const updatedGroups=nextGroups.map(x=>{
    if(x.sharedGroupId!==sharedId)return x;
    const localOnly=x.members.filter(id=>{
