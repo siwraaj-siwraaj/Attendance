@@ -576,6 +576,8 @@ export default function App(){
    }
    return base+14;
   };
+  // Keep every major report section in its own page area so headings/charts
+  // can never overlap the tables below them.
   drawHeader(g.name.toUpperCase());
   doc.setFont("helvetica","bold");doc.setFontSize(25);doc.setTextColor(28,34,32);doc.text(money(r.total),margin,43);
   doc.setFont("helvetica","normal");doc.setFontSize(9);doc.text(r.memberIds.length+" people  ·  "+r.rows.length+" expenses",margin,49);
@@ -584,25 +586,45 @@ export default function App(){
   const dailyMap=new Map<string,number>();
   r.rows.forEach(e=>{const d=new Date(e.createdAt).toLocaleDateString("en-IN",{day:"2-digit",month:"short"});dailyMap.set(d,(dailyMap.get(d)||0)+e.amount);});
   const dailyItems=Array.from(dailyMap.entries()).map(([label,value])=>({label,value}));
-  let y=58;
-  y=drawBarChart("SPENDING BY PAYER",paidByItems,y)+5;
-  if(dailyItems.length){y=drawLineChart("DAILY SPENDING",dailyItems,y)+4;}
-  if(y>250){doc.addPage();drawHeader(g.name.toUpperCase());y=32;}
-  doc.setFont("helvetica","bold");doc.setFontSize(11);doc.setTextColor(28,34,32);doc.text("SETTLEMENT",margin,y);y+=5;
+
+  // PAGE 1: quick summary + payer chart.
+  drawBarChart("SPENDING BY PAYER",paidByItems,58);
+
+  // PAGE 2: daily spending + settlement.
+  doc.addPage();
+  drawHeader(g.name.toUpperCase());
+  let y=38;
+  if(dailyItems.length)y=drawLineChart("DAILY SPENDING",dailyItems,y)+8;
+  else{doc.setFont("helvetica","normal");doc.setFontSize(9);doc.text("No daily spending data.",margin,y+8);y+=20;}
+  if(y>245){doc.addPage();drawHeader(g.name.toUpperCase());y=32;}
+  doc.setFont("helvetica","bold");doc.setFontSize(11);doc.setTextColor(28,34,32);doc.text("SETTLEMENT",margin,y);y+=7;
   if(transfers.length){
    const settlementRows=transfers.map(t=>[person(t.from)+" → "+person(t.to),money(t.amount)]);
    y=drawTable(["FROM / TO","AMOUNT"],[tableWidth-48,48],settlementRows,{fontSize:9,rowHeight:9,startY:y});
-  }else{doc.setFont("helvetica","normal");doc.setFontSize(9);doc.text("All settled",margin,y+5);y+=14;}
-  y+=9;doc.setFont("helvetica","bold");doc.setFontSize(11);doc.text("EXPENSES",margin,y);y+=5;
+  }else{
+   doc.setFont("helvetica","normal");doc.setFontSize(9);doc.text("All settled",margin,y+5);y+=14;
+  }
+
+  // PAGE 3+: complete expense table.
+  doc.addPage();
+  drawHeader(g.name.toUpperCase()+" · EXPENSES");
   const expenseRows=r.rows.map(e=>{
    const split=e.splitMode==="equal"?"Equal ("+money(e.people.length?e.amount/e.people.length:0)+")":e.splitMode==="percent"?"Percentage":"Exact";
    return [new Date(e.createdAt).toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"}),e.title,person(e.paidBy),money(e.amount),split];
   });
-  drawTable(["DATE","EXPENSE","PAID BY","AMOUNT","SPLIT"],[27,66,34,32,27],expenseRows,{fontSize:8,rowHeight:10});
+  drawTable(["DATE","EXPENSE","PAID BY","AMOUNT","SPLIT"],[27,66,34,32,27],expenseRows,{fontSize:8,rowHeight:10,startY:32});
+
+  // Final page: detailed non-equal split information.
   if(r.rows.some(e=>e.splitMode!=="equal")){
-   doc.addPage();drawHeader(g.name.toUpperCase()+" · SPLIT DETAILS");
+   doc.addPage();
+   drawHeader(g.name.toUpperCase()+" · SPLIT DETAILS");
    const detailRows:string[][]=[];
-   r.rows.forEach(e=>{if(e.splitMode==="equal")return;e.people.forEach(id=>detailRows.push([e.title,person(id),e.splitMode==="percent"?((Number(e.shares?.[id]??0)/e.amount)*100).toFixed(1)+"%":money(Number(e.shares?.[id]??0))]));});
+   r.rows.forEach(e=>{
+    if(e.splitMode==="equal")return;
+    e.people.forEach(id=>{
+     detailRows.push([e.title,person(id),e.splitMode==="percent"?((Number(e.shares?.[id]??0)/e.amount)*100).toFixed(1)+"%":money(Number(e.shares?.[id]??0))]);
+    });
+   });
    if(detailRows.length)drawTable(["EXPENSE","PERSON","SHARE"],[90,55,41],detailRows,{fontSize:8.5,rowHeight:9,startY:32});
   }
   const base64=doc.output("datauristring").split(",")[1];
