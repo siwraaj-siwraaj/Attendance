@@ -297,14 +297,10 @@ export default function App(){
   };
   const payerUid=resolveUserId(e.paidBy);
   const participantUids=e.people.map(resolveUserId).filter(Boolean) as string[];
-  // A shared expense can include a local-only friend from the owner's group.
-  // Only people who have a ShiWise account are required to be members of the
-  // Supabase shared group; local-only friends remain represented by their
-  // local person ID in the expense.
-  if(!payerUid||!memberIds.has(payerUid)||participantUids.some(uid=>!memberIds.has(uid))){
-   alert("The payer and any connected ShiWise account in a shared expense must belong to the shared group.");
-   return false;
-  }
+  // Group Details controls who can participate in a local expense. Shared
+  // expenses may include both local-only friends and connected ShiWise users.
+  // Do not block saving just because a connected friend is not yet present in
+  // the Supabase shared-group membership list.
   const sharesUserIds=e.shares?Object.fromEntries(Object.entries(e.shares).map(([id,v])=>{
    const uid=resolveUserId(id);
    return [uid||id,v];
