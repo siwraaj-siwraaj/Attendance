@@ -3,18 +3,21 @@ import { format } from "date-fns";
 import {
   ArrowRight,
   CalendarDays,
+  CheckCircle2,
   ChevronDown,
   FileText,
   Grid2X2,
   List,
   Pencil,
   Plus,
+  RotateCcw,
   Search,
+  Trash2,
   Wrench,
   X,
 } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
-import { useAddContract, useContracts, useUpdateContract } from "../hooks/useBackend";
+import { useAddContract, useContracts, useDeleteContract, useMarkContractSettled, useUpdateContract } from "../hooks/useBackend";
 import { SkeletonCardList } from "../components/SkeletonLoader";
 import ScrollHeaderTitle from "../components/ScrollHeaderTitle";
 
@@ -37,8 +40,11 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
   const { data: contracts = [], isLoading } = useContracts();
   const addContract = useAddContract();
   const updateContract = useUpdateContract();
+  const markContractSettled = useMarkContractSettled();
+  const deleteContract = useDeleteContract();
 
   const [selectedContract, setSelectedContract] = useState<any | null>(null);
+  const [contractToDelete, setContractToDelete] = useState<any | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [expandedContractId, setExpandedContractId] = useState<string | null>(null);
@@ -257,9 +263,54 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
                           </div>
                         ))}
                       </div>
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        <button type="button" onClick={() => onViewAttendance?.(c.id)} className="flex h-10 items-center gap-2 rounded-xl bg-orange-500 px-4 text-xs font-extrabold text-white" data-ocid="contract.view_attendance_button">View attendance <ArrowRight size={15} /></button>
-                        {canEdit && <button type="button" onClick={() => openEdit(c)} className="flex h-10 items-center gap-2 rounded-xl border bg-white px-4 text-xs font-bold text-[#101828]" style={{ borderColor: "#D0D5DD" }} data-ocid="contract.edit_button"><Pencil size={14} />Edit</button>}
+                      <div className="mt-3 space-y-2.5">
+                        <div className="grid grid-cols-2 gap-2">
+                          {canEdit && (
+                            <button
+                              type="button"
+                              onClick={() => openEdit(c)}
+                              className="flex h-11 min-w-0 items-center justify-center gap-2 rounded-xl border bg-white px-2 text-xs font-bold text-[#101828] transition active:scale-[0.98]"
+                              style={{ borderColor: "#D0D5DD" }}
+                              data-ocid="contract.edit_button"
+                            >
+                              <Pencil size={14} />Edit
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => onViewAttendance?.(c.id)}
+                            className="flex h-11 min-w-0 items-center justify-center gap-1.5 rounded-xl bg-orange-500 px-2 text-xs font-extrabold text-white transition active:scale-[0.98]"
+                            data-ocid="contract.view_attendance_button"
+                          >
+                            View Attendance <ArrowRight size={14} />
+                          </button>
+                        </div>
+                        {canEdit && (
+                          <div className="grid grid-cols-2 gap-2">
+                            <button
+                              type="button"
+                              onClick={() => markContractSettled.mutate(
+                                { id: c.id, settled: !c.settled },
+                                { onError: (error) => window.alert(error.message || "Could not update contract status.") },
+                              )}
+                              disabled={markContractSettled.isPending || deleteContract.isPending}
+                              className={`flex h-11 min-w-0 items-center justify-center gap-1.5 rounded-xl border px-2 text-xs font-bold transition active:scale-[0.98] disabled:opacity-50 ${c.settled ? "border-amber-200 bg-amber-50 text-amber-700" : "border-emerald-200 bg-emerald-50 text-emerald-700"}`}
+                              data-ocid="contract.settle_button"
+                            >
+                              {c.settled ? <RotateCcw size={14} /> : <CheckCircle2 size={14} />}
+                              <span>{c.settled ? "Reopen Contract" : "Settle Contract"}</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setContractToDelete(c)}
+                              disabled={markContractSettled.isPending || deleteContract.isPending}
+                              className="flex h-11 min-w-0 items-center justify-center gap-1.5 rounded-xl border border-red-200 bg-red-50 px-2 text-xs font-bold text-red-700 transition active:scale-[0.98] disabled:opacity-50"
+                              data-ocid="contract.delete_button"
+                            >
+                              <Trash2 size={14} />Delete
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
@@ -271,6 +322,25 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
       </div>
 
       <div aria-hidden="true" className="h-[var(--rossie-nav-clearance)] shrink-0" />
+
+      {contractToDelete && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-[#101828]/60 p-4" role="presentation" onClick={(event) => { if (event.target === event.currentTarget && !deleteContract.isPending) setContractToDelete(null); }}>
+          <section role="alertdialog" aria-modal="true" aria-labelledby="delete-contract-title" aria-describedby="delete-contract-description" className="w-full max-w-sm rounded-2xl border bg-white p-5 shadow-2xl" style={{ borderColor: "#FEE2E2" }}>
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-red-50 text-red-600"><Trash2 size={20} /></div>
+            <h2 id="delete-contract-title" className="mt-4 text-base font-extrabold text-[#101828]">Delete contract?</h2>
+            <p id="delete-contract-description" className="mt-2 text-sm leading-5 text-[#667085]">
+              You are about to delete <span className="font-bold text-[#101828]">{contractToDelete.name}</span>. This cannot be undone. If the contract has linked records, deletion may be rejected to protect that data.
+            </p>
+            {deleteContract.isError && <p className="mt-3 rounded-lg bg-red-50 p-2 text-xs font-medium text-red-700">{deleteContract.error.message || "Could not delete this contract."}</p>}
+            <div className="mt-5 grid grid-cols-2 gap-2">
+              <button type="button" onClick={() => { setContractToDelete(null); deleteContract.reset(); }} disabled={deleteContract.isPending} className="h-11 rounded-xl border bg-white text-sm font-bold text-[#344054] disabled:opacity-50" style={{ borderColor: "#D0D5DD" }}>Cancel</button>
+              <button type="button" onClick={() => deleteContract.mutate(contractToDelete.id, { onSuccess: () => setContractToDelete(null) })} disabled={deleteContract.isPending} className="flex h-11 items-center justify-center gap-2 rounded-xl bg-red-600 text-sm font-bold text-white disabled:opacity-50" data-ocid="contract.confirm_delete_button">
+                <Trash2 size={14} />{deleteContract.isPending ? "Deleting…" : "Delete contract"}
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
 
       {showForm && (
         <div
