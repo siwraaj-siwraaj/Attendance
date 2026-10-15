@@ -240,7 +240,7 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
               const id = c.id.toString();
               const expanded = expandedContractId === id;
               return (
-                <article key={id} className={viewMode === "card" ? "overflow-hidden rounded-2xl border bg-white shadow-sm" : index ? "border-t" : ""} style={{ borderColor: "#EAECF0" }} data-ocid="contract.card">
+                <article key={id} className={viewMode === "card" ? "overflow-hidden rounded-2xl border bg-white shadow-sm" : index ? "border-t" : ""} style={{ borderColor: "#EAECF0", touchAction: "pan-y" }} data-ocid="contract.card" data-no-pull>
                   <button type="button" onClick={() => setExpandedContractId(expanded ? null : id)} className={viewMode === "card" ? "flex w-full items-center gap-3 px-3.5 py-3 text-left active:bg-slate-50" : "flex w-full items-center gap-3 px-4 py-2 text-left active:bg-slate-50"}>
                     <span className={viewMode === "card" ? "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#FFF3EB] text-orange-500" : "flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#FFF3EB] text-orange-500"}><FileText size={18} /></span>
                     <span className="min-w-0 flex-1">
