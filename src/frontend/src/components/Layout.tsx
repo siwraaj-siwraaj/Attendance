@@ -31,6 +31,9 @@ export default function Layout({ children }: LayoutProps) {
   const [pullOffset, setPullOffset] = useState(0);
   const pullStartYRef = useRef<number | null>(null);
   const pullingRef = useRef(false);
+  // Never interpret a gesture that starts on an interactive control as pull-to-refresh.
+  // Keep this decision for the entire gesture because WebView touch targets can shift.
+  const pullBlockedRef = useRef(false);
   const swipeContentRef = useRef<HTMLDivElement | null>(null);
   const mainRef = useRef<HTMLElement | null>(null);
   const csvInputRef = useRef<HTMLInputElement>(null);
@@ -42,17 +45,25 @@ export default function Layout({ children }: LayoutProps) {
   };
 
   const handleTouchStart = (event: TouchEvent<HTMLElement>) => {
+    const target = event.target as HTMLElement | null;
+    const startedOnControl = Boolean(
+      target?.closest('button, a, input, textarea, select, option, label, [role="button"], [role="dialog"], [data-no-pull]')
+    );
+    pullBlockedRef.current = startedOnControl;
+    pullingRef.current = false;
+
     const main = event.currentTarget;
-    if (main.scrollTop <= 0) {
+    if (!startedOnControl && main.scrollTop <= 0) {
       pullStartYRef.current = event.touches[0]?.clientY ?? null;
-      pullingRef.current = false;
     } else {
       pullStartYRef.current = null;
-      pullingRef.current = false;
     }
   };
 
   const handleTouchMove = (event: TouchEvent<HTMLElement>) => {
+    // A touch that began on a button or other control must remain a normal tap,
+    // even if the browser reports a different target during the gesture.
+    if (pullBlockedRef.current) return;
     const startY = pullStartYRef.current;
     if (startY === null || event.currentTarget.scrollTop > 0) return;
     const currentY = event.touches[0]?.clientY;
@@ -61,7 +72,7 @@ export default function Layout({ children }: LayoutProps) {
     if (delta <= 0) return;
 
     const target = event.target as HTMLElement | null;
-    if (target?.closest("input, textarea, select, button, [data-no-pull]")) return;
+    if (target?.closest('input, textarea, select, button, a, [role="button"], [role="dialog"], [data-no-pull]')) return;
 
     pullingRef.current = true;
     const resistance = 0.42;
@@ -71,6 +82,7 @@ export default function Layout({ children }: LayoutProps) {
 
   const handleTouchEnd = () => {
     pullStartYRef.current = null;
+    pullBlockedRef.current = false;
     if (!pullingRef.current) return;
     pullingRef.current = false;
     setPullOffset(0);
