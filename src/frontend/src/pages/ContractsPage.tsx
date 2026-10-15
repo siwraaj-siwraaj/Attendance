@@ -264,7 +264,7 @@ function ContractsPage({ onViewAttendance }: { onViewAttendance?: (id: bigint) =
                         ))}
                       </div>
                       <div className="mt-3 space-y-2.5">
-                        <div className="grid grid-cols-2 gap-2">
+                        <div className={canEdit ? "grid grid-cols-2 gap-2" : "grid grid-cols-1 gap-2"}>
                           {canEdit && (
                             <button
                               type="button"
