@@ -278,3 +278,11 @@ body:has([data-ocid="bottom_tab_bar"]) .app-scroll-container .app-tab-header {
 .app-scroll-container > div > .app-tab-header ~ *:has(.app-tab-header) {
   transform: none;
 }
+
+/* Contract cards must not scroll underneath a high-z-index sticky header.
+   On mobile this header can otherwise intercept taps on cards as they pass below it. */
+body:has([data-ocid="contract.card"]) .app-scroll-container .app-tab-header {
+  position: relative;
+  top: auto;
+  z-index: auto;
+}
