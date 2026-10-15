@@ -286,3 +286,11 @@ body:has([data-ocid="contract.card"]) .app-scroll-container .app-tab-header {
   top: auto;
   z-index: auto;
 }
+
+/* The pull-to-refresh animation transforms whole sections after the page header.
+   Keep Contracts content in the normal hit-testing layer on Android WebView. */
+body:has([data-ocid="contract.card"]) .app-scroll-container > div > .app-tab-header ~ * {
+  transform: none !important;
+  transition: none !important;
+  will-change: auto !important;
+}
