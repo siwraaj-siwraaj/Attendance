@@ -107,29 +107,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     const restore = async () => {
-      try {
-        const cached = readCachedAuth();
-        if (cached?.username) {
-          // Cached auth is already in React state. Do not block the UI while
-          // Supabase validates the persisted session in the background.
-          finishInitialization();
-        }
+      const cached = readCachedAuth();
+      if (cached?.username) {
+        // Cached auth is already in React state. Do not block the UI while
+        // Supabase validates the persisted session in the background.
+        finishInitialization();
+      }
 
-        const result = await Promise.race([
-          actor?.restoreSession(),
-          new Promise<null>((resolve) => {
-            timeoutId = setTimeout(() => resolve(null), RESTORE_TIMEOUT_MS);
+      // Keep the actual restore promise alive after the UI timeout. Previously,
+      // Promise.race discarded a late successful result, so push-token
+      // registration could be skipped on a slow network or cold app launch.
+      const restorePromise = actor ? actor.restoreSession() : Promise.resolve(null);
+      void restorePromise
+        .then((result) => {
+          if (cancelled) return;
+          if (result) {
+            applyLoginResult(result);
+            void registerCurrentDeviceForPush();
+          } else if (!cached?.username) {
+            finishInitialization();
+          }
+        })
+        .catch(() => {
+          if (!cached?.username) finishInitialization();
+        });
+
+      if (!cached?.username) {
+        await Promise.race([
+          restorePromise.then(() => undefined, () => undefined),
+          new Promise<void>((resolve) => {
+            timeoutId = setTimeout(resolve, RESTORE_TIMEOUT_MS);
           }),
         ]);
-        if (cancelled) return;
-        if (result) {
-          applyLoginResult(result);
-          void registerCurrentDeviceForPush();
-        } else if (!cached?.username) {
-          finishInitialization();
-        }
-      } catch {
-        if (!readCachedAuth()?.username) finishInitialization();
+        finishInitialization();
       }
     };
 
@@ -138,7 +148,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       cancelled = true;
       if (timeoutId) clearTimeout(timeoutId);
     };
-  }, [actor, applyLoginResult, registerCurrentDeviceForPush]);
+  }, [actor, applyLoginResult, readCachedAuth, registerCurrentDeviceForPush]);
 
   const login = useCallback(
     async (usernameInput: string, password: string, rememberMe = false): Promise<boolean> => {
