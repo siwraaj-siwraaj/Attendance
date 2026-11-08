@@ -36,15 +36,17 @@ function LaboursPage({ onSelectLabour }: LaboursPageProps) {
     if (showForm) window.setTimeout(() => nameRef.current?.focus(), 80);
   }, [showForm]);
 
+  const todayLocal = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
+
   const openAdd = useCallback(() => {
-    setName(""); setEmployeeId(""); setPhoneNumber(""); setJoinDate(""); setError(""); setShowForm(true);
+    setName(""); setEmployeeId(""); setPhoneNumber(""); setJoinDate(todayLocal()); setError(""); setShowForm(true);
   }, []);
 
   const save = useCallback(() => {
     if (!name.trim()) { setError("Name is required"); return; }
     const normalizedPhone = phoneNumber.replace(/\D/g, "");
-    if (!/^\d{10}$/.test(normalizedPhone)) { setError("Enter a valid 10-digit mobile number"); return; }
-    if (labours.some((l: any) => String(l.phoneNumber ?? "") === normalizedPhone)) { setError("This mobile number is already saved for another labour"); return; }
+    if (normalizedPhone && !/^\d{10}$/.test(normalizedPhone)) { setError("Enter a valid 10-digit mobile number"); return; }
+    if (normalizedPhone && labours.some((l: any) => String(l.phoneNumber ?? "") === normalizedPhone)) { setError("This mobile number is already saved for another labour"); return; }
     setError("");
     addLabour.mutate(
       { name: name.trim(), employeeId: employeeId.trim(), joinDate: joinDate.trim(), phoneNumber: normalizedPhone },
@@ -129,8 +131,8 @@ function LaboursPage({ onSelectLabour }: LaboursPageProps) {
           <div className="mb-5 flex items-center justify-between"><div><p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-orange-500">New team member</p><h2 className="mt-1 text-xl font-black">Add Labour</h2></div><button type="button" onClick={() => setShowForm(false)} className="rounded-xl bg-[#101828]/5 p-2"><X size={18} /></button></div>
           <div className="space-y-3">
             <label className="block"><span className="mb-1.5 block text-xs font-bold text-[#101828]/60">Full name *</span><input ref={nameRef} value={name} onChange={e => setName(e.target.value)} placeholder="Enter full name" className="h-12 w-full rounded-xl border border-[#101828]/10 bg-[#F8FAFC] px-4 text-sm outline-none focus:border-orange-400" /></label>
-            <label className="block"><span className="mb-1.5 block text-xs font-bold text-[#101828]/60">Mobile number *</span><input type="tel" inputMode="numeric" maxLength={10} value={phoneNumber} onChange={e => setPhoneNumber(e.target.value.replace(/\D/g, "").slice(0, 10))} placeholder="10-digit mobile number" className="h-12 w-full rounded-xl border border-[#101828]/10 bg-[#F8FAFC] px-4 text-sm outline-none focus:border-orange-400" /></label>
-            <label className="block"><span className="mb-1.5 block text-xs font-bold text-[#101828]/60">Employee ID</span><input value={employeeId} onChange={e => setEmployeeId(e.target.value)} placeholder="Optional ID" className="h-12 w-full rounded-xl border border-[#101828]/10 bg-[#F8FAFC] px-4 text-sm outline-none focus:border-orange-400" /></label>
+            <label className="block"><span className="mb-1.5 block text-xs font-bold text-[#101828]/60">Mobile number (optional)</span><input type="tel" inputMode="numeric" maxLength={10} value={phoneNumber} onChange={e => setPhoneNumber(e.target.value.replace(/\D/g, "").slice(0, 10))} placeholder="Enter mobile number (optional)" className="h-12 w-full rounded-xl border border-[#101828]/10 bg-[#F8FAFC] px-4 text-sm outline-none focus:border-orange-400" /></label>
+            <label className="block"><span className="mb-1.5 block text-xs font-bold text-[#101828]/60">Labour ID</span><div className="flex h-12 w-full items-center rounded-xl border border-dashed border-[#101828]/15 bg-[#F8FAFC] px-4 text-sm font-semibold text-[#667085]">Generated automatically when saved</div></label>
             <label className="block"><span className="mb-1.5 block text-xs font-bold text-[#101828]/60">Join date</span><input type="date" value={joinDate} onChange={e => setJoinDate(e.target.value)} className="h-12 w-full rounded-xl border border-[#101828]/10 bg-[#F8FAFC] px-4 text-sm outline-none focus:border-orange-400" /></label>
             {error && <p className="text-xs font-semibold text-red-600">{error}</p>}
             <div className="flex gap-2 pt-1"><button type="button" onClick={() => setShowForm(false)} className="h-12 flex-1 rounded-xl border border-[#101828]/10 text-sm font-bold">Cancel</button><button type="button" onClick={save} disabled={addLabour.isPending} className="h-12 flex-1 rounded-xl bg-orange-500 text-sm font-extrabold text-white disabled:opacity-50">{addLabour.isPending ? "Saving…" : "Add labour"}</button></div>
