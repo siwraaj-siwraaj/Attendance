@@ -263,15 +263,29 @@ export function createSupabaseActor() {
           if (duplicate?.length) return err("This mobile number is already saved for another labour");
         }
         const effectiveJoinDate = joinDate || new Date().toISOString().slice(0, 10);
+        // employee_id is NOT NULL, so use a unique temporary value for the insert,
+        // then replace it with the stable, database-ID-based labour code.
+        const temporaryId = `TEMP-${crypto.randomUUID()}`;
         const rows = await rest("labours", {
           method: "POST",
           headers: { Prefer: "return=representation" },
-          body: { name, employee_id: null, phone_number: phone || null, join_date: effectiveJoinDate, is_active: true },
+          body: { name, employee_id: temporaryId, phone_number: phone || null, join_date: effectiveJoinDate, is_active: true },
         });
         const inserted = rows[0];
         const generatedId = `LAB-${String(inserted.id).padStart(4, "0")}`;
-        const updated = await rest("labours", { method: "PATCH", query: `?id=eq.${inserted.id}`, body: { employee_id: generatedId } });
-        return ok(mapLabour(updated?.[0] ?? { ...inserted, employee_id: generatedId }));
+        try {
+          const updated = await rest("labours", {
+            method: "PATCH",
+            query: `?id=eq.${inserted.id}&select=*`,
+            body: { employee_id: generatedId },
+          });
+          if (!updated?.length) throw new Error("Labour was created but its ID could not be finalized. Please refresh and check the labour list.");
+          return ok(mapLabour(updated[0]));
+        } catch (updateError) {
+          // Avoid leaving a partially-created labour with a temporary ID.
+          try { await rest("labours", { method: "DELETE", query: `?id=eq.${inserted.id}` }); } catch { /* preserve the original error */ }
+          throw updateError;
+        }
       } catch (e: any) { return err(e.message); }
     },
     async deleteLabour(id: bigint) { try { return await functionCall("rossie-admin", { action: "delete_labour", labourId: id.toString() }); } catch (e: any) { return { error: e?.message ?? "Could not delete labour" }; } },
