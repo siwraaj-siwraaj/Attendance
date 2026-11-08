@@ -257,15 +257,21 @@ export function createSupabaseActor() {
     async addLabour(name: string, employeeId: string, joinDate: string, phoneNumber: string) {
       try {
         const phone = String(phoneNumber ?? "").replace(/\D/g, "");
-        if (!/^\d{10}$/.test(phone)) return err("Enter a valid 10-digit mobile number");
-        const duplicate = await rest("labours", { query: `?select=id&phone_number=eq.${encodeURIComponent(phone)}&limit=1` });
-        if (duplicate?.length) return err("This mobile number is already saved for another labour");
+        if (phone && !/^\d{10}$/.test(phone)) return err("Enter a valid 10-digit mobile number");
+        if (phone) {
+          const duplicate = await rest("labours", { query: `?select=id&phone_number=eq.${encodeURIComponent(phone)}&limit=1` });
+          if (duplicate?.length) return err("This mobile number is already saved for another labour");
+        }
+        const effectiveJoinDate = joinDate || new Date().toISOString().slice(0, 10);
         const rows = await rest("labours", {
           method: "POST",
           headers: { Prefer: "return=representation" },
-          body: { name, employee_id: employeeId, phone_number: phone, join_date: joinDate ? new Date(joinDate).toISOString() : null, is_active: true },
+          body: { name, employee_id: null, phone_number: phone || null, join_date: effectiveJoinDate, is_active: true },
         });
-        return ok(mapLabour(rows[0]));
+        const inserted = rows[0];
+        const generatedId = `LAB-${String(inserted.id).padStart(4, "0")}`;
+        const updated = await rest("labours", { method: "PATCH", query: `?id=eq.${inserted.id}`, body: { employee_id: generatedId } });
+        return ok(mapLabour(updated?.[0] ?? { ...inserted, employee_id: generatedId }));
       } catch (e: any) { return err(e.message); }
     },
     async deleteLabour(id: bigint) { try { return await functionCall("rossie-admin", { action: "delete_labour", labourId: id.toString() }); } catch (e: any) { return { error: e?.message ?? "Could not delete labour" }; } },
