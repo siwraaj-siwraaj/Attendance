@@ -125,7 +125,8 @@ function AdvancesPage() {
 
   const filtered = useMemo(() => {
     const search = query.trim().toLowerCase();
-    return outstandingAdvances.filter((advance: Advance) => {
+    // Keep settled-contract advances visible so admins can still review, edit or delete them.
+    return advances.filter((advance: Advance) => {
       const contractMatches =
         filterContractId === "all" ||
         advance.contractId.toString() === filterContractId;
@@ -138,7 +139,7 @@ function AdvancesPage() {
       );
     });
   }, [
-    outstandingAdvances,
+    advances,
     filterContractId,
     query,
     labourName,
@@ -357,8 +358,8 @@ function AdvancesPage() {
               style={{ borderColor: BORDER }}
               data-ocid="advances.contract_filter"
             >
-              <option value="all">All active</option>
-              {activeContracts.map((contract: Contract) => (
+              <option value="all">All contracts</option>
+              {contracts.map((contract: Contract) => (
                 <option key={contract.id.toString()} value={contract.id.toString()}>
                   {contract.name}
                 </option>
@@ -370,7 +371,7 @@ function AdvancesPage() {
         <section className="pt-4">
           <div className="mb-3 flex items-end justify-between px-1">
             <div>
-              <h2 className="text-base font-black" style={{ color: TEXT }}>Outstanding advances</h2>
+              <h2 className="text-base font-black" style={{ color: TEXT }}>Advance records</h2>
               <p className="mt-0.5 text-xs" style={{ color: MUTED }}>Grouped by labour · tap a person for details</p>
             </div>
             <span className="rounded-full bg-orange-50 px-2.5 py-1 text-xs font-extrabold text-orange-700">
@@ -384,12 +385,12 @@ function AdvancesPage() {
                 <CircleDollarSign size={25} />
               </div>
               <p className="mt-4 text-sm font-black" style={{ color: TEXT }}>
-                {outstandingAdvances.length ? "No matching advances" : "No outstanding advances"}
+                {advances.length ? "No matching advances" : "No advance records"}
               </p>
               <p className="mt-1 text-xs" style={{ color: MUTED }}>
-                {outstandingAdvances.length
+                {advances.length
                   ? "Try a different search or contract filter."
-                  : "Recorded advances will appear here until their contract is settled."}
+                  : "Recorded advances will appear here."}
               </p>
             </div>
           ) : (
@@ -405,8 +406,8 @@ function AdvancesPage() {
                 return (
                   <article
                     key={labourId}
-                    className={index ? "border-t" : ""}
-                    style={{ borderColor: BORDER }}
+                    className={index ? "relative border-t" : "relative"}
+                    style={{ borderColor: BORDER, zIndex: expanded ? 2 : 0 }}
                   >
                     <button
                       type="button"
@@ -439,7 +440,7 @@ function AdvancesPage() {
                     </button>
 
                     {expanded && (
-                      <div className="space-y-2 border-t bg-[#F8FAFC] p-3" style={{ borderColor: BORDER }}>
+                      <div className="relative z-10 space-y-2 border-t bg-[#F8FAFC] p-3" style={{ borderColor: BORDER }}>
                         {list.map((advance: Advance) => (
                           <div
                             key={advance.id.toString()}
@@ -454,6 +455,9 @@ function AdvancesPage() {
                                 <p className="mt-1 truncate text-xs font-semibold" style={{ color: MUTED }}>
                                   {contractName(advance.contractId)}
                                 </p>
+                                {isContractSettled(contracts.find((contract: Contract) => contract.id === advance.contractId)) && (
+                                  <span className="mt-1 inline-flex rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700">Settled contract</span>
+                                )}
                                 {advance.note && (
                                   <p className="mt-2 break-words text-sm text-[#475467]">{advance.note}</p>
                                 )}
